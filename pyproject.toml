@@ -1,9 +1,15 @@
 [project]
-name = "xl-prioritization"
+name = "xlranker"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cyclopts>=3.15.0",
     "xgboost>=3.0.0",
 ]
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+[project.scripts]
+xlr = "xlranker.cli:cli"
