@@ -1,11 +1,27 @@
-from xlranker.util.math import set_protein_order
+from dataclasses import dataclass
 
 
+@dataclass
 class Protein:
     """Protein class that has the name and abundance for the protein"""
 
     name: str
     abundance: float | None
+
+
+from xlranker.util.math import set_protein_order
+
+
+@dataclass
+class Peptide:
+    sequence: str
+    mapped_proteins: list[Protein]
+
+
+class PeptideGroup:
+    """Peptide group that can contain multiple ProteinPairs and PeptidePairs"""
+
+    pass
 
 
 class ProteinPair:
