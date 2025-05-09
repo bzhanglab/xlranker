@@ -9,7 +9,7 @@ class Protein:
     abundance: float | None
 
 
-def set_protein_order(a: Protein, b: Protein) -> tuple[Protein, Protein]:
+def sort_proteins(a: Protein, b: Protein) -> tuple[Protein, Protein]:
     """Takes into two Proteins and returns them so the first protein is higher abundant. Handles missing values.
 
     In the case of missing values for both proteins or equal values, the input order is maintained.

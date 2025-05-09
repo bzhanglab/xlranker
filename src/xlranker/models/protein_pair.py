@@ -1,4 +1,4 @@
-from xlranker.models.protein import Protein, set_protein_order
+from xlranker.models.protein import Protein, sort_proteins
 
 
 class ProteinPair:
@@ -16,7 +16,7 @@ class ProteinPair:
             protein_a (Protein): First protein in the pair
             protein_b (Protein): Second protein in the pair
         """
-        (a, b) = set_protein_order(protein_a, protein_b)
+        (a, b) = sort_proteins(protein_a, protein_b)
         self.a = a
         self.b = b
         self.score = None
