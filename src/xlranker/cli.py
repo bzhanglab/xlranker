@@ -1,4 +1,5 @@
 import cyclopts
+import xlranker.ml.data as xlr_data
 
 app = cyclopts.App()
 
@@ -7,6 +8,12 @@ app = cyclopts.App()
 def hello(name: str):
     """greets the user!"""
     print(f"Hello {name}!")
+
+
+@app.command()
+def test_loading():
+    df = xlr_data.load_default_ppi()
+    print(df.head())
 
 
 @app.command()

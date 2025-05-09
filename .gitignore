@@ -1,4 +1,5 @@
-# Python-generated files
+.DS_Store
+ Python-generated files
 __pycache__/
 *.py[oc]
 build/
@@ -13,3 +14,8 @@ wheels/
 
 .cache
 .pytest_cache
+
+# data files
+
+util/ppi/ppi.tsv
+util/ppi/ppi.parquet

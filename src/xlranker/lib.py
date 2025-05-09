@@ -4,6 +4,12 @@ from .bio import Protein, Peptide, ProteinPair, PeptideGroup
 
 
 class XLDataSet:
+    """Crosslinking dataset object.
+
+    Attributes:
+        peptides (dict[str, Peptide]): dictionary of Peptide objects
+    """
+
     peptides: dict[str, Peptide]
 
     def __init__(self):
