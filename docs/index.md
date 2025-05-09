@@ -1,17 +1,26 @@
-# Welcome to MkDocs
+<div align="center">
+<img src="images/logo.svg" alt="Logo" width="80" height="80">
+<h1 style="margin-top: -1pt; margin-bottom: 0pt">XLRanker</h1>
+<!-- Badges -->
+<a target="_blank" style="margin-top: 0pt" href="https://colab.research.google.com/github/bzhanglab">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+</div><br>
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+XLRanker is a tool to rank and prioritize protein to protein cross linking data. The tool uses parsimonious selection as well as an XGBoost model to select the best protein pairs to represent ambiguous peptides.
 
-## Commands
+## Installation
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+You can install `xlranker` using pip:
 
-## Project layout
+```bash
+pip install xlranker
+```
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Usage
+
+Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) for detailed usage instructions and examples.
+
+## Example Notebook
+
+For a quick start, you can check out the example notebook in the `notebooks` directory or [launch a google colab notebook](https://colab.research.google.com/github/zhang-lab/xlranker/blob/main/notebooks/xlranker_example.ipynb) to see how to use the package interactively.

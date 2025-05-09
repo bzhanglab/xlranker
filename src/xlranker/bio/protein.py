@@ -3,7 +3,12 @@ from dataclasses import dataclass
 
 @dataclass
 class Protein:
-    """Protein class that has the name and abundance for the protein"""
+    """Protein class that has the name and abundance for the protein
+
+    Attributes:
+        name (str): Name of the protein
+        abundance (float | None): Abundance value of the protein
+    """
 
     name: str
     abundance: float | None

@@ -3,12 +3,27 @@ site_url: https://bzhanlab.github.io/XLRanker
 theme:
   name: material
   logo: images/logo.svg
+  font:
+    text: Fira Sans
+    code: Fira Code
   palette:
     scheme: default
     primary: white
   features:
     - navigation.tabs
     - content.code.copy
+    - navigation.sections
 plugins:
-- mkdocstrings:
-    default_handler: python
+  - privacy
+  - search
+  - mkdocstrings:
+      default_handler: python
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

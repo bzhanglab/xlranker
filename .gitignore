@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# mkdocs cache
+
+.cache
+.pytest_cache
