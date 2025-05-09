@@ -1,0 +1,14 @@
+site_name: XLRanker
+site_url: https://bzhanlab.github.io/XLRanker
+theme:
+  name: material
+  logo: images/logo.svg
+  palette:
+    scheme: default
+    primary: white
+  features:
+    - navigation.tabs
+    - content.code.copy
+plugins:
+- mkdocstrings:
+    default_handler: python

@@ -1,4 +1,4 @@
-from xlranker.models.protein import Protein, sort_proteins
+from xlranker.bio.protein import Protein, sort_proteins
 
 
 class ProteinPair:

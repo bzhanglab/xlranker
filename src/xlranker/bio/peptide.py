@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from xlranker.models.protein import Protein
+from xlranker.bio.protein import Protein
 
 
 @dataclass
