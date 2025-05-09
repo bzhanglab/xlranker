@@ -19,7 +19,7 @@ pip install xlranker
 
 ## Usage
 
-Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) for detailed usage instructions and examples.
+Please view the [usage documentation](usage/index.md) for detailed usage instructions and examples.
 
 ## Example Notebook
 
