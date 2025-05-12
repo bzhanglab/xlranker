@@ -34,7 +34,7 @@ class ProteinPair:
 
     def select(self):
         """Set this pair to be selected"""
-        self.is_selected = False
+        self.is_selected = True
 
     def __eq__(self, value: Self) -> bool:
         """Checks if ProteinPairs are equivalent, without caring for order
