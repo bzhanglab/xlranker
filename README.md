@@ -23,4 +23,4 @@ Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) fo
 
 ## Example Notebook
 
-For a quick start, you can check out the example notebook in the `notebooks` directory or [launch a google colab notebook](https://colab.research.google.com/github/zhang-lab/xlranker/blob/main/notebooks/xlranker_example.ipynb) to see how to use the package interactively.
+For a quick start, you can check out the example notebook in the `notebooks` directory or [launch a google colab notebook](https://colab.research.google.com/github/bzhanglab/xlranker/blob/main/notebooks/xlranker_example.ipynb) to see how to use the package interactively.
