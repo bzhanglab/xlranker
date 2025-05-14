@@ -1,7 +1,39 @@
 import logging
 from xlranker.bio import Peptide, Protein
+from xlranker.bio import PeptideGroup
 
 logger = logging.getLogger(__name__)
+
+
+def read_network_file(network_path: str) -> list[PeptideGroup]:
+    with open(network_path) as r:
+        text = r.read().split("\n")
+    new_rows = set()  # Track unique rows
+    valid_rows = 0  # Keeps track of number of edges in original file
+    for row in text:
+        if "\t" in row:
+            valid_rows += 1
+            vals = row.split("\t")
+            val_a = vals[0]
+            val_b = vals[1]
+            if val_a > val_b:  # Make sure edges are all sorted the same.
+                temp = val_a
+                val_a = val_b
+                val_b = temp
+            new_rows.add(f"{val_a}\t{val_b}")
+    duplicate_rows = valid_rows - len(new_rows)  # Count number of duplicated rows
+    if duplicate_rows > 0:  # Send warning that duplicate edges were removed.
+        logger.warning(
+            f"Found and removed {duplicate_rows} duplicated edge(s) in network."
+        )
+    network = []
+    for row in new_rows:
+        vals = row.split("\t")
+        a = Peptide(vals[0])
+        b = Peptide(vals[1])
+        group = PeptideGroup(a, b)
+        network.append(group)
+    return network
 
 
 def read_mapping_table_file(file_path: str) -> list[Peptide]:

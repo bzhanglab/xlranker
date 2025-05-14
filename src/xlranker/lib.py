@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 
 from .bio import Protein, Peptide, ProteinPair, PeptideGroup
 
@@ -20,3 +21,12 @@ class XLDataSet:
         for peptide in self.peptides.values():
             all_proteins.extend(peptide.mapped_proteins)
         return all_proteins
+
+    def load_from_network(
+        network_path: str,
+        custom_mapping_path: str | None = None,
+        is_fasta: bool = True,
+        split_by: str = "|",
+        split_index: int = 6,
+    ) -> Self:
+        all_sequences = None

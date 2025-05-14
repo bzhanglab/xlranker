@@ -1,5 +1,4 @@
 from importlib.resources import files
-import gzip
 import polars as pl
 
 
