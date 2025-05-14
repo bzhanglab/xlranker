@@ -31,6 +31,7 @@ def test_protein_order_with_both_null():
 
 
 def test_protein_order_no_nulls():
+    # Big protein should always come first
     assert xlr.bio.protein.sort_proteins(SMALL_PROTEIN, BIG_PROTEIN) == (
         BIG_PROTEIN,
         SMALL_PROTEIN,
