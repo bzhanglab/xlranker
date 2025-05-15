@@ -43,7 +43,9 @@ def test_fasta(
     verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
 ):
     setup_logging(verbose=verbose)
-    mapper = PeptideMapper(fasta_path=fasta_file, split_by=split, split_index=gs_index)
+    mapper = PeptideMapper(
+        mapping_table_path=fasta_file, split_by=split, split_index=gs_index
+    )
     sequences = ["SGGLSNL", "MIYD", "NGLEEKRKS"]
     mapping_res = mapper.map_sequences(sequences)
     for seq in sequences:
