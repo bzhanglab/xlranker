@@ -1,34 +1,8 @@
 import cyclopts
 from xlranker.util.mapping import PeptideMapper
 import xlranker.ml.data as xlr_data
-import logging
-import sys
+from xlranker.lib import setup_logging
 from typing import Annotated
-
-
-def setup_logging(verbose: bool = False, log_file: str = None):
-    level = logging.DEBUG if verbose else logging.INFO
-
-    # Create root logger
-    logger = logging.getLogger()
-    logger.setLevel(level)
-
-    # Console handler (stderr)
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setLevel(level)
-    console_formatter = logging.Formatter("[%(levelname)s] %(message)s")
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-
-    # Optional file handler
-    if log_file:
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        )
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
 
 
 app = cyclopts.App()

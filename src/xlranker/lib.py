@@ -1,3 +1,4 @@
+import sys
 from typing import Self
 import logging
 import polars as pl
@@ -10,6 +11,31 @@ from .bio import Protein, Peptide
 logger = logging.getLogger(__name__)
 
 
+def setup_logging(verbose: bool = False, log_file: str = None):
+    level = logging.DEBUG if verbose else logging.INFO
+
+    # Create root logger
+    logger = logging.getLogger()
+    logger.setLevel(level)
+
+    # Console handler (stderr)
+    console_handler = logging.StreamHandler(sys.stderr)
+    console_handler.setLevel(level)
+    console_formatter = logging.Formatter("[%(levelname)s] %(message)s")
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+
+    # Optional file handler
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        )
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+
+
 class XLDataSet:
     """XLRanker crosslinking dataset object.
 
@@ -20,6 +46,7 @@ class XLDataSet:
     peptides: dict[str, Peptide]
 
     def __init__(self):
+        setup_logging()
         pass
 
     def get_all_proteins(self) -> list[Protein]:
