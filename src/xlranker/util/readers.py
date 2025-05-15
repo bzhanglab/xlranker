@@ -2,6 +2,7 @@ import logging
 import polars as pl
 from xlranker.bio import Peptide, Protein
 from xlranker.bio import PeptideGroup
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,28 @@ def read_data_matrix(data_path: str, additional_null_values=[]) -> pl.DataFrame:
     return pl.read_csv(
         data_path, has_header=True, separator="\t", null_values=null_values
     )
+
+
+def read_data_folder(folder_path: str, additional_null_values=[]) -> list[pl.DataFrame]:
+    """reads all TSV files in a folder
+
+    Args:
+        folder_path (str): path of the folder that contains files ending in .tsv
+        additional_null_values (list[str]): list of str of additional values that should considered as null in the data files
+
+    Raises:
+        FileNotFoundError: raised if no TSV files are found
+
+    Returns:
+        list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read by the read_data_matrix function
+    """
+    file_list = Path(folder_path).glob("*.tsv")
+    if len(file_list) == 0:
+        raise FileNotFoundError(f"No TSV files were found in directory: {folder_path}")
+    return [
+        read_data_matrix(file, additional_null_values=additional_null_values)
+        for file in file_list
+    ]
 
 
 def read_network_file(network_path: str) -> list[PeptideGroup]:
