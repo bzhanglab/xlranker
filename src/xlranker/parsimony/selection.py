@@ -1,4 +1,7 @@
 from xlranker.bio import PeptideGroup
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ParsimonySelector:
