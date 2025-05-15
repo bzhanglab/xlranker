@@ -19,6 +19,12 @@ pip install xlranker
 
 ## Usage
 
+To analyze a TSV file containing a network of peptide sequences run:
+
+```
+xlranker start peptide_network.tsv
+```
+
 Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) for detailed usage instructions and examples.
 
 ## Example Notebook
