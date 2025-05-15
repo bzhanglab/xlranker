@@ -113,7 +113,7 @@ def read_mapping_table_file(file_path: str) -> dict[str, list[str]]:
                 seq = vals[0]
                 if seq in uniq_sequences:
                     logging.warning(
-                        f"Peptide Sequence {seq} duplicated! Keeping first instance."
+                        f"Peptide sequence {seq} duplicated! Keeping first instance."
                     )
                 else:
                     uniq_sequences.add(seq)

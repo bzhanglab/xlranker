@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class XLDataSet:
-    """Crosslinking dataset object.
+    """XLRanker crosslinking dataset object.
 
     Attributes:
         peptides (dict[str, Peptide]): dictionary of Peptide objects

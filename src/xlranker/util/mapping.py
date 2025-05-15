@@ -32,9 +32,9 @@ class PeptideMapper:
         self.is_fasta = is_fasta
 
     def map_sequences(self, sequences: list[str]) -> dict[str, list[str]]:
-        if self.is_fasta:
+        if self.is_fasta:  # determine which mapping function to use
             return self.map_fasta(sequences)
-        else:
+        else:  # mapping table just needs to be read
             return read_mapping_table_file(self.mapping_table_path)
 
     def map_fasta(self, sequences: list[str]) -> dict[str, list[str]]:
