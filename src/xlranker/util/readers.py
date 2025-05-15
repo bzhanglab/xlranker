@@ -1,11 +1,41 @@
 import logging
+import polars as pl
 from xlranker.bio import Peptide, Protein
 from xlranker.bio import PeptideGroup
 
 logger = logging.getLogger(__name__)
 
 
+def read_data_matrix(data_path: str, additional_null_values=[]) -> pl.DataFrame:
+    """reads data matrix into a Polars DataFrame
+
+    Format:
+     - Has Header (any names allowed)
+     - null/missing values: "", "NA". More can be added.
+
+    Args:
+        data_path (str): path to the data matrix
+        additional_null_values (list[str]): list of str of additional values that should considered as null
+
+    Returns:
+        pl.DataFrame: Polars DataFrame of the input data
+    """
+    null_values = ["", "NA"]
+    null_values.extend(additional_null_values)
+    return pl.read_csv(
+        data_path, has_header=True, separator="\t", null_values=null_values
+    )
+
+
 def read_network_file(network_path: str) -> list[PeptideGroup]:
+    """reads TSV network file to a list of PeptideGroup
+
+    Args:
+        network_path (str): path to the TSV file
+
+    Returns:
+        list[PeptideGroup]: list of PeptideGroup representing the network
+    """
     with open(network_path) as r:
         text = r.read().split("\n")
     new_rows = set()  # Track unique rows
