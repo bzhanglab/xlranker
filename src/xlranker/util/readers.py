@@ -1,6 +1,6 @@
 import logging
 import polars as pl
-from xlranker.bio import Peptide, Protein
+from xlranker.bio import Peptide
 from xlranker.bio import PeptideGroup
 from pathlib import Path
 

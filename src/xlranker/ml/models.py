@@ -1,5 +1,4 @@
 from xlranker.lib import XLDataSet
-import xgboost as xgb
 
 """
 Model Process:

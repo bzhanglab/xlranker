@@ -1,6 +1,5 @@
 import cyclopts
 from xlranker.util.mapping import PeptideMapper
-from xlranker.util.readers import read_mapping_table_file
 import xlranker.ml.data as xlr_data
 import logging
 import sys

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Self
 import logging
 import polars as pl
@@ -6,7 +5,7 @@ import polars as pl
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from .bio import Protein, Peptide, ProteinPair, PeptideGroup
+from .bio import Protein, Peptide
 
 logger = logging.getLogger(__name__)
 
