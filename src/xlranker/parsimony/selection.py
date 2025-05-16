@@ -12,9 +12,11 @@ class ParsimonyGroup:
 
 class ParsimonySelector:
     data_set: XLDataSet
+    groups: dict[int, list[ProteinPair]]
 
     def __init__(self, data_set: XLDataSet):
         self.data_set = data_set
+        self.groups = {}
 
     def prioritize_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
         if protein_pair.in_group:
@@ -24,6 +26,9 @@ class ParsimonySelector:
                 )
             return
         protein_pair.set_group(group_id)
+        if group_id not in self.groups:
+            self.groups[group_id] = []
+        self.groups[group_id].append(protein_pair)
         for peptide_pair in protein_pair.linked_peptide_pairs:
             self.prioritize_peptide_pair(peptide_pair, group_id)
 
