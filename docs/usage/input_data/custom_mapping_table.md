@@ -1,5 +1,5 @@
 !!! note "For Advanced Users"
-    xlranker uses GenCode v48 to map peptide sequences, which should be sufficient for most users. However, some analysis may require 
+    xlranker uses GenCode v48 to map peptide sequences, which should be sufficient for most users. However, some analysis may require
 
 # Custom Mapping Table
 
@@ -25,7 +25,7 @@ To test your custom mapping script, you can use the `xlranker test-fasta --split
 
 ## TSV Table Format
 
-The mapping table should be a tab-separated file where the first column in a line is the peptide sequence with the following columns being proteins (**GENE SYMBOL**) that map to that sequence. There is no restrictions on length, but the sequences in the mapping table must match the sequences given in the list of identified peptide pairs. 
+The mapping table should be a tab-separated file where the first column in a line is the peptide sequence with the following columns being proteins (**GENE SYMBOL**) that map to that sequence. There is no restrictions on length, but the sequences in the mapping table must match the sequences given in the list of identified peptide pairs.
 
 ### Example
 
