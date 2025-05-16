@@ -4,6 +4,8 @@
         "fasta",
         "gencode",
         "mkdocstrings",
+        "omic",
+        "omics",
         "xlranker"
     ]
 }

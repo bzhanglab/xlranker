@@ -3,11 +3,10 @@ from typing import Self
 import logging
 import polars as pl
 
-from xlranker.bio.peptide_group import PeptideGroup
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from .bio import Protein
+from .bio import Protein, PeptideGroup
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ def setup_logging(
 
 
 class XLDataSet:
-    """XLRanker crosslinking dataset object.
+    """XLRanker cross-linking dataset object.
 
     Attributes:
         peptides (dict[str, Peptide]): dictionary of Peptide objects
