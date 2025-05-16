@@ -54,7 +54,7 @@ class PeptideMapper:
         return map_res
 
     def map_fasta(self, sequences: list[str]) -> dict[str, list[str]]:
-        matches = {}
+        matches: dict[str, set[str]] = {}
         logger.info(f"Mapping {len(sequences)} peptide sequences")
         for record in SeqIO.parse(self.mapping_table_path, "fasta"):
             for sequence in sequences:
@@ -66,6 +66,7 @@ class PeptideMapper:
                             self.split_index
                         ].strip()
                     )
+        final_matches: dict[str, list[str]] = {}
         for key in matches:
-            matches[key] = list(matches[key])
-        return matches
+            final_matches[key] = list(matches[key])
+        return final_matches

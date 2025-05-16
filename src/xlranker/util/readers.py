@@ -41,11 +41,12 @@ def read_data_folder(folder_path: str, additional_null_values=[]) -> list[pl.Dat
     Returns:
         list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read by the read_data_matrix function
     """
-    file_list = Path(folder_path).glob("*.tsv")
+    file_glob = Path(folder_path).glob("*.tsv")
+    file_list: list[Path] = list(file_glob)
     if len(file_list) == 0:
         raise FileNotFoundError(f"No TSV files were found in directory: {folder_path}")
     return [
-        read_data_matrix(file, additional_null_values=additional_null_values)
+        read_data_matrix(str(file), additional_null_values=additional_null_values)
         for file in file_list
     ]
 

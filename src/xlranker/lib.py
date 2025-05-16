@@ -1,5 +1,4 @@
 import sys
-from typing import Self
 import logging
 import polars as pl
 
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging(
-    verbose: bool = False, log_file: str = None, silent_all: bool = False
+    verbose: bool = False, log_file: str | None = None, silent_all: bool = False
 ):
     if silent_all:
         # Remove all handlers and disable logging
@@ -54,17 +53,9 @@ class XLDataSet:
     omic_data: list[pl.DataFrame]
     proteins: dict[str, Protein]
 
-    def __init__(
-        self, network: list[PeptidePair], omic_data: list[pl.DataFrame]
-    ) -> "XLDataSet":
+    def __init__(self, network: list[PeptidePair], omic_data: list[pl.DataFrame]):
         self.network = network
         self.omic_data = omic_data
-
-    def get_all_proteins(self) -> list[Protein]:
-        all_proteins = []
-        for peptide in self.peptides.values():
-            all_proteins.extend(peptide.mapped_proteins)
-        return all_proteins
 
     def build_protein_pairs(self):
         self.proteins = {}
@@ -87,17 +78,18 @@ class XLDataSet:
                         protein_pairs.append(new_pair)
             pair.protein_pairs = protein_pairs
 
-    @staticmethod
     @classmethod
     def load_from_network(
-        cls: Self,
+        cls,
         network_path: str,
         omics_data_folder: str,
         custom_mapping_path: str | None = None,
         is_fasta: bool = True,
-        split_by: str = "|",
-        split_index: int = 6,
+        split_by: str | None = "|",
+        split_index: int | None = 6,
     ) -> "XLDataSet":
+        split_by = "|" if split_by is None else split_by
+        split_index = 6 if split_index is None else split_index
         network = read_network_file(network_path)
         omic_data: list[pl.DataFrame] = read_data_folder(omics_data_folder)
         peptide_sequences = set()

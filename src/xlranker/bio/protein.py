@@ -13,7 +13,7 @@ class Protein:
     name: str
     abundance: float | None
 
-    def __eq__(self, value: "Protein"):
+    def __eq__(self, value):
         return value.name == self.name
 
     def __hash__(self):
