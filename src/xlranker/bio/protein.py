@@ -11,7 +11,7 @@ class Protein:
     """
 
     name: str
-    abundance: float | None
+    abundance: float | None = None
 
     def __eq__(self, value):
         return value.name == self.name

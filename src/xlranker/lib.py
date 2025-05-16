@@ -57,11 +57,17 @@ class XLDataSet:
         self.network = network
         self.omic_data = omic_data
 
-    def build_protein_pairs(self):
+    def build_protein_pairs(self, remove_intra: bool = True) -> None:
+        """build protein pairs of the XLDataSet network
+
+        Args:
+            remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
+        """
         self.proteins = {}
         for pair in self.network:
             protein_pairs: list[ProteinPair] = []
             for protein_a_name in pair.a.mapped_proteins:
+                # Check if protein already encountered
                 if protein_a_name not in self.proteins:
                     protein_a = Protein(protein_a_name)
                     self.proteins[protein_a_name] = protein_a
@@ -73,7 +79,12 @@ class XLDataSet:
                         self.proteins[protein_b_name] = protein_b
                     else:
                         protein_b = self.proteins[protein_b_name]
-                    if protein_a != protein_b:
+                    if (
+                        remove_intra and protein_a != protein_b
+                    ):  # Check if is intra linkage
+                        new_pair = ProteinPair(protein_a, protein_b)
+                        protein_pairs.append(new_pair)
+                    else:  # Add pair regardless of protein identity
                         new_pair = ProteinPair(protein_a, protein_b)
                         protein_pairs.append(new_pair)
             pair.protein_pairs = protein_pairs
