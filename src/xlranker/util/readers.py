@@ -1,7 +1,7 @@
 import logging
 import polars as pl
 from xlranker.bio import Peptide
-from xlranker.bio import PeptideGroup
+from xlranker.bio import PeptidePair
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def read_data_folder(folder_path: str, additional_null_values=[]) -> list[pl.Dat
     ]
 
 
-def read_network_file(network_path: str) -> list[PeptideGroup]:
+def read_network_file(network_path: str) -> list[PeptidePair]:
     """reads TSV network file to a list of PeptideGroup
 
     Args:
@@ -91,7 +91,7 @@ def read_network_file(network_path: str) -> list[PeptideGroup]:
         vals = row.split("\t")
         a = Peptide(vals[0])
         b = Peptide(vals[1])
-        group = PeptideGroup(a, b)
+        group = PeptidePair(a, b)
         network.append(group)
     return network
 

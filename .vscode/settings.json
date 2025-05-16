@@ -3,6 +3,7 @@
         "cyclopts",
         "fasta",
         "gencode",
+        "levelname",
         "mkdocstrings",
         "omic",
         "omics",

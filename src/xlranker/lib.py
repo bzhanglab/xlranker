@@ -6,7 +6,7 @@ import polars as pl
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from .bio import Protein, PeptideGroup
+from .bio import Protein, PeptidePair, ProteinPair
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +50,13 @@ class XLDataSet:
         peptides (dict[str, Peptide]): dictionary of Peptide objects
     """
 
-    network: list[PeptideGroup]
+    network: list[PeptidePair]
     omic_data: list[pl.DataFrame]
+    proteins: dict[str, Protein]
 
-    def __init__(self, network: list[PeptideGroup], omic_data: list[pl.DataFrame]):
+    def __init__(
+        self, network: list[PeptidePair], omic_data: list[pl.DataFrame]
+    ) -> "XLDataSet":
         self.network = network
         self.omic_data = omic_data
 
@@ -62,6 +65,27 @@ class XLDataSet:
         for peptide in self.peptides.values():
             all_proteins.extend(peptide.mapped_proteins)
         return all_proteins
+
+    def build_protein_pairs(self):
+        self.proteins = {}
+        for pair in self.network:
+            protein_pairs: list[ProteinPair] = []
+            for protein_a_name in pair.a.mapped_proteins:
+                if protein_a_name not in self.proteins:
+                    protein_a = Protein(protein_a_name)
+                    self.proteins[protein_a_name] = protein_a
+                else:
+                    protein_a = self.proteins[protein_a_name]
+                for protein_b_name in pair.b.mapped_proteins:
+                    if protein_b_name not in self.proteins:
+                        protein_b = Protein(protein_b_name)
+                        self.proteins[protein_b_name] = protein_b
+                    else:
+                        protein_b = self.proteins[protein_b_name]
+                    if protein_a != protein_b:
+                        new_pair = ProteinPair(protein_a, protein_b)
+                        protein_pairs.append(new_pair)
+            pair.protein_pairs = protein_pairs
 
     @staticmethod
     @classmethod
@@ -73,7 +97,7 @@ class XLDataSet:
         is_fasta: bool = True,
         split_by: str = "|",
         split_index: int = 6,
-    ) -> Self:
+    ) -> "XLDataSet":
         network = read_network_file(network_path)
         omic_data: list[pl.DataFrame] = read_data_folder(omics_data_folder)
         peptide_sequences = set()

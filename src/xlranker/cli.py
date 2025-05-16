@@ -84,7 +84,7 @@ def start(
     if seed is None:
         seed = random.randint(0, 10000000)
         logger.info(f"Randomly generated seed: {seed}")
-    _data_set: XLDataSet = XLDataSet.load_from_network(
+    _data_set = XLDataSet.load_from_network(
         network,
         data_folder,
         custom_mapping_path=mapping_table,
