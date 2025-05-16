@@ -11,3 +11,6 @@ class Peptide:
     def __init__(self, sequence: str, mapped_proteins: list[Protein] = []):
         self.sequence = sequence
         self.mapped_proteins = mapped_proteins
+
+    def __str__(self):
+        return self.sequence

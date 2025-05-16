@@ -3,6 +3,7 @@ from typing import Self
 import logging
 import polars as pl
 
+from xlranker.bio.peptide_group import PeptideGroup
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
@@ -43,11 +44,13 @@ class XLDataSet:
         peptides (dict[str, Peptide]): dictionary of Peptide objects
     """
 
-    peptides: dict[str, Peptide]
+    network: list[PeptideGroup]
+    omic_data: list[pl.DataFrame]
 
-    def __init__(self):
+    def __init__(self, network: list[PeptideGroup], omic_data: list[pl.DataFrame]):
         setup_logging()
-        pass
+        self.network = network
+        self.omic_data = omic_data
 
     def get_all_proteins(self) -> list[Protein]:
         all_proteins = []
@@ -55,7 +58,9 @@ class XLDataSet:
             all_proteins.extend(peptide.mapped_proteins)
         return all_proteins
 
+    @classmethod
     def load_from_network(
+        cls: Self,
         network_path: str,
         omics_data_folder: str,
         custom_mapping_path: str | None = None,
@@ -64,7 +69,7 @@ class XLDataSet:
         split_index: int = 6,
     ) -> Self:
         network = read_network_file(network_path)
-        omics_data: list[pl.DataFrame] = read_data_folder(omics_data_folder)
+        omic_data: list[pl.DataFrame] = read_data_folder(omics_data_folder)
         peptide_sequences = set()
         for group in network:
             peptide_sequences.add(group.a.sequence)
@@ -76,4 +81,7 @@ class XLDataSet:
             is_fasta=is_fasta,
         )
         mapping_results = mapper.map_sequences(list(peptide_sequences))
-        pairs = []
+        for group in network:
+            group.a.mapped_proteins = mapping_results[group.a.sequence]
+            group.b.mapped_proteins = mapping_results[group.b.sequence]
+        return cls(network, omic_data)
