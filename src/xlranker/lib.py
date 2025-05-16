@@ -12,7 +12,14 @@ from .bio import Protein
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(verbose: bool = False, log_file: str = None):
+def setup_logging(
+    verbose: bool = False, log_file: str = None, silent_all: bool = False
+):
+    if silent_all:
+        # Remove all handlers and disable logging
+        logging.getLogger().handlers.clear()
+        logging.disable(logging.CRITICAL + 1)
+        return
     level = logging.DEBUG if verbose else logging.INFO
 
     # Create root logger
@@ -48,7 +55,6 @@ class XLDataSet:
     omic_data: list[pl.DataFrame]
 
     def __init__(self, network: list[PeptideGroup], omic_data: list[pl.DataFrame]):
-        setup_logging()
         self.network = network
         self.omic_data = omic_data
 
