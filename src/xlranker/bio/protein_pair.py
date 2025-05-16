@@ -1,7 +1,9 @@
+from xlranker.bio import GroupedEntity
+from xlranker.bio.peptide_pair import PeptidePair
 from xlranker.bio.protein import Protein, sort_proteins
 
 
-class ProteinPair:
+class ProteinPair(GroupedEntity):
     """ProteinPair class that tracks the required data for the pipeline"""
 
     a: Protein
@@ -9,6 +11,7 @@ class ProteinPair:
     score: float | None
     is_selected: bool
     pair_name: str
+    linked_peptide_pairs: list[PeptidePair]
 
     def __init__(self, protein_a: Protein, protein_b: Protein):
         """Initialize a ProteinPair object, making sure a is the higher abundant protein. Input order does not matter.
@@ -17,11 +20,17 @@ class ProteinPair:
             protein_a (Protein): First protein in the pair
             protein_b (Protein): Second protein in the pair
         """
+        super().__init__()
         (a, b) = sort_proteins(protein_a, protein_b)
         self.a = a
         self.b = b
         self.score = None
         self.is_selected = False
+        self.linked_peptide_pairs = []
+        self.pair_name = f"{self.a.name}-{self.b.name}"
+
+    def link_pair(self, pair: PeptidePair) -> None:
+        self.linked_peptide_pairs.append(pair)
 
     def set_score(self, score: float):
         """Set the score of the protein pair
