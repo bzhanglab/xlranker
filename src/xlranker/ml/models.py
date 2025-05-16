@@ -1,6 +1,3 @@
-from xlranker.lib import XLDataSet
-import xgboost as xgb
-
 """
 Model Process:
 
@@ -9,6 +6,8 @@ Model Process:
 2. Generate Negative Dataset
     - Random protein pairs that are not selected pairs
 """
+
+from xlranker.lib import XLDataSet
 
 
 class PrioritizationModel:

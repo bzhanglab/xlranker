@@ -1,5 +1,4 @@
 from importlib.resources import files
-import gzip
 import lzma
 import polars as pl
 import tarfile
@@ -8,11 +7,11 @@ import tempfile
 
 def load_default_ppi() -> pl.DataFrame:
     ppi_path = files("xlranker.data") / "ppi.parquet"
-    return pl.read_parquet(ppi_path)
+    return pl.read_parquet(str(ppi_path))
 
 
 def get_gencode_fasta() -> str:
-    gencode_path = files("xlranker.data") / "gencode.v48.tar.xz"
+    gencode_path = str(files("xlranker.data") / "gencode.v48.tar.xz")
     with lzma.open(gencode_path) as r:
         with tarfile.open(fileobj=r) as tar:
             fa_file = next(

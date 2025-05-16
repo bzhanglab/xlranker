@@ -23,7 +23,7 @@ The input data for `xlranker` are:
 ??? example "Example Data"
 
     To test the pipeline or view the input data formatting, download the example data below
-    
+
     [:octicons-download-16: Download example.tar.gz](#){ .md-button .md-button--secondary }
 
 

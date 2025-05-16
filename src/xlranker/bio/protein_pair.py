@@ -1,4 +1,3 @@
-from typing import Self
 from xlranker.bio.protein import Protein, sort_proteins
 
 
@@ -36,7 +35,7 @@ class ProteinPair:
         """Set this pair to be selected"""
         self.is_selected = True
 
-    def __eq__(self, value: Self) -> bool:
+    def __eq__(self, value) -> bool:
         """Checks if ProteinPairs are equivalent, without caring for order
 
         Args:
@@ -45,6 +44,8 @@ class ProteinPair:
         Returns:
             bool: True if protein pairs are equivalent, regardless of a and b order
         """
+        if value.__class__ != self.__class__:
+            return False
         if self.a == value.a:
             return self.b == value.b
         elif self.a == value.b:

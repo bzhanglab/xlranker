@@ -1,38 +1,14 @@
+import logging
+import random
 import cyclopts
 from xlranker.util.mapping import PeptideMapper
-from xlranker.util.readers import read_mapping_table_file
 import xlranker.ml.data as xlr_data
-import logging
-import sys
+from xlranker.lib import XLDataSet, setup_logging
 from typing import Annotated
 
 
-def setup_logging(verbose: bool = False, log_file: str = None):
-    level = logging.DEBUG if verbose else logging.INFO
-
-    # Create root logger
-    logger = logging.getLogger()
-    logger.setLevel(level)
-
-    # Console handler (stderr)
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setLevel(level)
-    console_formatter = logging.Formatter("[%(levelname)s] %(message)s")
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-
-    # Optional file handler
-    if log_file:
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        )
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
-
-
 app = cyclopts.App()
+logger = logging.getLogger(__name__)
 
 
 @app.command()
@@ -50,7 +26,7 @@ def test_fasta(
     mapping_res = mapper.map_sequences(sequences)
     for seq in sequences:
         print(f"Sequence: {seq}")
-        print(f"Results:\n{"\n".join(mapping_res[seq])}\n")
+        print(f"Results:\n{'\n'.join(mapping_res[seq])}\n")
     print("Verify results are in gene symbol!")
 
 
@@ -70,15 +46,52 @@ def test_loading():
 
 
 @app.command()
-def start(input: str):
+def start(
+    network: Annotated[str, cyclopts.Parameter(name=["--network", "-n"])],
+    data_folder: Annotated[str, cyclopts.Parameter(name=["--data-folder", "-d"])],
+    seed: Annotated[int | None, cyclopts.Parameter(name=["--seed", "-s"])] = None,
+    verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
+    log_file: Annotated[
+        str | None, cyclopts.Parameter(name=["--log-file", "-l"])
+    ] = None,
+    mapping_table: Annotated[
+        str | None, cyclopts.Parameter(name=["--mapping-table", "-m"])
+    ] = None,
+    split: Annotated[str | None, cyclopts.Parameter(name=["--split"])] = None,
+    gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
+    is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
+):
     """Run the full prioritization pipeline
 
     Requires input file to be in the format specified in the project documentation.
 
+    Examples:
+
+    `xlranker start network.tsv omic_data_folder/ -s 42`
+
     Args:
-        input (str): input file in TSV format
+        network (Annotated[str, cyclopts.Parameter, optional): path to TSV file containing peptide network.
+        data_folder (Annotated[str, cyclopts.Parameter, optional): folder containing the omics data for the model prediction.
+        seed (Annotated[int  |  None, cyclopts.Parameter, optional): seed for machine learning pipeline. If not set, seed is randomly selected.
+        verbose (Annotated[bool, cyclopts.Parameter, optional): enable verbose logging.
+        log_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, saves logging to path
+        mapping_table (Annotated[ str  |  None, cyclopts.Parameter, optional): path to custom mapping table for peptide sequences
+        split (Annotated[ str  |  None, cyclopts.Parameter, optional): character used for splitting the FASTA file header
+        gs_index (Annotated[int  |  None, cyclopts.Parameter, optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
+        is_fasta (Annotated[bool, cyclopts.Parameter, optional): Enable if mapping table is a FASTA file.
     """
-    pass
+    setup_logging(verbose=verbose, log_file=log_file)
+    if seed is None:
+        seed = random.randint(0, 10000000)
+        logger.info(f"Randomly generated seed: {seed}")
+    _data_set = XLDataSet.load_from_network(
+        network,
+        data_folder,
+        custom_mapping_path=mapping_table,
+        is_fasta=is_fasta,
+        split_by=split,
+        split_index=gs_index,
+    )
 
 
 def cli():

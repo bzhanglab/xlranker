@@ -32,13 +32,29 @@ class PeptideMapper:
         self.is_fasta = is_fasta
 
     def map_sequences(self, sequences: list[str]) -> dict[str, list[str]]:
-        if self.is_fasta:
-            return self.map_fasta(sequences)
-        else:
-            return read_mapping_table_file(self.mapping_table_path)
+        map_res = dict()
+        if self.is_fasta:  # determine which mapping function to use
+            map_res = self.map_fasta(sequences)
+        else:  # mapping table just needs to be read
+            map_res = read_mapping_table_file(self.mapping_table_path)
+        had_error = False
+        for seq in sequences:  # verify all sequences have mapping information
+            if seq not in map_res:
+                logger.debug(f"is_fasta: {self.is_fasta}")
+                logger.error(f"{seq} not found in mapping table!")
+                had_error = True
+            elif len(map_res[seq]) == 0:
+                logger.debug(f"is_fasta: {self.is_fasta}")
+                logger.error(f"{seq} maps to no proteins!")
+                had_error = True
+        if had_error:
+            raise ValueError(
+                "Mapping incomplete. Verify peptide sequences and mapping table is correct."
+            )
+        return map_res
 
     def map_fasta(self, sequences: list[str]) -> dict[str, list[str]]:
-        matches = {}
+        matches: dict[str, set[str]] = {}
         logger.info(f"Mapping {len(sequences)} peptide sequences")
         for record in SeqIO.parse(self.mapping_table_path, "fasta"):
             for sequence in sequences:
@@ -50,6 +66,7 @@ class PeptideMapper:
                             self.split_index
                         ].strip()
                     )
+        final_matches: dict[str, list[str]] = {}
         for key in matches:
-            matches[key] = list(matches[key])
-        return matches
+            final_matches[key] = list(matches[key])
+        return final_matches

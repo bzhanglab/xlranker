@@ -1,7 +1,12 @@
 {
     "cSpell.words": [
+        "cyclopts",
         "fasta",
         "gencode",
-        "mkdocstrings"
+        "levelname",
+        "mkdocstrings",
+        "omic",
+        "omics",
+        "xlranker"
     ]
 }

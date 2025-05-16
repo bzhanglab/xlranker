@@ -11,7 +11,13 @@ class Protein:
     """
 
     name: str
-    abundance: float | None
+    abundance: float | None = None
+
+    def __eq__(self, value):
+        return value.name == self.name
+
+    def __hash__(self):
+        hash(self.name)
 
 
 def sort_proteins(a: Protein, b: Protein) -> tuple[Protein, Protein]:
