@@ -3,7 +3,7 @@ import random
 import cyclopts
 from xlranker.util.mapping import PeptideMapper
 import xlranker.ml.data as xlr_data
-from xlranker.lib import setup_logging
+from xlranker.lib import XLDataSet, setup_logging
 from typing import Annotated
 
 
@@ -54,6 +54,12 @@ def start(
     log_file: Annotated[
         str | None, cyclopts.Parameter(name=["--log-file", "-l"])
     ] = None,
+    mapping_table: Annotated[
+        str | None, cyclopts.Parameter(name=["--mapping-table", "-m"])
+    ] = None,
+    split: Annotated[str | None, cyclopts.Parameter(name=["--split"])] = None,
+    gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
+    is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
 ):
     """Run the full prioritization pipeline
 
@@ -69,11 +75,23 @@ def start(
         seed (Annotated[int  |  None, cyclopts.Parameter, optional): seed for machine learning pipeline. If not set, seed is randomly selected.
         verbose (Annotated[bool, cyclopts.Parameter, optional): enable verbose logging.
         log_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, saves logging to path
+        mapping_table (Annotated[ str  |  None, cyclopts.Parameter, optional): path to custom mapping table for peptide sequences
+        split (Annotated[ str  |  None, cyclopts.Parameter, optional): character used for splitting the FASTA file header
+        gs_index (Annotated[int  |  None, cyclopts.Parameter, optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
+        is_fasta (Annotated[bool, cyclopts.Parameter, optional): Enable if mapping table is a FASTA file.
     """
     setup_logging(verbose=verbose, log_file=log_file)
     if seed is None:
         seed = random.randint(0, 10000000)
         logger.info(f"Randomly generated seed: {seed}")
+    _data_set: XLDataSet = XLDataSet.load_from_network(
+        network,
+        data_folder,
+        custom_mapping_path=mapping_table,
+        is_fasta=is_fasta,
+        split_by=split,
+        split_index=gs_index,
+    )
 
 
 def cli():

@@ -63,6 +63,7 @@ class XLDataSet:
             all_proteins.extend(peptide.mapped_proteins)
         return all_proteins
 
+    @staticmethod
     @classmethod
     def load_from_network(
         cls: Self,
