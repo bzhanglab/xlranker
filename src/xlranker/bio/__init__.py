@@ -8,7 +8,7 @@ __all__ = ["Protein", "Peptide", "ProteinPair", "PeptidePair", "PeptidePair"]
 
 class GroupedEntity:
     group_id: int
-    in_group: int
+    in_group: bool
 
     def __init__(self):
         self.in_group = False
@@ -19,6 +19,4 @@ class GroupedEntity:
         self.group_id = group_id
 
     def get_group(self) -> int:
-        if self.in_group:
-            return self.group_id
-        return -1
+        return self.group_id
