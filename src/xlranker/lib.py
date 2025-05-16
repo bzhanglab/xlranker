@@ -7,7 +7,7 @@ from xlranker.bio.peptide_group import PeptideGroup
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from .bio import Protein, Peptide
+from .bio import Protein
 
 logger = logging.getLogger(__name__)
 
