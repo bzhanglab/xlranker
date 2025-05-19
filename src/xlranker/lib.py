@@ -2,7 +2,7 @@ import sys
 import logging
 import polars as pl
 
-from xlranker.util import get_abundance
+from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
@@ -64,7 +64,7 @@ class XLDataSet:
         self.omic_data = omic_data
         self.protein_pairs = {}
 
-    def build_protein(self, remove_intra: bool = True) -> None:
+    def build_proteins(self, remove_intra: bool = True) -> None:
         """build protein pairs of the XLDataSet network
 
         Args:
@@ -81,6 +81,23 @@ class XLDataSet:
                     self.omic_data[omic_file], protein
                 )
             self.proteins[protein] = Protein(protein, abundances)
+        for peptide_pair in self.network.values():
+            for protein_a_name in peptide_pairs.a.mapped_proteins:
+                protein_a = self.proteins[protein_a_name]
+                for protein_b_name in peptide_pair.b.mapped_proteins:
+                    protein_b = self.proteins[protein_b_name]
+                    if not remove_intra or (
+                        remove_intra and protein_a != protein_b
+                    ):  # Check if is intra linkage
+                        pair_id = get_pair_id(protein_a, protein_b)
+                        if pair_id not in self.protein_pairs:
+                            new_pair = ProteinPair(protein_a, protein_b)
+                            self.protein_pairs[pair_id] = new_pair
+                            peptide_pair.protein_pairs.append(new_pair)
+                        else:
+                            peptide_pair.protein_pairs.append(
+                                self.protein_pairs[pair_id]
+                            )
 
     @classmethod
     def load_from_network(
