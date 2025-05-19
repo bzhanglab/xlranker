@@ -1,8 +1,10 @@
 import logging
 import polars as pl
 from xlranker.bio import Peptide
-from xlranker.bio import PeptidePair
+from xlranker.bio.pairs import PeptidePair
 from pathlib import Path
+
+from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,13 @@ def read_data_matrix(data_path: str, additional_null_values=[]) -> pl.DataFrame:
     )
 
 
-def read_data_folder(folder_path: str, additional_null_values=[]) -> list[pl.DataFrame]:
+def base_name(file_path) -> str:
+    return Path(file_path).stem
+
+
+def read_data_folder(
+    folder_path: str, additional_null_values=[]
+) -> dict[str, pl.DataFrame]:
     """reads all TSV files in a folder
 
     Args:
@@ -45,13 +53,15 @@ def read_data_folder(folder_path: str, additional_null_values=[]) -> list[pl.Dat
     file_list: list[Path] = list(file_glob)
     if len(file_list) == 0:
         raise FileNotFoundError(f"No TSV files were found in directory: {folder_path}")
-    return [
-        read_data_matrix(str(file), additional_null_values=additional_null_values)
-        for file in file_list
-    ]
+    ret_dict = {}
+    for file in file_list:
+        ret_dict[base_name(file)] = read_data_matrix(
+            str(file), additional_null_values=additional_null_values
+        )
+    return ret_dict
 
 
-def read_network_file(network_path: str) -> list[PeptidePair]:
+def read_network_file(network_path: str) -> dict[str, PeptidePair]:
     """reads TSV network file to a list of PeptideGroup
 
     Args:
@@ -87,13 +97,13 @@ def read_network_file(network_path: str) -> list[PeptidePair]:
         logger.warning(
             f"Found and removed {duplicate_rows} duplicated edge(s) in network."
         )
-    network = []
+    network: dict[str, PeptidePair] = {}
     for row in new_rows:
         vals = row.split("\t")
         a = Peptide(vals[0])
         b = Peptide(vals[1])
         group = PeptidePair(a, b)
-        network.append(group)
+        network[get_pair_id(a, b)] = group
     return network
 
 

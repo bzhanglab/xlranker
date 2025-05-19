@@ -1,11 +1,9 @@
 from .protein import Protein
 from .peptide import Peptide
-from .protein_pair import ProteinPair
-from .peptide_pair import PeptidePair
 
 from enum import Enum, auto
 
-__all__ = ["Protein", "Peptide", "ProteinPair", "PeptidePair", "PeptidePair"]
+__all__ = ["Protein", "Peptide"]
 
 
 class PrioritizationStatus(Enum):

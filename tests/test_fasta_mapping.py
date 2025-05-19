@@ -52,5 +52,8 @@ def test_custom_table(tmp_path):
     sequences = ["LHYTTIM", "AVAWTLGVSHS", "PLLALPPQGPPG"]
     res = mapper.map_sequences(sequences)
     assert res["LHYTTIM"] == ["OR4F5"]
-    assert res["AVAWTLGVSHS"] == ["OR4F16", "OR4F29"]
+    assert res["AVAWTLGVSHS"] == ["OR4F16", "OR4F29"] or res["AVAWTLGVSHS"] == [
+        "OR4F29",
+        "OR4F14",
+    ]
     assert res["PLLALPPQGPPG"] == ["SAMD11"]

@@ -1,10 +1,16 @@
-from xlranker.bio import PeptidePair, PrioritizationStatus, ProteinPair
+from xlranker.bio import PrioritizationStatus
+from xlranker.bio.pairs import PeptidePair
+from xlranker.bio.pairs import ProteinPair
 from xlranker.lib import XLDataSet
+import networkx as nx
 import logging
+
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class ParsimonyGroup:
     protein_pairs: list[ProteinPair]
     peptide_pairs: list[PeptidePair]
@@ -14,11 +20,13 @@ class ParsimonySelector:
     data_set: XLDataSet
     groups: dict[int, list[ProteinPair]]
     can_prioritize: bool
+    network: nx.Graph
 
     def __init__(self, data_set: XLDataSet):
         self.data_set = data_set
         self.groups = {}
         self.can_prioritize = False
+        self.network = None
 
     def assign_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
         if protein_pair.in_group:
@@ -53,6 +61,11 @@ class ParsimonySelector:
             self.assign_peptide_pair(pair, next_group_id)
             next_group_id += 1
         self.can_prioritize = True
+
+    def build_network(self) -> None:
+        g = nx.Graph()
+        g.add_nodes_from(self.data_set.network)
+        g.add_nodes_from(self.data_set.network)
 
     def prioritize(self) -> None:
         if not self.can_prioritize:
