@@ -1,4 +1,4 @@
-from xlranker.bio import PeptidePair, ProteinPair
+from xlranker.bio import PeptidePair, PrioritizationStatus, ProteinPair
 from xlranker.lib import XLDataSet
 import logging
 
@@ -13,12 +13,14 @@ class ParsimonyGroup:
 class ParsimonySelector:
     data_set: XLDataSet
     groups: dict[int, list[ProteinPair]]
+    can_prioritize: bool
 
     def __init__(self, data_set: XLDataSet):
         self.data_set = data_set
         self.groups = {}
+        self.can_prioritize = False
 
-    def prioritize_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
+    def assign_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
         if protein_pair.in_group:
             if protein_pair.group_id != group_id:
                 raise ValueError(
@@ -30,9 +32,9 @@ class ParsimonySelector:
             self.groups[group_id] = []
         self.groups[group_id].append(protein_pair)
         for peptide_pair in protein_pair.linked_peptide_pairs:
-            self.prioritize_peptide_pair(peptide_pair, group_id)
+            self.assign_peptide_pair(peptide_pair, group_id)
 
-    def prioritize_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
+    def assign_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
         if peptide_pair.in_group:
             if peptide_pair.group_id != group_id:
                 raise ValueError(
@@ -41,12 +43,44 @@ class ParsimonySelector:
             return
         peptide_pair.set_group(group_id)
         for protein_pair in peptide_pair.protein_pairs:
-            self.prioritize_protein_pair(protein_pair, group_id)
+            self.assign_protein_pair(protein_pair, group_id)
 
     def create_groups(self) -> None:
         next_group_id = 1
         for pair in self.data_set.network:
             if pair.in_group:
                 continue
-            self.prioritize_peptide_pair(pair, next_group_id)
+            self.assign_peptide_pair(pair, next_group_id)
             next_group_id += 1
+        self.can_prioritize = True
+
+    def prioritize(self) -> None:
+        if not self.can_prioritize:
+            logger.warning(
+                "Parsimony group creation not performed before prioritization. Running now."
+            )
+            self.create_groups()
+        for group in self.groups:
+            best_pairs: list[ProteinPair] = []
+            max_connections = 0
+            for protein_pair in self.groups[group]:
+                conn_len = len(protein_pair.linked_peptide_pairs)
+                if max_connections == conn_len:
+                    best_pairs.append(protein_pair)
+                elif max_connections < conn_len:
+                    best_pairs = [protein_pair]
+                    max_connections = conn_len
+            best_status = (
+                PrioritizationStatus.PARSIMONY_SELECTED
+                if len(best_pairs) == 1
+                else PrioritizationStatus.PARSIMONY_AMBIGUOUS
+            )
+            for protein_pair in self.groups[group]:
+                if protein_pair in best_pairs:
+                    protein_pair.set_status(best_status)
+                else:
+                    protein_pair.set_status(PrioritizationStatus.PARSIMONY_NOT_SELECTED)
+
+    def run(self) -> None:
+        self.create_groups()
+        self.prioritize()
