@@ -82,6 +82,7 @@ class XLDataSet:
                 )
             self.proteins[protein] = Protein(protein, abundances)
         for peptide_pair in self.network.values():
+            peptide_id = get_pair_id(peptide_pair.a, peptide_pair.b)
             for protein_a_name in peptide_pairs.a.mapped_proteins:
                 protein_a = self.proteins[protein_a_name]
                 for protein_b_name in peptide_pair.b.mapped_proteins:
@@ -89,15 +90,15 @@ class XLDataSet:
                     if not remove_intra or (
                         remove_intra and protein_a != protein_b
                     ):  # Check if is intra linkage
-                        pair_id = get_pair_id(protein_a, protein_b)
-                        if pair_id not in self.protein_pairs:
+                        protein_id = get_pair_id(protein_a, protein_b)
+                        if protein_id not in self.protein_pairs:
                             new_pair = ProteinPair(protein_a, protein_b)
-                            self.protein_pairs[pair_id] = new_pair
-                            peptide_pair.protein_pairs.append(new_pair)
+                            self.protein_pairs[protein_id] = new_pair
+                            peptide_pair.add_connection(protein_id)
+                            new_pair.add_connection(peptide_id)
                         else:
-                            peptide_pair.protein_pairs.append(
-                                self.protein_pairs[pair_id]
-                            )
+                            self.protein_pairs[protein_id].add_connection(peptide_id)
+                            peptide_pair.add_connection(protein_id)
 
     @classmethod
     def load_from_network(

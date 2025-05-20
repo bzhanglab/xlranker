@@ -19,24 +19,3 @@ class PrioritizationStatus(Enum):
     # Machine Learning-based statuses
     ML_NOT_SELECTED = auto()  # Lower ML score
     ML_SELECTED = auto()  # Highest ML score
-
-
-class GroupedEntity:
-    group_id: int
-    in_group: bool
-    status: PrioritizationStatus
-
-    def __init__(self):
-        self.in_group = False
-        self.group_id = -1
-        self.status = PrioritizationStatus.NOT_ANALYZED
-
-    def set_group(self, group_id: int) -> None:
-        self.in_group = True
-        self.group_id = group_id
-
-    def get_group(self) -> int:
-        return self.group_id
-
-    def set_status(self, status: PrioritizationStatus) -> None:
-        self.status = status

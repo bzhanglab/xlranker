@@ -1,6 +1,51 @@
-from xlranker.bio import GroupedEntity
+from xlranker.bio import PrioritizationStatus
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
+from xlranker.util import get_pair_id
+
+
+class GroupedEntity:
+    group_id: int
+    in_group: bool
+    status: PrioritizationStatus
+    connections: set[str]
+
+    def __init__(self):
+        self.in_group = False
+        self.group_id = -1
+        self.status = PrioritizationStatus.NOT_ANALYZED
+        self.connections = set()
+
+    def set_group(self, group_id: int) -> None:
+        self.in_group = True
+        self.group_id = group_id
+
+    def get_group(self) -> int:
+        return self.group_id
+
+    def set_status(self, status: PrioritizationStatus) -> None:
+        self.status = status
+
+    def add_connection(self, entity: str) -> None:
+        self.connections.add(entity)
+
+    def remove_connections(self, entities: set) -> None:
+        self.connections.difference_update(entities)
+
+    def n_connections(self) -> int:
+        return len(self.connections)
+
+    def overlap(self, entities: set[str]) -> int:
+        return len(self.connections.intersection(entities))
+
+    def same_connectivity(self, grouped_entity: "GroupedEntity") -> bool:
+        return (
+            len(self.connections.symmetric_difference(grouped_entity.connections)) == 0
+        )
+
+    def connectivity_id(self) -> str:
+        """Returns a unique, order-independent id for the set of connections."""
+        return "|".join(sorted(self.connections))
 
 
 class ProteinPair(GroupedEntity):
@@ -10,8 +55,7 @@ class ProteinPair(GroupedEntity):
     b: Protein
     score: float | None
     is_selected: bool
-    pair_name: str
-    linked_peptide_pairs: list["PeptidePair"]
+    pair_id: str
 
     def __init__(self, protein_a: Protein, protein_b: Protein):
         """Initialize a ProteinPair object, making sure a is the higher abundant protein. Input order does not matter.
@@ -26,11 +70,7 @@ class ProteinPair(GroupedEntity):
         self.b = b
         self.score = None
         self.is_selected = False
-        self.linked_peptide_pairs = []
-        self.pair_name = f"{self.a.name}-{self.b.name}"
-
-    def link_pair(self, pair: "PeptidePair") -> None:
-        self.linked_peptide_pairs.append(pair)
+        self.pair_id = get_pair_id(a, b)
 
     def set_score(self, score: float):
         """Set the score of the protein pair
@@ -67,7 +107,6 @@ class PeptidePair(GroupedEntity):
 
     a: Peptide
     b: Peptide
-    protein_pairs: list[ProteinPair]
 
     def __init__(self, peptide_a: Peptide, peptide_b: Peptide):
         super().__init__()
