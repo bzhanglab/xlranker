@@ -54,6 +54,6 @@ def test_custom_table(tmp_path):
     assert res["LHYTTIM"] == ["OR4F5"]
     assert res["AVAWTLGVSHS"] == ["OR4F16", "OR4F29"] or res["AVAWTLGVSHS"] == [
         "OR4F29",
-        "OR4F14",
+        "OR4F16",
     ]
     assert res["PLLALPPQGPPG"] == ["SAMD11"]
