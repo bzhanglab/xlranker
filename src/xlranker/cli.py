@@ -1,6 +1,7 @@
 import logging
 import random
 import cyclopts
+from xlranker.parsimony.selection import ParsimonySelector
 from xlranker.util.mapping import PeptideMapper
 import xlranker.ml.data as xlr_data
 from xlranker.lib import XLDataSet, setup_logging
@@ -43,6 +44,25 @@ def test(
 def test_loading():
     df = xlr_data.load_default_ppi()
     print(df.head())
+
+
+@app.command()
+def test_prioritization(network: str, omic_folder: str):
+    setup_logging()
+    logger.info("Loading data")
+    dataset = XLDataSet.load_from_network(network, omic_folder)
+    logging.info("Building protein data")
+    dataset.build_proteins()
+    prioritizer = ParsimonySelector(dataset)
+    logging.info("Running prioritization")
+    prioritizer.run()
+    logging.info("Saving results")
+    tsv_data = ["pair_id\tstatus\tgroup_id"]
+    for protein_pair_groups in prioritizer.protein_groups.values():
+        for protein_pair in protein_pair_groups:
+            tsv_data.append(protein_pair.to_tsv())
+    with open("output.tsv", "w") as w:
+        w.write("\n".join(tsv_data))
 
 
 @app.command()

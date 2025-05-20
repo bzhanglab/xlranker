@@ -101,14 +101,30 @@ class ProteinPair(GroupedEntity):
             return self.b == value.a
         return False
 
+    def to_tsv(self) -> str:
+        """converts object into a TSV string
+
+        Returns:
+            str: TSV representation of the protein pair, including id and status
+        """
+        return f"{self.pair_id}\t{self.status}\t{self.get_group()}"
+
+    def __hash__(self):
+        return hash(self.pair_id)
+
 
 class PeptidePair(GroupedEntity):
     """Peptide group that can contain multiple ProteinPairs and PeptidePairs"""
 
     a: Peptide
     b: Peptide
+    pair_id: str
 
     def __init__(self, peptide_a: Peptide, peptide_b: Peptide):
         super().__init__()
         self.a = peptide_a
         self.b = peptide_b
+        self.pair_id = get_pair_id(peptide_a, peptide_b)
+
+    def __hash__(self):
+        return hash(self.pair_id)

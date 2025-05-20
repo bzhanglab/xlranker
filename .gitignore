@@ -19,6 +19,7 @@ wheels/
 
 util/ppi/ppi.tsv
 util/ppi/ppi.parquet
+analysis
 
 # MKDocs
 site/

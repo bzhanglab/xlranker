@@ -63,6 +63,7 @@ class XLDataSet:
         self.network = network
         self.omic_data = omic_data
         self.protein_pairs = {}
+        self.proteins = {}
 
     def build_proteins(self, remove_intra: bool = True) -> None:
         """build protein pairs of the XLDataSet network

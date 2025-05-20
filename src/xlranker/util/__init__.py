@@ -7,11 +7,11 @@ from xlranker.bio.protein import Protein
 def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
     name_a = ""
     name_b = ""
-    if a is Protein:
+    if isinstance(a, Protein):
         name_a = a.name
     else:
         name_a = a.sequence
-    if b is Protein:
+    if isinstance(b, Protein):
         name_b = b.name
     else:
         name_b = b.sequence
