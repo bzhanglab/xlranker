@@ -2,10 +2,12 @@ from xlranker.bio import PrioritizationStatus
 from xlranker.bio.pairs import PeptidePair
 from xlranker.bio.pairs import ProteinPair
 from xlranker.lib import XLDataSet
-import networkx as nx
 import logging
+import random
 
 from dataclasses import dataclass
+
+from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +20,14 @@ class ParsimonyGroup:
 
 class ParsimonySelector:
     data_set: XLDataSet
-    groups: dict[int, list[ProteinPair]]
+    protein_groups: dict[int, list[ProteinPair]]
+    peptide_groups: dict[int, list[PeptidePair]]
     can_prioritize: bool
-    network: nx.Graph
 
     def __init__(self, data_set: XLDataSet):
         self.data_set = data_set
-        self.groups = {}
+        self.protein_groups = {}
+        self.peptide_groups = {}
         self.can_prioritize = False
         self.network = None
 
@@ -36,11 +39,11 @@ class ParsimonySelector:
                 )
             return
         protein_pair.set_group(group_id)
-        if group_id not in self.groups:
-            self.groups[group_id] = []
-        self.groups[group_id].append(protein_pair)
-        for peptide_pair in protein_pair.linked_peptide_pairs:
-            self.assign_peptide_pair(peptide_pair, group_id)
+        if group_id not in self.protein_groups:
+            self.protein_groups[group_id] = []
+        self.protein_groups[group_id].append(protein_pair)
+        for peptide_pair_id in protein_pair.connections:
+            self.assign_peptide_pair(self.data_set.network[peptide_pair_id], group_id)
 
     def assign_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
         if peptide_pair.in_group:
@@ -50,22 +53,62 @@ class ParsimonySelector:
                 )
             return
         peptide_pair.set_group(group_id)
-        for protein_pair in peptide_pair.protein_pairs:
-            self.assign_protein_pair(protein_pair, group_id)
+        if group_id not in self.peptide_groups:
+            self.peptide_groups[group_id] = []
+        self.peptide_groups[group_id].append(peptide_pair)
+        for protein_pair_id in peptide_pair.connections:
+            self.assign_protein_pair(
+                self.data_set.protein_pairs[protein_pair_id], group_id
+            )
 
     def create_groups(self) -> None:
         next_group_id = 1
-        for pair in self.data_set.network:
+        for pair in self.data_set.network.values():
             if pair.in_group:
                 continue
             self.assign_peptide_pair(pair, next_group_id)
             next_group_id += 1
         self.can_prioritize = True
 
-    def build_network(self) -> None:
-        g = nx.Graph()
-        g.add_nodes_from(self.data_set.network)
-        g.add_nodes_from(self.data_set.network)
+    def prioritize_group(self, group_id: int) -> None:
+        peptide_names = set(
+            [get_pair_id(pep.a, pep.b) for pep in self.peptide_groups[group_id]]
+        )
+        proteins = set(self.protein_groups[group_id])
+        protein_pair_groups: dict[str, list[ProteinPair]] = {}
+        for protein_pair in proteins:
+            conn_id = protein_pair.connectivity_id()
+            if conn_id not in protein_pair_groups:
+                protein_pair_groups[conn_id] = []
+            protein_pair_groups[conn_id].append(protein_pair)
+        while len(peptide_names) > 0:
+            max_connections = 0
+            best_pairs = []
+            for conn_id in protein_pair_groups:
+                n_conn = protein_pair_groups[conn_id][0].overlap(peptide_names)
+                if max_connections < n_conn:
+                    max_connections = n_conn
+                    best_pairs = [conn_id]
+                elif max_connections == n_conn:
+                    best_pairs.append(conn_id)
+            selected_index = random.randint(
+                0, len(best_pairs) - 1
+            )  # select one random index to move forward
+            best_pair_group = protein_pair_groups[best_pairs[selected_index]]
+            peptide_names.difference_update(best_pair_group[0].connections)
+            status = (
+                PrioritizationStatus.PARSIMONY_SELECTED
+                if len(best_pair_group) == 1
+                else PrioritizationStatus.PARSIMONY_AMBIGUOUS
+            )
+            for pair in best_pair_group:
+                pair.set_status(status)
+        for pair_group in protein_pair_groups.values():
+            for protein_pair in pair_group:
+                if (
+                    protein_pair.status == PrioritizationStatus.NOT_ANALYZED
+                ):  # if not analyzed then pair is no selected
+                    protein_pair.set_status(PrioritizationStatus.PARSIMONY_NOT_SELECTED)
 
     def prioritize(self) -> None:
         if not self.can_prioritize:
@@ -73,26 +116,8 @@ class ParsimonySelector:
                 "Parsimony group creation not performed before prioritization. Running now."
             )
             self.create_groups()
-        for group in self.groups:
-            best_pairs: list[ProteinPair] = []
-            max_connections = 0
-            for protein_pair in self.groups[group]:
-                conn_len = len(protein_pair.linked_peptide_pairs)
-                if max_connections == conn_len:
-                    best_pairs.append(protein_pair)
-                elif max_connections < conn_len:
-                    best_pairs = [protein_pair]
-                    max_connections = conn_len
-            best_status = (
-                PrioritizationStatus.PARSIMONY_SELECTED
-                if len(best_pairs) == 1
-                else PrioritizationStatus.PARSIMONY_AMBIGUOUS
-            )
-            for protein_pair in self.groups[group]:
-                if protein_pair in best_pairs:
-                    protein_pair.set_status(best_status)
-                else:
-                    protein_pair.set_status(PrioritizationStatus.PARSIMONY_NOT_SELECTED)
+        for group in self.protein_groups:
+            self.prioritize_group(group)
 
     def run(self) -> None:
         self.create_groups()
