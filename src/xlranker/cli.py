@@ -23,7 +23,7 @@ def test_fasta(
     mapper = PeptideMapper(
         mapping_table_path=fasta_file, split_by=split, split_index=gs_index
     )
-    sequences = ["SGGLSNL", "MIYD", "NGLEEKRKS"]
+    sequences = ["QKTPK", "MGSGKK"]
     mapping_res = mapper.map_sequences(sequences)
     for seq in sequences:
         print(f"Sequence: {seq}")
@@ -37,7 +37,7 @@ def test(
 ):
     setup_logging(verbose)
     mapper = PeptideMapper()
-    print(mapper.map_sequences(["SGGLSNL", "MIYD", "NGLEEKRKS"]))
+    print(mapper.map_sequences(["VVEPKR", "MGSGKK"]))
 
 
 @app.command()

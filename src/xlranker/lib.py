@@ -72,9 +72,9 @@ class XLDataSet:
             remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
         """
         all_proteins: set[str] = set()
-        for peptide_pairs in self.network.values():
-            all_proteins = all_proteins.union(set(peptide_pairs.a.mapped_proteins))
-            all_proteins = all_proteins.union(set(peptide_pairs.b.mapped_proteins))
+        for p_peptide_pairs in self.network.values():
+            all_proteins = all_proteins.union(set(p_peptide_pairs.a.mapped_proteins))
+            all_proteins = all_proteins.union(set(p_peptide_pairs.b.mapped_proteins))
         for protein in all_proteins:
             abundances = {}
             for omic_file in self.omic_data:
@@ -84,12 +84,12 @@ class XLDataSet:
             self.proteins[protein] = Protein(protein, abundances)
         for peptide_pair in self.network.values():
             peptide_pair_id = get_pair_id(peptide_pair.a, peptide_pair.b)
-            for protein_a_name in peptide_pairs.a.mapped_proteins:
+            for protein_a_name in peptide_pair.a.mapped_proteins:
                 protein_a = self.proteins[protein_a_name]
                 for protein_b_name in peptide_pair.b.mapped_proteins:
                     protein_b = self.proteins[protein_b_name]
                     if not remove_intra or (
-                        remove_intra and protein_a != protein_b
+                        remove_intra and protein_a_name != protein_b_name
                     ):  # Check if is intra linkage
                         protein_pair_id = get_pair_id(protein_a, protein_b)
                         if protein_pair_id not in self.protein_pairs:

@@ -16,8 +16,8 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
     else:
         name_b = b.sequence
     if name_a < name_b:
-        return f"{name_a}-{name_b}"
-    return f"{name_b}-{name_a}"
+        return f"{name_a}+{name_b}"
+    return f"{name_b}+{name_a}"
 
 
 def get_abundance(omic_df: pl.DataFrame, analyte: str) -> float | None:
