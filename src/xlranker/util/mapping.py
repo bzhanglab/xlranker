@@ -8,6 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class PeptideMapper:
+    """Peptide mapper class
+
+    Raises:
+        ValueError: Raises error if there is an issue with mapping tables
+    """
+
     mapping_table_path: str
     split_by: str
     split_index: int
@@ -17,12 +23,24 @@ class PeptideMapper:
         self,
         mapping_table_path: str | None = None,
         split_by: str = "|",
-        split_index: int = 6,
+        split_index: int = 3,
         is_fasta: bool = True,
     ):
+        """initializes PeptideMapper
+
+        Args:
+            mapping_table_path (str | None, optional): path to mapping table. Can be in fasta or mapping table. If none, then uses the default gencode v42 version. Defaults to None.
+            split_by (str, optional): character in fasta description to split into id components. Defaults to "|".
+            split_index (int, optional): index of gene symbol in fasta file. Defaults to 3.
+            is_fasta (bool, optional): is input file fasta file. Defaults to True.
+        """
         if mapping_table_path is None:
             logger.info("Using default gencode fasta file for peptide mapping")
             self.mapping_table_path = get_gencode_fasta()
+            # Make sure variables match defaults
+            split_by = "|"
+            split_index = 3
+            is_fasta = True
         else:
             logger.info("Using custom fasta file for peptide mapping")
             logging.debug(f"FASTA File Path: {mapping_table_path}")
@@ -61,11 +79,12 @@ class PeptideMapper:
                 if sequence in record.seq:
                     if sequence not in matches:
                         matches[sequence] = set()
-                    matches[sequence].add(
-                        record.description.split(self.split_by)[
-                            self.split_index
-                        ].strip()
-                    )
+                    split_res = record.description.split(self.split_by)
+                    if self.split_index >= len(split_res):
+                        matches[sequence].add(split_res[0])
+                    elif len(split_res) != 0:
+                        matches[sequence].add(split_res[self.split_index].split(" ")[0])
+
         final_matches: dict[str, list[str]] = {}
         for key in matches:
             final_matches[key] = list(matches[key])

@@ -83,7 +83,7 @@ class XLDataSet:
                 )
             self.proteins[protein] = Protein(protein, abundances)
         for peptide_pair in self.network.values():
-            peptide_id = get_pair_id(peptide_pair.a, peptide_pair.b)
+            peptide_pair_id = get_pair_id(peptide_pair.a, peptide_pair.b)
             for protein_a_name in peptide_pairs.a.mapped_proteins:
                 protein_a = self.proteins[protein_a_name]
                 for protein_b_name in peptide_pair.b.mapped_proteins:
@@ -91,15 +91,17 @@ class XLDataSet:
                     if not remove_intra or (
                         remove_intra and protein_a != protein_b
                     ):  # Check if is intra linkage
-                        protein_id = get_pair_id(protein_a, protein_b)
-                        if protein_id not in self.protein_pairs:
+                        protein_pair_id = get_pair_id(protein_a, protein_b)
+                        if protein_pair_id not in self.protein_pairs:
                             new_pair = ProteinPair(protein_a, protein_b)
-                            self.protein_pairs[protein_id] = new_pair
-                            peptide_pair.add_connection(protein_id)
-                            new_pair.add_connection(peptide_id)
+                            self.protein_pairs[protein_pair_id] = new_pair
+                            peptide_pair.add_connection(protein_pair_id)
+                            new_pair.add_connection(peptide_pair_id)
                         else:
-                            self.protein_pairs[protein_id].add_connection(peptide_id)
-                            peptide_pair.add_connection(protein_id)
+                            self.protein_pairs[protein_pair_id].add_connection(
+                                peptide_pair_id
+                            )
+                            peptide_pair.add_connection(protein_pair_id)
 
     @classmethod
     def load_from_network(
@@ -109,7 +111,7 @@ class XLDataSet:
         custom_mapping_path: str | None = None,
         is_fasta: bool = True,
         split_by: str | None = "|",
-        split_index: int | None = 6,
+        split_index: int | None = 3,
     ) -> "XLDataSet":
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
