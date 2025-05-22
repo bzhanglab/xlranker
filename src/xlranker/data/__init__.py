@@ -11,7 +11,7 @@ def load_default_ppi() -> pl.DataFrame:
 
 
 def get_gencode_fasta() -> str:
-    gencode_path = str(files("xlranker.data") / "gencode.v42.tar.xz")
+    gencode_path = str(files("xlranker.data") / "uniprot_5_22.tar.xz")
     with lzma.open(gencode_path) as r:
         with tarfile.open(fileobj=r) as tar:
             fa_file = next(

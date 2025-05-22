@@ -1,10 +1,32 @@
 from xlranker.data import get_gencode_fasta
 from Bio import SeqIO
 import logging
+from enum import Enum, auto
 
 from xlranker.util.readers import read_mapping_table_file
 
 logger = logging.getLogger(__name__)
+
+
+class FastaType(Enum):
+    UNIPROT = auto()
+    GENCODE = auto()
+
+
+def extract_gene_symbol_uniprot(fasta_description: str) -> str:
+    splits = fasta_description.split(" ")
+    for split in splits:
+        if "GN=" in split:  # check if gene name split
+            return split[3:]  # Remove GN= from string
+    return fasta_description  # return if failed
+
+
+def extract_gene_symbol(fasta_description: str, fasta_type: FastaType) -> str:
+    match fasta_type:
+        case FastaType.UNIPROT:
+            return extract_gene_symbol_uniprot(fasta_description)
+        case FastaType.GENCODE:
+            return ""
 
 
 class PeptideMapper:
