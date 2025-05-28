@@ -47,10 +47,13 @@ def test_custom_table(tmp_path):
     temp_file = tmp_path / "fasta_snippet.fa"
     temp_file.write_text(FASTA_SNIPPET)
     mapper = xlranker.util.mapping.PeptideMapper(
-        mapping_table_path=str(temp_file), is_fasta=True
+        mapping_table_path=str(temp_file), is_fasta=True, split_index=6
     )
     sequences = ["LHYTTIM", "AVAWTLGVSHS", "PLLALPPQGPPG"]
     res = mapper.map_sequences(sequences)
     assert res["LHYTTIM"] == ["OR4F5"]
-    assert res["AVAWTLGVSHS"] == ["OR4F16", "OR4F29"]
+    assert res["AVAWTLGVSHS"] == ["OR4F16", "OR4F29"] or res["AVAWTLGVSHS"] == [
+        "OR4F29",
+        "OR4F16",
+    ]
     assert res["PLLALPPQGPPG"] == ["SAMD11"]
