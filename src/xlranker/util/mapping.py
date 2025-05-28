@@ -18,15 +18,29 @@ def extract_gene_symbol_uniprot(fasta_description: str) -> str:
     for split in splits:
         if "GN=" in split:  # check if gene name split
             return split[3:]  # Remove GN= from string
+    splits = splits[0].split("|")
+    if len(splits) >= 2:
+        return splits[1]
     return fasta_description  # return if failed
 
 
-def extract_gene_symbol(fasta_description: str, fasta_type: FastaType) -> str:
+def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
+    split_by = kwargs["split_by"]
+    split_index = kwargs["split_index"]
+    split_res = fasta_description.split(split_by)
+    if split_index >= len(split_res):
+        return split_res[0]  # keep first split if split_index is too large
+    elif len(split_res) != 0:
+        return split_res[split_index].split(" ")[0]  # remove elements after space
+    return fasta_description  # return if failed
+
+
+def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs) -> str:
     match fasta_type:
         case FastaType.UNIPROT:
             return extract_gene_symbol_uniprot(fasta_description)
         case FastaType.GENCODE:
-            return ""
+            return extract_gene_symbol_gencode(fasta_description, **kwargs)
 
 
 class PeptideMapper:
@@ -40,6 +54,7 @@ class PeptideMapper:
     split_by: str
     split_index: int
     is_fasta: bool
+    fasta_type: FastaType
 
     def __init__(
         self,
@@ -47,6 +62,7 @@ class PeptideMapper:
         split_by: str = "|",
         split_index: int = 3,
         is_fasta: bool = True,
+        fasta_type: FastaType = FastaType.UNIPROT,
     ):
         """initializes PeptideMapper
 
@@ -70,6 +86,7 @@ class PeptideMapper:
         self.split_by = split_by
         self.split_index = split_index
         self.is_fasta = is_fasta
+        self.fasta_type = fasta_type
 
     def map_sequences(self, sequences: list[str]) -> dict[str, list[str]]:
         map_res = dict()
@@ -77,35 +94,31 @@ class PeptideMapper:
             map_res = self.map_fasta(sequences)
         else:  # mapping table just needs to be read
             map_res = read_mapping_table_file(self.mapping_table_path)
-        had_error = False
         for seq in sequences:  # verify all sequences have mapping information
             if seq not in map_res:
                 logger.debug(f"is_fasta: {self.is_fasta}")
-                logger.error(f"{seq} not found in mapping table!")
-                had_error = True
+                logger.warning(f"{seq} not found in mapping table!")
             elif len(map_res[seq]) == 0:
                 logger.debug(f"is_fasta: {self.is_fasta}")
-                logger.error(f"{seq} maps to no proteins!")
-                had_error = True
-        if had_error:
-            raise ValueError(
-                "Mapping incomplete. Verify peptide sequences and mapping table is correct."
-            )
+                logger.warning(f"{seq} maps to no proteins!")
         return map_res
 
     def map_fasta(self, sequences: list[str]) -> dict[str, list[str]]:
         matches: dict[str, set[str]] = {}
+        for seq in sequences:
+            matches[seq] = set()
         logger.info(f"Mapping {len(sequences)} peptide sequences")
         for record in SeqIO.parse(self.mapping_table_path, "fasta"):
             for sequence in sequences:
                 if sequence in record.seq:
-                    if sequence not in matches:
-                        matches[sequence] = set()
-                    split_res = record.description.split(self.split_by)
-                    if self.split_index >= len(split_res):
-                        matches[sequence].add(split_res[0])
-                    elif len(split_res) != 0:
-                        matches[sequence].add(split_res[self.split_index].split(" ")[0])
+                    matches[sequence].add(
+                        extract_gene_symbol(
+                            record.description,
+                            self.fasta_type,
+                            split_by=self.split_by,
+                            split_index=self.split_index,
+                        )
+                    )
 
         final_matches: dict[str, list[str]] = {}
         for key in matches:
