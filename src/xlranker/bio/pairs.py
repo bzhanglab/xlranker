@@ -107,7 +107,7 @@ class ProteinPair(GroupedEntity):
         Returns:
             dict[str, float | None]: dictionary where keys are the abundance name and the values being the abundance value
         """
-        ret_val = {}
+        ret_val: dict[str, str | float | None] = {"pair": self.pair_id}
         for abundance_key in self.a.abundances:
             a = self.a.abundances[abundance_key]
             b = self.b.abundances[abundance_key]
