@@ -8,6 +8,7 @@ Model Process:
 """
 
 import logging
+import polars as pl
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
 from xlranker.lib import XLDataSet
 
@@ -36,3 +37,6 @@ class PrioritizationModel:
             )
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         return negatives
+
+    def construct_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
+        pass
