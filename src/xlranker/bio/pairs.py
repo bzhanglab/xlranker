@@ -102,6 +102,11 @@ class ProteinPair(GroupedEntity):
         return False
 
     def abundance_dict(self) -> dict[str, float | None]:
+        """convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value
+
+        Returns:
+            dict[str, float | None]: dictionary where keys are the abundance name and the values being the abundance value
+        """
         ret_val = {}
         for abundance_key in self.a.abundances:
             a = self.a.abundances[abundance_key]
