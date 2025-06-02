@@ -19,6 +19,7 @@ import xgboost
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
 from xlranker.lib import XLDataSet
 from xlranker.config import config
+from xlranker.ml.data import load_gmts
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,14 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
     "min_child_weight": 1,
     "tree_method": "hist",
 }
+
+
+def in_same_set(a, b, sets: list[list[set[str]]]) -> bool:
+    for gmt in sets:
+        for gene_set in gmt:
+            if a in gene_set and b in gene_set:
+                return True
+    return False
 
 
 class ModelConfig:
@@ -75,8 +84,14 @@ class PrioritizationModel:
     existing_pairs: set[tuple[str, str]]
     model_config: ModelConfig
     n_features: int
+    gmts: list[list[set[str]]]
 
-    def __init__(self, dataset: XLDataSet, model_config: ModelConfig = ModelConfig()):
+    def __init__(
+        self,
+        dataset: XLDataSet,
+        model_config: ModelConfig = ModelConfig(),
+        gmt_list: list[list[set[str]]] = load_gmts(),
+    ):
         self.dataset = dataset
         self.positives = []
         self.to_predict = []
@@ -92,6 +107,7 @@ class PrioritizationModel:
         )
         self.n_features = len(self.to_predict[0].abundance_dict()) - 1
         self.model_config = model_config
+        self.gmts = gmt_list
 
     def get_negatives(self, n: int) -> list[ProteinPair]:
         """get a list of negative protein pairs
@@ -120,7 +136,11 @@ class PrioritizationModel:
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
             pair_key = tuple(sorted([a, b]))
-            if pair_key in self.existing_pairs or pair_key in generated:
+            if (
+                pair_key in self.existing_pairs
+                or pair_key in generated
+                or in_same_set(a, b, self.gmts)
+            ):
                 continue
             negatives.append(
                 ProteinPair(self.dataset.proteins[a], self.dataset.proteins[b])
