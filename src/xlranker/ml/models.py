@@ -17,7 +17,6 @@ from sklearn.model_selection import StratifiedKFold
 import xgboost
 
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
-from xlranker.bio.protein import Protein
 from xlranker.lib import XLDataSet
 from xlranker import config
 
@@ -64,7 +63,7 @@ class ModelConfig:
                 return False
         return True
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         # Utility to get all config as a dict
         return {k: getattr(self, k) for k in self.__dict__}
 
@@ -73,9 +72,8 @@ class PrioritizationModel:
     positives: list[ProteinPair]
     to_predict: list[ProteinPair]
     dataset: XLDataSet
-    existing_pairs: set[tuple[Protein, Protein]]
+    existing_pairs: set[tuple[str, str]]
     model_config: ModelConfig
-    na_count: int
     n_features: int
 
     def __init__(self, dataset: XLDataSet, model_config: ModelConfig = ModelConfig()):
@@ -88,8 +86,9 @@ class PrioritizationModel:
                     self.positives.append(protein_pair)
                 case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
                     self.to_predict.append(protein_pair)
-        self.existing_pairs: set[tuple[Protein, Protein]] = set(
-            (p.a, p.b) for p in self.dataset.protein_pairs.values()
+        self.existing_pairs: set[tuple[str, str]] = set(
+            tuple(sorted([p.a.name, p.b.name]))
+            for p in self.dataset.protein_pairs.values()
         )
         self.n_features = len(self.to_predict[0].abundance_dict()) - 1
         self.model_config = model_config
@@ -116,7 +115,7 @@ class PrioritizationModel:
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         protein_ids = list(self.dataset.proteins.keys())
 
-        generated = set()
+        generated: set[tuple[str, str]] = set()
 
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
@@ -212,7 +211,7 @@ class PrioritizationModel:
                     random_state=int(random_seed + run * fold),
                 )
 
-                model.fit(X_train, y_train)
+                _ = model.fit(X_train, y_train)
 
                 y_test_pred = model.predict_proba(X_test)[:, 1]
 
@@ -251,3 +250,33 @@ class PrioritizationModel:
         logger.info(
             "Results saved to: ."
         )  # TODO: Have output directory be configurable
+
+    def get_selected(self) -> list[ProteinPair]:
+        """get all `ProteinPair`s that were accepted
+
+        Returns:
+            list[ProteinPair]: All machine-learning selected pairs predicted by this model
+        """
+        return [
+            p for p in self.to_predict if p.status == PrioritizationStatus.ML_SELECTED
+        ]
+
+    def get_selections(self) -> list[ProteinPair]:
+        """get the best pair for each protein pair subgroup
+
+        Returns:
+            list[ProteinPair]: list of the protein pairs that were accepted
+        """
+        best_score: dict[str, float] = {}
+        for pair in self.to_predict:
+            conn_id = pair.connectivity_id()
+            if conn_id not in best_score:
+                best_score[conn_id] = pair.score
+            elif best_score[conn_id] < pair.score:
+                best_score[conn_id] = pair.score
+        for pair in self.to_predict:
+            if pair.score == best_score[pair.connectivity_id()]:
+                pair.status = PrioritizationStatus.ML_SELECTED
+            else:
+                pair.status = PrioritizationStatus.ML_NOT_SELECTED
+        return self.get_selected()

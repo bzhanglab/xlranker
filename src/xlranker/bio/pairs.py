@@ -53,7 +53,7 @@ class ProteinPair(GroupedEntity):
 
     a: Protein
     b: Protein
-    score: float | None
+    score: float
     is_selected: bool
     pair_id: str
 
@@ -68,7 +68,7 @@ class ProteinPair(GroupedEntity):
         (a, b) = sort_proteins(protein_a, protein_b)
         self.a = a
         self.b = b
-        self.score = None
+        self.score = -1
         self.is_selected = False
         self.pair_id = get_pair_id(a, b)
 
