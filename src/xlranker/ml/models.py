@@ -39,4 +39,24 @@ class PrioritizationModel:
         return negatives
 
     def construct_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
-        pass
+        """generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair
+
+        Args:
+            negative_pairs (list[ProteinPair]): the list of negative pairs to add to DataFrame
+
+        Returns:
+            pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
+        """
+        df_array: list[dict[str, str | int | float | None]] = []
+        headers = ["pair"]  # headers in the correct order
+        for pair in self.positives:
+            pair_dict = pair.abundance_dict()
+            pair_dict["label"] = 1
+        headers.extend(
+            [k for k in self.positives[0].abundance_dict().keys() if k != "pair"]
+        )
+        headers.append("label")
+        for pair in negative_pairs:
+            pair_dict = pair.abundance_dict()
+            pair_dict["label"] = 0
+        return pl.DataFrame(df_array).select(headers)
