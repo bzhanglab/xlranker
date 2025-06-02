@@ -26,8 +26,8 @@ class Protein:
     def __eq__(self, value):
         return value.name == self.name
 
-    def __hash__(self):
-        hash(self.name)
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     def abundance(self) -> float | None:
         return self.abundances.get(self.main_column, None)

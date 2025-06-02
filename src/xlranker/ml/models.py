@@ -4,7 +4,7 @@ Model Process:
 1. Identify Positive Dataset
     - All representative pairs from parsimonious selection
 2. Generate Negative Dataset
-    - Random protein pairs that are not selected pairs
+    - Random protein pairs that are not candidate pairs
 """
 
 import logging
@@ -18,17 +18,46 @@ from xlranker import config
 logger = logging.getLogger(__name__)
 
 
+class ModelConfig:
+    runs: int
+    folds: int
+
+    def __init__(self, runs: int = 10, folds: int = 5):
+        self.runs = runs
+        self.folds = folds
+
+    def validate(self) -> bool:
+        attrs = {
+            "runs": (int, lambda x: x >= 1),
+            "folds": (int, lambda x: x >= 1),
+        }
+        for attr, (typ, cond) in attrs.items():
+            value = getattr(self, attr, None)
+            if not isinstance(value, typ):
+                return False
+            if cond and not cond(value):
+                return False
+        return True
+
+    def as_dict(self) -> dict:
+        # Utility to get all config as a dict
+        return {k: getattr(self, k) for k in self.__dict__}
+
+
 class PrioritizationModel:
     positives: list[ProteinPair]
     dataset: XLDataSet
     existing_pairs: set[tuple[Protein, Protein]]
+    model_config: ModelConfig
+    na_count: int
 
-    def __init__(self, dataset: XLDataSet):
+    def __init__(self, dataset: XLDataSet, model_config: ModelConfig = ModelConfig()):
         self.dataset = dataset
         self.positives = []
         self.existing_pairs: set[tuple[Protein, Protein]] = set(
             (p.a, p.b) for p in self.dataset.protein_pairs.values()
         )
+        self.model_config = model_config
 
     def get_positives(self):
         for protein_pair in self.dataset.protein_pairs.values():
@@ -92,3 +121,9 @@ class PrioritizationModel:
             pair_dict = pair.abundance_dict()
             pair_dict["label"] = 0
         return pl.DataFrame(df_array).select(headers)
+
+    def get_predictions(self, df: pl.DataFrame):
+        pass
+
+    def run(self):
+        pass
