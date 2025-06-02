@@ -9,7 +9,13 @@ Model Process:
 
 import logging
 import random
+from typing import Any
+import numpy as np
 import polars as pl
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import StratifiedKFold
+import xgboost
+
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
 from xlranker.bio.protein import Protein
 from xlranker.lib import XLDataSet
@@ -18,13 +24,32 @@ from xlranker import config
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_XGB_PARAMS: dict[str, Any] = {
+    "objective": "binary:logistic",
+    "eval_metric": "auc",
+    "eta": 0.1,
+    "max_depth": 6,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 1,
+    "tree_method": "hist",
+}
+
+
 class ModelConfig:
     runs: int
     folds: int
+    xgb_params: dict[str, Any]
 
-    def __init__(self, runs: int = 10, folds: int = 5):
+    def __init__(
+        self,
+        runs: int = 10,
+        folds: int = 5,
+        xgb_params: dict[str, Any] = DEFAULT_XGB_PARAMS,
+    ):
         self.runs = runs
         self.folds = folds
+        self.xgb_params = xgb_params
 
     def validate(self) -> bool:
         attrs = {
@@ -46,23 +71,28 @@ class ModelConfig:
 
 class PrioritizationModel:
     positives: list[ProteinPair]
+    to_predict: list[ProteinPair]
     dataset: XLDataSet
     existing_pairs: set[tuple[Protein, Protein]]
     model_config: ModelConfig
     na_count: int
+    n_features: int
 
     def __init__(self, dataset: XLDataSet, model_config: ModelConfig = ModelConfig()):
         self.dataset = dataset
         self.positives = []
+        self.to_predict = []
+        for protein_pair in self.dataset.protein_pairs.values():
+            match protein_pair.status:
+                case PrioritizationStatus.PARSIMONY_SELECTED:
+                    self.positives.append(protein_pair)
+                case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
+                    self.to_predict.append(protein_pair)
         self.existing_pairs: set[tuple[Protein, Protein]] = set(
             (p.a, p.b) for p in self.dataset.protein_pairs.values()
         )
+        self.n_features = len(self.to_predict[0].abundance_dict()) - 1
         self.model_config = model_config
-
-    def get_positives(self):
-        for protein_pair in self.dataset.protein_pairs.values():
-            if protein_pair.status == PrioritizationStatus.PARSIMONY_SELECTED:
-                self.positives.append(protein_pair)
 
     def get_negatives(self, n: int) -> list[ProteinPair]:
         """get a list of negative protein pairs
@@ -99,7 +129,18 @@ class PrioritizationModel:
             generated.add(pair_key)
         return negatives
 
-    def construct_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
+    def construct_predict_df(self) -> pl.DataFrame:
+        df_array: list[dict[str, str | int | float | None]] = []
+        headers = ["pair"]  # headers in the correct order
+        for pair in self.to_predict:
+            pair_dict = pair.abundance_dict()
+            df_array.append(pair_dict)
+        headers.extend(
+            [k for k in self.to_predict[0].abundance_dict().keys() if k != "pair"]
+        )
+        return pl.DataFrame(df_array).select(headers)
+
+    def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
         """generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair
 
         Args:
@@ -113,6 +154,7 @@ class PrioritizationModel:
         for pair in self.positives:
             pair_dict = pair.abundance_dict()
             pair_dict["label"] = 1
+            df_array.append(pair_dict)
         headers.extend(
             [k for k in self.positives[0].abundance_dict().keys() if k != "pair"]
         )
@@ -120,10 +162,92 @@ class PrioritizationModel:
         for pair in negative_pairs:
             pair_dict = pair.abundance_dict()
             pair_dict["label"] = 0
+            df_array.append(pair_dict)
         return pl.DataFrame(df_array).select(headers)
 
-    def get_predictions(self, df: pl.DataFrame):
-        pass
+    def run_model(self):
+        random_seed = random.random() * 100000
 
-    def run(self):
-        pass
+        predict_df = self.construct_predict_df()
+
+        predict_X = predict_df.drop("pair").to_numpy()
+
+        predictions = np.zeros((self.model_config.runs, len(self.to_predict)))
+
+        # Lists to store data for Shapley values and AUC plots
+        all_test_labels = []
+        all_test_preds = []
+        run_ids = []
+        aucs = []
+
+        for run in range(self.model_config.runs):
+            logger.info(f"Model on run {run + 1}/{self.model_config.runs}")
+            np.random.seed(int(random_seed + run))
+            train_df = self.construct_training_df(
+                self.get_negatives(
+                    len(self.positives)
+                )  # TODO: Make number of negatives a parameter
+            )
+
+            X = train_df.drop(["pair", "label"]).to_numpy()
+            y = train_df.get_column("label").to_numpy()
+
+            skf = StratifiedKFold(
+                n_splits=self.model_config.folds,
+                shuffle=True,
+                random_state=(int(random_seed + run)),
+            )
+
+            y_test_run = np.array([])
+            y_test_pred_run = np.array([])
+
+            # Run k-fold cross-validation
+            for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
+                # Split data
+                X_train, X_test = X[train_idx], X[test_idx]
+                y_train, y_test = y[train_idx], y[test_idx]
+
+                model = xgboost.XGBClassifier(
+                    **self.model_config.xgb_params,
+                    random_state=int(random_seed + run * fold),
+                )
+
+                model.fit(X_train, y_train)
+
+                y_test_pred = model.predict_proba(X_test)[:, 1]
+
+                y_test_run = np.append(y_test_run, y_test)
+                y_test_pred_run = np.append(y_test_pred_run, y_test_pred)
+
+            # Train a model on the entire dataset for predictions
+            random_seed = random.random() * 100000
+            model = xgboost.XGBClassifier(
+                **self.model_config.xgb_params, random_state=int(random_seed)
+            )
+            model.fit(X, y)
+
+            # Get predictions for the prediction dataset
+            predictions = model.predict_proba(predict_X)[:, 1]
+            predictions[run] = predictions
+
+            auc_score = roc_auc_score(y_test_run, y_test_pred_run)
+            aucs.append(auc_score)
+            logger.info(f"ROC AUC for run {run + 1}: {round(auc_score, 3)}")
+            all_test_labels.append(y_test_run)
+            all_test_preds.append(y_test_pred_run)
+            run_ids.append(run)
+
+        mean_predictions = np.mean(predictions, axis=0)
+
+        for i, protein_pair in enumerate(self.to_predict):
+            protein_pair.set_score(mean_predictions[i])
+
+        predict_df["prediction"] = mean_predictions
+        predict_df.write_csv("model_output.tsv", separator="\t")
+        # Print summary statistics
+        logger.info(
+            f"\nAverage AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
+        )
+        logger.info(
+            "Results saved to: ."
+        )  # TODO: Have output directory be configurable
