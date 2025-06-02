@@ -20,6 +20,24 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
     return f"{name_b}+{name_a}"
 
 
+def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
+    """returns True if a is greater or equal to b, with checks for None
+
+    Args:
+        a (float | None): a value
+        b (float | None): b value
+
+    Returns:
+        bool: True if a is greater or equal to b. If both are None, return True. Any float is greater than None.
+    """
+    if a is None:
+        return b is None
+    else:
+        if b is None:
+            return True
+        return a >= b
+
+
 def get_abundance(omic_df: pl.DataFrame, analyte: str) -> float | None:
     # Assume first column is the index/search space
     index_col = omic_df.columns[0]

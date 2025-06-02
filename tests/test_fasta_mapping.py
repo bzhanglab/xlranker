@@ -47,7 +47,10 @@ def test_custom_table(tmp_path):
     temp_file = tmp_path / "fasta_snippet.fa"
     temp_file.write_text(FASTA_SNIPPET)
     mapper = xlranker.util.mapping.PeptideMapper(
-        mapping_table_path=str(temp_file), is_fasta=True, split_index=6
+        mapping_table_path=str(temp_file),
+        is_fasta=True,
+        split_index=6,
+        fasta_type=xlranker.util.mapping.FastaType.GENCODE,
     )
     sequences = ["LHYTTIM", "AVAWTLGVSHS", "PLLALPPQGPPG"]
     res = mapper.map_sequences(sequences)

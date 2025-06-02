@@ -1,7 +1,7 @@
 from xlranker.bio import PrioritizationStatus
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
-from xlranker.util import get_pair_id
+from xlranker.util import get_pair_id, safe_a_greater_or_equal_to_b
 
 
 class GroupedEntity:
@@ -53,7 +53,7 @@ class ProteinPair(GroupedEntity):
 
     a: Protein
     b: Protein
-    score: float | None
+    score: float
     is_selected: bool
     pair_id: str
 
@@ -68,7 +68,7 @@ class ProteinPair(GroupedEntity):
         (a, b) = sort_proteins(protein_a, protein_b)
         self.a = a
         self.b = b
-        self.score = None
+        self.score = -1
         self.is_selected = False
         self.pair_id = get_pair_id(a, b)
 
@@ -100,6 +100,24 @@ class ProteinPair(GroupedEntity):
         elif self.a == value.b:
             return self.b == value.a
         return False
+
+    def abundance_dict(self) -> dict[str, str | float | None]:
+        """convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value
+
+        Returns:
+            dict[str, float | None]: dictionary where keys are the abundance name and the values being the abundance value
+        """
+        ret_val: dict[str, str | float | None] = {"pair": self.pair_id}
+        for abundance_key in self.a.abundances:
+            a = self.a.abundances[abundance_key]
+            b = self.b.abundances[abundance_key]
+            if safe_a_greater_or_equal_to_b(a, b):
+                ret_val[f"{abundance_key}_a"] = a
+                ret_val[f"{abundance_key}_b"] = b
+            else:  # make sure a is the larger value
+                ret_val[f"{abundance_key}_a"] = b
+                ret_val[f"{abundance_key}_b"] = a
+        return ret_val
 
     def to_tsv(self) -> str:
         """converts object into a TSV string
