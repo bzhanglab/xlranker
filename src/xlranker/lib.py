@@ -6,7 +6,7 @@ from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from .bio import Protein
+from .bio import PrioritizationStatus, Protein
 from .bio.pairs import PeptidePair
 from .bio.pairs import ProteinPair
 
@@ -132,3 +132,20 @@ class XLDataSet:
             group.a.mapped_proteins = mapping_results[group.a.sequence]
             group.b.mapped_proteins = mapping_results[group.b.sequence]
         return cls(network, omic_data)
+
+
+def get_final_network(data_set: XLDataSet) -> list[ProteinPair]:
+    return [
+        pair
+        for pair in data_set.protein_pairs.values()
+        if pair.status == PrioritizationStatus.ML_SELECTED
+        or pair.status == PrioritizationStatus.PARSIMONY_SELECTED
+    ]
+
+
+def write_pair_to_network(pairs: list[ProteinPair], output_file: str) -> None:
+    network_strings = []
+    for pair in pairs:
+        network_strings.append(f"{pair.a.name}\t{pair.b.name}")
+    with open(output_file, "w") as w:
+        w.write("\n".join(network_strings) + "\n")
