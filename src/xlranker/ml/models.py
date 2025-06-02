@@ -18,7 +18,7 @@ import xgboost
 
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
 from xlranker.lib import XLDataSet
-from xlranker import config
+from xlranker.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -226,8 +226,8 @@ class PrioritizationModel:
             model.fit(X, y)
 
             # Get predictions for the prediction dataset
-            predictions = model.predict_proba(predict_X)[:, 1]
-            predictions[run] = predictions
+            cur_predictions = model.predict_proba(predict_X)[:, 1]
+            predictions[run] = cur_predictions
 
             auc_score = roc_auc_score(y_test_run, y_test_pred_run)
             aucs.append(auc_score)
@@ -241,7 +241,7 @@ class PrioritizationModel:
         for i, protein_pair in enumerate(self.to_predict):
             protein_pair.set_score(mean_predictions[i])
 
-        predict_df["prediction"] = mean_predictions
+        predict_df = predict_df.with_columns(pl.Series("prediction", mean_predictions))
         predict_df.write_csv("model_output.tsv", separator="\t")
         # Print summary statistics
         logger.info(
