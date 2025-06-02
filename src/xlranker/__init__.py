@@ -5,3 +5,10 @@ import xlranker.parsimony
 import xlranker.ml
 
 __all__ = ["xlranker", "bio", "util", "lib", "parsimony", "ml"]
+
+
+class Config:
+    fragile = True  # Break on any warning
+
+
+config = Config()
