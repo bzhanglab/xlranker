@@ -94,6 +94,7 @@ class PeptideMapper:
             map_res = self.map_fasta(sequences)
         else:  # mapping table just needs to be read
             map_res = read_mapping_table_file(self.mapping_table_path)
+        no_maps = 0
         for seq in sequences:  # verify all sequences have mapping information
             if seq not in map_res:
                 logger.debug(f"is_fasta: {self.is_fasta}")
@@ -101,6 +102,9 @@ class PeptideMapper:
             elif len(map_res[seq]) == 0:
                 logger.debug(f"is_fasta: {self.is_fasta}")
                 logger.warning(f"{seq} maps to no proteins!")
+                no_maps += 1
+        if no_maps != 0:
+            logger.warning(f"{no_maps} sequences do not have mapped proteins")
         return map_res
 
     def map_fasta(self, sequences: list[str]) -> dict[str, list[str]]:

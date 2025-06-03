@@ -64,7 +64,7 @@ class ParsimonySelector:
     def create_groups(self) -> None:
         next_group_id = 1
         for pair in self.data_set.network.values():
-            if pair.in_group:
+            if pair.in_group or len(pair.connections) == 0:
                 continue
             self.assign_peptide_pair(pair, next_group_id)
             next_group_id += 1
