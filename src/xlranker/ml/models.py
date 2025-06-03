@@ -19,7 +19,7 @@ import xgboost
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
 from xlranker.lib import XLDataSet
 from xlranker.config import config
-from xlranker.ml.data import load_gmts
+from xlranker.ml.data import load_default_ppi, load_gmts
 
 logger = logging.getLogger(__name__)
 
@@ -85,12 +85,14 @@ class PrioritizationModel:
     model_config: ModelConfig
     n_features: int
     gmts: list[list[set[str]]]
+    ppi_db: pl.DataFrame
 
     def __init__(
         self,
         dataset: XLDataSet,
         model_config: ModelConfig = ModelConfig(),
         gmt_list: list[list[set[str]]] = load_gmts(),
+        ppi_db: pl.DataFrame = load_default_ppi(),
     ):
         self.dataset = dataset
         self.positives = []
@@ -108,6 +110,17 @@ class PrioritizationModel:
         self.n_features = len(self.to_predict[0].abundance_dict()) - 1
         self.model_config = model_config
         self.gmts = gmt_list
+        self.ppi_db = ppi_db
+
+    def is_ppi(self, a: str, b: str) -> float:
+        if a > b:
+            c = a
+            a = b
+            b = c
+        row_exists = self.ppi_db.filter(
+            (self.ppi_db["P1"] == a) & (self.ppi_db["P2"] == b)
+        )
+        return 1.0 if row_exists.height > 0 else 0.0
 
     def get_negatives(self, n: int) -> list[ProteinPair]:
         """get a list of negative protein pairs
@@ -150,14 +163,20 @@ class PrioritizationModel:
 
     def construct_predict_df(self) -> pl.DataFrame:
         df_array: list[dict[str, str | int | float | None]] = []
+        is_first = True
         headers = ["pair"]  # headers in the correct order
+        schema = {"pair": pl.String()}
         for pair in self.to_predict:
             pair_dict = pair.abundance_dict()
+            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
             df_array.append(pair_dict)
-        headers.extend(
-            [k for k in self.to_predict[0].abundance_dict().keys() if k != "pair"]
-        )
-        return pl.DataFrame(df_array).select(headers)
+            if is_first:
+                is_first = False
+                for header in pair_dict.keys():
+                    if "pair" != header:
+                        headers.append(header)
+                        schema[header] = pl.Float64()
+        return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
 
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
         """generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair
@@ -170,19 +189,25 @@ class PrioritizationModel:
         """
         df_array: list[dict[str, str | int | float | None]] = []
         headers = ["pair"]  # headers in the correct order
+        is_first = True
+        schema = {"pair": pl.String()}
         for pair in self.positives:
             pair_dict = pair.abundance_dict()
-            pair_dict["label"] = 1
+            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+            pair_dict["label"] = 1.0
             df_array.append(pair_dict)
-        headers.extend(
-            [k for k in self.positives[0].abundance_dict().keys() if k != "pair"]
-        )
-        headers.append("label")
+            if is_first:
+                for header in pair_dict.keys():
+                    if "pair" != header:
+                        headers.append(header)
+                        schema[header] = pl.Float64()
+                is_first = False
         for pair in negative_pairs:
             pair_dict = pair.abundance_dict()
-            pair_dict["label"] = 0
+            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+            pair_dict["label"] = 0.0
             df_array.append(pair_dict)
-        return pl.DataFrame(df_array).select(headers)
+        return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
 
     def run_model(self):
         random_seed = random.random() * 100000
@@ -265,7 +290,7 @@ class PrioritizationModel:
         predict_df.write_csv("model_output.tsv", separator="\t")
         # Print summary statistics
         logger.info(
-            f"\nAverage AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
+            f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
         )
         logger.info(
             "Results saved to: ."
@@ -295,7 +320,9 @@ class PrioritizationModel:
             elif best_score[conn_id] < pair.score:
                 best_score[conn_id] = pair.score
         for pair in self.to_predict:
-            if pair.score == best_score[pair.connectivity_id()]:
+            if (
+                pair.score == best_score[pair.connectivity_id()]
+            ):  # ! This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED
