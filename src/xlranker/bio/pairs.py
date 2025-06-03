@@ -57,7 +57,7 @@ class ProteinPair(GroupedEntity):
     is_selected: bool
     pair_id: str
 
-    def __init__(self, protein_a: Protein, protein_b: Protein):
+    def __init__(self, protein_a: Protein, protein_b: Protein) -> None:
         """Initialize a ProteinPair object, making sure a is the higher abundant protein. Input order does not matter.
 
         Args:
@@ -73,10 +73,11 @@ class ProteinPair(GroupedEntity):
         self.pair_id = get_pair_id(a, b)
 
     def set_score(self, score: float):
-        """Set the score of the protein pair
+        """Set the score of the protein pair.
 
         Args:
             score (float): float of the score given to the pair
+
         """
         self.score = score
 
@@ -132,7 +133,7 @@ class ProteinPair(GroupedEntity):
 
 
 class PeptidePair(GroupedEntity):
-    """Peptide group that can contain multiple ProteinPairs and PeptidePairs"""
+    """Peptide group that can contain multiple ProteinPairs and PeptidePairs."""
 
     a: Peptide
     b: Peptide

@@ -123,13 +123,18 @@ class PrioritizationModel:
         return 1.0 if row_exists.height > 0 else 0.0
 
     def get_negatives(self, n: int) -> list[ProteinPair]:
-        """get a list of negative protein pairs
+        """Get a list of negative protein pairs.
 
         Args:
             n (int): the number of pairs to generate
 
+        Raises:
+            ValueError: Raised if the value of `n` is larger than what is possible
+                        and if config.fragile is True
+
         Returns:
             list[ProteinPair]: list of negative protein pairs
+
         """
         negatives: list[ProteinPair] = []
         n_prot = len(self.dataset.proteins.values())
@@ -165,7 +170,7 @@ class PrioritizationModel:
         df_array: list[dict[str, str | int | float | None]] = []
         is_first = True
         headers = ["pair"]  # headers in the correct order
-        schema = {"pair": pl.String()}
+        schema: dict[str, Any] = {"pair": pl.String()}
         for pair in self.to_predict:
             pair_dict = pair.abundance_dict()
             pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
@@ -186,6 +191,7 @@ class PrioritizationModel:
 
         Returns:
             pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
+
         """
         df_array: list[dict[str, str | int | float | None]] = []
         headers = ["pair"]  # headers in the correct order
