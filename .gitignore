@@ -17,9 +17,9 @@ wheels/
 
 # data files
 
-util/ppi/ppi.tsv
-util/ppi/ppi.parquet
+scripts/ppi/ppi.parquet
 analysis
+scripts/gmt/gmts/*.gmt
 
 # MKDocs
 site/
