@@ -19,7 +19,7 @@ import xgboost
 from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
 from xlranker.lib import XLDataSet
 from xlranker.config import config
-from xlranker.ml.data import load_default_ppi, load_gmts
+from xlranker.data import load_default_ppi, load_gmts
 
 logger = logging.getLogger(__name__)
 

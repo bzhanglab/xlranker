@@ -5,6 +5,7 @@ from xlranker.parsimony.selection import ParsimonySelector
 from xlranker.util.mapping import PeptideMapper
 import xlranker.ml.data as xlr_data
 from xlranker.lib import XLDataSet, setup_logging
+import xlranker.config
 from typing import Annotated
 
 
@@ -80,6 +81,7 @@ def start(
     split: Annotated[str | None, cyclopts.Parameter(name=["--split"])] = None,
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
+    config_file: Annotated[str | None, cyclopts.Parameter(name=["--config"])] = None,
 ):
     """Run the full prioritization pipeline
 
@@ -99,7 +101,10 @@ def start(
         split (Annotated[ str  |  None, cyclopts.Parameter, optional): character used for splitting the FASTA file header
         gs_index (Annotated[int  |  None, cyclopts.Parameter, optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
         is_fasta (Annotated[bool, cyclopts.Parameter, optional): Enable if mapping table is a FASTA file.
+        config (Annotated[str | None, cyclopts.Parameter, optional): Path of JSON file containing config parameters
     """
+    if config_file is not None:
+        xlranker.config.load_from_json(config_file)
     setup_logging(verbose=verbose, log_file=log_file)
     if seed is None:
         seed = random.randint(0, 10000000)

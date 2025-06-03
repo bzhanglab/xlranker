@@ -10,7 +10,7 @@ class GroupedEntity:
     status: PrioritizationStatus
     connections: set[str]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.in_group = False
         self.group_id = -1
         self.status = PrioritizationStatus.NOT_ANALYZED
@@ -72,7 +72,7 @@ class ProteinPair(GroupedEntity):
         self.is_selected = False
         self.pair_id = get_pair_id(a, b)
 
-    def set_score(self, score: float):
+    def set_score(self, score: float) -> None:
         """Set the score of the protein pair.
 
         Args:
@@ -128,7 +128,7 @@ class ProteinPair(GroupedEntity):
         """
         return f"{self.pair_id}\t{self.status}\t{self.get_group()}"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.pair_id)
 
 
@@ -139,11 +139,11 @@ class PeptidePair(GroupedEntity):
     b: Peptide
     pair_id: str
 
-    def __init__(self, peptide_a: Peptide, peptide_b: Peptide):
+    def __init__(self, peptide_a: Peptide, peptide_b: Peptide) -> None:
         super().__init__()
         self.a = peptide_a
         self.b = peptide_b
         self.pair_id = get_pair_id(peptide_a, peptide_b)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.pair_id)
