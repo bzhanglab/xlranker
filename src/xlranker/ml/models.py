@@ -1,5 +1,4 @@
-"""
-Model Process:
+"""Model Process:
 
 1. Identify Positive Dataset
     - All representative pairs from parsimonious selection
@@ -9,16 +8,17 @@ Model Process:
 
 import logging
 import random
-from typing import Any
+from typing import Any, Container
+
 import numpy as np
 import polars as pl
+import xgboost
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
-import xgboost
 
-from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
-from xlranker.lib import XLDataSet
+from xlranker.bio.pairs import PrioritizationStatus, ProteinPair
 from xlranker.config import config
+from xlranker.lib import XLDataSet
 from xlranker.ml.data import load_default_ppi, load_gmts
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class PrioritizationModel:
     positives: list[ProteinPair]
     to_predict: list[ProteinPair]
     dataset: XLDataSet
-    existing_pairs: set[tuple[str, str]]
+    existing_pairs: set[Container[str]]
     model_config: ModelConfig
     n_features: int
     gmts: list[list[set[str]]]
@@ -90,9 +90,9 @@ class PrioritizationModel:
     def __init__(
         self,
         dataset: XLDataSet,
-        model_config: ModelConfig = ModelConfig(),
-        gmt_list: list[list[set[str]]] = load_gmts(),
-        ppi_db: pl.DataFrame = load_default_ppi(),
+        model_config: ModelConfig | None = None,
+        gmt_list: list[list[set[str]]] | None = None,
+        ppi_db: pl.DataFrame | None = None,
     ):
         self.dataset = dataset
         self.positives = []
@@ -103,16 +103,34 @@ class PrioritizationModel:
                     self.positives.append(protein_pair)
                 case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
                     self.to_predict.append(protein_pair)
-        self.existing_pairs: set[tuple[str, str]] = set(
+        self.existing_pairs = set(
             tuple(sorted([p.a.name, p.b.name]))
             for p in self.dataset.protein_pairs.values()
         )
         self.n_features = len(self.to_predict[0].abundance_dict()) - 1
+        if model_config is None:
+            model_config = ModelConfig()
         self.model_config = model_config
+        if gmt_list is None:
+            gmt_list = load_gmts()
         self.gmts = gmt_list
+        if ppi_db is None:
+            ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
 
     def is_ppi(self, a: str, b: str) -> float:
+        """Determine if protein a and protein b has a known ppi in  ppi_db.
+
+        Order of `a` and `b` does not matter.
+
+        Args:
+            a (str): First protein
+            b (str): Second protein
+
+        Returns:
+            float: Return float with 1.0 meaning there is a known ppi in the db
+
+        """
         if a > b:
             c = a
             a = b
@@ -123,13 +141,18 @@ class PrioritizationModel:
         return 1.0 if row_exists.height > 0 else 0.0
 
     def get_negatives(self, n: int) -> list[ProteinPair]:
-        """get a list of negative protein pairs
+        """Get a list of negative protein pairs.
 
         Args:
             n (int): the number of pairs to generate
 
+        Raises:
+            ValueError: Raised if the value of n is larger than what is possible
+                        and if config.fragile is `True`.
+
         Returns:
             list[ProteinPair]: list of negative protein pairs
+
         """
         negatives: list[ProteinPair] = []
         n_prot = len(self.dataset.proteins.values())
@@ -144,7 +167,7 @@ class PrioritizationModel:
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         protein_ids = list(self.dataset.proteins.keys())
 
-        generated: set[tuple[str, str]] = set()
+        generated: set[Container[str]] = set()
 
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
@@ -179,13 +202,14 @@ class PrioritizationModel:
         return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
 
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
-        """generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair
+        """Generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair.
 
         Args:
             negative_pairs (list[ProteinPair]): the list of negative pairs to add to DataFrame
 
         Returns:
             pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
+
         """
         df_array: list[dict[str, str | int | float | None]] = []
         headers = ["pair"]  # headers in the correct order
@@ -276,7 +300,7 @@ class PrioritizationModel:
 
             auc_score = roc_auc_score(y_test_run, y_test_pred_run)
             aucs.append(auc_score)
-            logger.info(f"ROC AUC for run {run + 1}: {round(auc_score, 3)}")
+            logger.info(f"ROC AUC for run {run + 1}: {auc_score:.2f}")
             all_test_labels.append(y_test_run)
             all_test_preds.append(y_test_pred_run)
             run_ids.append(run)
@@ -297,20 +321,22 @@ class PrioritizationModel:
         )  # TODO: Have output directory be configurable
 
     def get_selected(self) -> list[ProteinPair]:
-        """get all `ProteinPair`s that were accepted
+        """Get all `ProteinPair`s that were accepted
 
         Returns:
             list[ProteinPair]: All machine-learning selected pairs predicted by this model
+
         """
         return [
             p for p in self.to_predict if p.status == PrioritizationStatus.ML_SELECTED
         ]
 
     def get_selections(self) -> list[ProteinPair]:
-        """get the best pair for each protein pair subgroup
+        """Get the best pair for each protein pair subgroup
 
         Returns:
             list[ProteinPair]: list of the protein pairs that were accepted
+
         """
         best_score: dict[str, float] = {}
         for pair in self.to_predict:
@@ -322,7 +348,7 @@ class PrioritizationModel:
         for pair in self.to_predict:
             if (
                 pair.score == best_score[pair.connectivity_id()]
-            ):  # ! This allows for multiple pairs to be accepted
+            ):  # FIX: This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED

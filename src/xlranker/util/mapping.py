@@ -1,19 +1,44 @@
-from xlranker.data import get_gencode_fasta
-from Bio import SeqIO
+"""Mapping related classes and functions."""
+
 import logging
 from enum import Enum, auto
 
+from Bio import SeqIO
+
+from xlranker.data import get_gencode_fasta
 from xlranker.util.readers import read_mapping_table_file
 
 logger = logging.getLogger(__name__)
 
 
 class FastaType(Enum):
-    UNIPROT = auto()
-    GENCODE = auto()
+    """Types of Fasta files supported by XLRanker."""
+
+    UNIPROT = auto(), "UNIPROT FASTA type"
+    GENCODE = auto(), "Gencode FASTA type"
 
 
 def extract_gene_symbol_uniprot(fasta_description: str) -> str:
+    """Get the gene symbol from a UNIPROT style FASTA description.
+
+    Method:
+        1. Split the description by spaces
+        2. Find split with GN= (Gene Name)
+        3. Remove GN= from split and return
+
+    If split with GN= not found, return the UNIPROT symbol.
+        1. Using first split (when splitting by space), split again by |
+        2. If there is at least 2 elements in split, return second element
+
+    If can't get UNIPROT symbol, return original description.
+
+    Args:
+        fasta_description (str): FASTA description string
+
+    Returns:
+        str: Gene Symbol from description. If can't be extracted, try getting UNIPROT ID.
+             If all fails, return original description
+    """
     splits = fasta_description.split(" ")
     for split in splits:
         if "GN=" in split:  # check if gene name split
@@ -25,12 +50,35 @@ def extract_gene_symbol_uniprot(fasta_description: str) -> str:
 
 
 def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
+    """Get the gene symbol from a UNIPROT style FASTA description.
+
+    Method:
+        1. Split the description by spaces
+        2. Find split with GN= (Gene Name)
+        3. Remove GN= from split and return
+
+    If split with GN= not found, return the UNIPROT symbol.
+        1. Using first split (when splitting by space), split again by |
+        2. If there is at least 2 elements in split, return second element
+
+    If can't get UNIPROT symbol, return original description.
+
+    Args:
+        fasta_description (str): FASTA description string
+        split_by (str): Character to split description string
+        split_index (str): Index (0-based) of gene symbol after splitting.
+                           All characters after first space are removed.
+
+    Returns:
+        str: Gene Symbol from description. If can't be extracted, return original description
+
+    """
     split_by = kwargs["split_by"]
     split_index = kwargs["split_index"]
     split_res = fasta_description.split(split_by)
     if split_index >= len(split_res):
         return split_res[0]  # keep first split if split_index is too large
-    elif len(split_res) != 0:
+    if len(split_res) != 0:
         return split_res[split_index].split(" ")[0]  # remove elements after space
     return fasta_description  # return if failed
 
@@ -38,16 +86,17 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
 def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs) -> str:
     match fasta_type:
         case FastaType.UNIPROT:
-            return extract_gene_symbol_uniprot(fasta_description)
+            return extract_gene_symbol_uniprot(fasta_description).upper()
         case FastaType.GENCODE:
-            return extract_gene_symbol_gencode(fasta_description, **kwargs)
+            return extract_gene_symbol_gencode(fasta_description, **kwargs).upper()
 
 
 class PeptideMapper:
-    """Peptide mapper class
+    """Peptide mapper class.
 
     Raises:
         ValueError: Raises error if there is an issue with mapping tables
+
     """
 
     mapping_table_path: str
@@ -63,14 +112,20 @@ class PeptideMapper:
         split_index: int = 3,
         is_fasta: bool = True,
         fasta_type: FastaType = FastaType.UNIPROT,
-    ):
-        """initializes PeptideMapper
+    ) -> None:
+        """Initialize PeptideMapper.
 
         Args:
-            mapping_table_path (str | None, optional): path to mapping table. Can be in fasta or mapping table. If none, then uses the default gencode v42 version. Defaults to None.
-            split_by (str, optional): character in fasta description to split into id components. Defaults to "|".
+            mapping_table_path (str | None, optional): Path to mapping table.
+                                                       Can be in fasta or mapping table.
+                                                       If none, then uses the default uniprot version
+                                                       Defaults to None.
+            split_by (str, optional): character in fasta description to split into id components.
+                                      Defaults to "|".
             split_index (int, optional): index of gene symbol in fasta file. Defaults to 3.
             is_fasta (bool, optional): is input file fasta file. Defaults to True.
+            fasta_type (FastaType): Type of FASTA header. Can be UNIPROT or GENCODE
+
         """
         if mapping_table_path is None:
             logger.info("Using default gencode fasta file for peptide mapping")
@@ -89,6 +144,16 @@ class PeptideMapper:
         self.fasta_type = fasta_type
 
     def map_sequences(self, sequences: list[str]) -> dict[str, list[str]]:
+        """Map a list of sequences to genes.
+
+        Args:
+            sequences (list[str]): list of sequences to map to genes
+
+        Returns:
+            dict[str, list[str]]: dictionary where keys are peptide sequences
+                                  values are list of genes that map to that sequence
+
+        """
         map_res = dict()
         if self.is_fasta:  # determine which mapping function to use
             map_res = self.map_fasta(sequences)
