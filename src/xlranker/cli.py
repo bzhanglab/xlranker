@@ -24,6 +24,14 @@ def load_config(path: str) -> dict:
         raise ValueError("Unsupported config file format.")
 
 
+def save_config(path: str, config_obj: dict) -> None:
+    if path.endswith(".json"):
+        json.dump(config_obj, open(path, "w"))
+    elif path.endswith(".yaml") or path.endswith(".yml"):
+        return yaml.dump(config_obj, open(path, "w"))
+    raise ValueError("Unsupported config file format.")
+
+
 def is_folder(path_to_validate: str) -> bool | str:
     return (
         True
@@ -34,10 +42,10 @@ def is_folder(path_to_validate: str) -> bool | str:
 
 @app.command()
 def init() -> None:
-    _network = questionary.path(
+    network = questionary.path(
         "Path to your peptide sequence network:",
     ).ask()
-    _omic_data = questionary.path(
+    omic_data = questionary.path(
         "Path to omic data folder:",
         only_directories=True,
         validate=is_folder,
@@ -50,22 +58,43 @@ def init() -> None:
             "Default: Human UNIPROT from May 2025",
         ],
     ).ask()
+    fasta_type = None
     match mapping_table:
         case "Custom FASTA database":
-            _is_fasta = True
-            _mapping_table_path = questionary.path(
+            is_fasta = True
+            fasta_type = questionary.select(
+                "Type of FASTA file:", choices=["GENCODE", "UNIPROT"]
+            ).ask()
+            mapping_table_path = questionary.path(
                 "Path to fasta file:",
                 validate=lambda x: True
                 if x.lower().endswith(".fa") or x.lower().endswith(".fasta")
                 else "Please input a FASTA file (.fasta or .fa)",
             ).ask()
         case "TSV Table":
-            _is_fasta = False
-            _mapping_table_path = questionary.path("Path to TSV file:").ask()
+            is_fasta = False
+            mapping_table_path = questionary.path("Path to TSV file:").ask()
         case _:
-            _is_fasta = True
-            _mapping_table_path = None
-    print(mapping_table)
+            is_fasta = True
+            mapping_table_path = None
+    output_config = {
+        "network": network,
+        "omic_data": omic_data,
+        "is_fasta": is_fasta,
+    }
+    if mapping_table_path is not None:
+        output_config["mapping_table"] = mapping_table_path
+        if is_fasta:
+            output_config["fasta_type"] = fasta_type
+    output_path = questionary.path(
+        "Output for config (JSON or YAML):",
+        validate=lambda x: True
+        if x.lower().endswith(".json")
+        or x.lower().endswith(".yaml")
+        or x.lower().endswith(".yml")
+        else "File must end with .json, .yaml, or .yml",
+    ).ask()
+    save_config(output_path, output_config)
 
 
 @app.command()
