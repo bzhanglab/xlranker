@@ -3,11 +3,13 @@ import random
 import cyclopts
 from xlranker.parsimony.selection import ParsimonySelector
 from xlranker.util.mapping import PeptideMapper
-import xlranker.ml.data as xlr_data
+import xlranker.data as xlr_data
 from xlranker.lib import XLDataSet, setup_logging
 from typing import Annotated
 import json
 import yaml
+import questionary
+import os
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
@@ -20,6 +22,50 @@ def load_config(path: str) -> dict:
         return yaml.safe_load(open(path))
     else:
         raise ValueError("Unsupported config file format.")
+
+
+def is_folder(path_to_validate: str) -> bool | str:
+    return (
+        True
+        if not os.path.isfile(path_to_validate)
+        else "Input a directory, not an existing file."
+    )
+
+
+@app.command()
+def init() -> None:
+    _network = questionary.path(
+        "Path to your peptide sequence network:",
+    ).ask()
+    _omic_data = questionary.path(
+        "Path to omic data folder:",
+        only_directories=True,
+        validate=is_folder,
+    ).ask()
+    mapping_table = questionary.select(
+        "What mapping table will you use?",
+        choices=[
+            "Custom FASTA database",
+            "TSV Table",
+            "Default: Human UNIPROT from May 2025",
+        ],
+    ).ask()
+    match mapping_table:
+        case "Custom FASTA database":
+            _is_fasta = True
+            _mapping_table_path = questionary.path(
+                "Path to fasta file:",
+                validate=lambda x: True
+                if x.lower().endswith(".fa") or x.lower().endswith(".fasta")
+                else "Please input a FASTA file (.fasta or .fa)",
+            ).ask()
+        case "TSV Table":
+            _is_fasta = False
+            _mapping_table_path = questionary.path("Path to TSV file:").ask()
+        case _:
+            _is_fasta = True
+            _mapping_table_path = None
+    print(mapping_table)
 
 
 @app.command()
@@ -79,7 +125,7 @@ def test_prioritization(network: str, omic_folder: str):
 def start(
     network: Annotated[str, cyclopts.Parameter(name=["--network", "-n"])],
     data_folder: Annotated[str, cyclopts.Parameter(name=["--data-folder", "-d"])],
-    config_path: Annotated[
+    config_file: Annotated[
         str | None, cyclopts.Parameter(name=["--config", "-c"])
     ] = None,
     seed: Annotated[int | None, cyclopts.Parameter(name=["--seed", "-s"])] = None,
@@ -93,7 +139,6 @@ def start(
     split: Annotated[str | None, cyclopts.Parameter(name=["--split"])] = None,
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
-    config_file: Annotated[str | None, cyclopts.Parameter(name=["--config"])] = None,
 ):
     """Run the full prioritization pipeline
 
@@ -106,7 +151,7 @@ def start(
     Args:
         network (Annotated[str, cyclopts.Parameter, optional): path to TSV file containing peptide network.
         data_folder (Annotated[str, cyclopts.Parameter, optional): folder containing the omics data for the model prediction.
-        config_path (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, read and load options from config file. Can be in JSON or YAML format.
+        config_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, read and load options from config file. Can be in JSON or YAML format.
         seed (Annotated[int  |  None, cyclopts.Parameter, optional): seed for machine learning pipeline. If not set, seed is randomly selected.
         verbose (Annotated[bool, cyclopts.Parameter, optional): enable verbose logging.
         log_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, saves logging to path
@@ -117,14 +162,12 @@ def start(
 
     """
 
-    if config_path is not None:
-        config_data = load_config(config_path)
+    if config_file is not None:
+        config_data = load_config(config_file)
     else:
         config_data = {}
 
     # Use CLI arg if provided, otherwise fall back to config
-    # network = network or config_data.get("network", "network.tsv")
-    # data_folder = data_folder or config_data.get("data_folder", "omic_data")
     seed = seed if seed is not None else config_data.get("seed", None)
     verbose = verbose or config_data.get("verbose", False)
     log_file = log_file or config_data.get("log_file", None)
