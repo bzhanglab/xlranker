@@ -1,5 +1,6 @@
 """Mapping related classes and functions."""
 
+from dataclasses import dataclass
 import logging
 from enum import Enum, auto
 
@@ -7,6 +8,8 @@ from Bio import SeqIO
 
 from xlranker.data import get_gencode_fasta
 from xlranker.util.readers import read_mapping_table_file
+
+from xlranker.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +86,12 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
     return fasta_description  # return if failed
 
 
+@dataclass
+class MappingResult:
+    peptide_to_protein: dict[str, list[str]]
+    protein_sequences: dict[str, str] | None
+
+
 def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs) -> str:
     match fasta_type:
         case FastaType.UNIPROT:
@@ -143,7 +152,7 @@ class PeptideMapper:
         self.is_fasta = is_fasta
         self.fasta_type = fasta_type
 
-    def map_sequences(self, sequences: list[str]) -> dict[str, list[str]]:
+    def map_sequences(self, sequences: list[str]) -> MappingResult:
         """Map a list of sequences to genes.
 
         Args:
@@ -154,17 +163,19 @@ class PeptideMapper:
                                   values are list of genes that map to that sequence
 
         """
-        map_res = dict()
         if self.is_fasta:  # determine which mapping function to use
             map_res = self.map_fasta(sequences)
         else:  # mapping table just needs to be read
-            map_res = read_mapping_table_file(self.mapping_table_path)
+            map_res = MappingResult(
+                peptide_to_protein=read_mapping_table_file(self.mapping_table_path),
+                protein_sequences=None,
+            )
         no_maps = 0
         for seq in sequences:  # verify all sequences have mapping information
-            if seq not in map_res:
+            if seq not in map_res.peptide_to_protein:
                 logger.debug(f"is_fasta: {self.is_fasta}")
                 logger.warning(f"{seq} not found in mapping table!")
-            elif len(map_res[seq]) == 0:
+            elif len(map_res.peptide_to_protein[seq]) == 0:
                 logger.debug(f"is_fasta: {self.is_fasta}")
                 logger.warning(f"{seq} maps to no proteins!")
                 no_maps += 1
@@ -172,7 +183,12 @@ class PeptideMapper:
             logger.warning(f"{no_maps} sequences do not have mapped proteins")
         return map_res
 
-    def map_fasta(self, sequences: list[str]) -> dict[str, list[str]]:
+    def map_fasta(self, sequences: list[str]) -> MappingResult:
+        if config.reduce_fasta:
+            return self.map_fasta_with_reduction(sequences)
+        return self.map_fasta_no_reduction(sequences)
+
+    def map_fasta_no_reduction(self, sequences: list[str]) -> MappingResult:
         matches: dict[str, set[str]] = {}
         for seq in sequences:
             matches[seq] = set()
@@ -192,4 +208,47 @@ class PeptideMapper:
         final_matches: dict[str, list[str]] = {}
         for key in matches:
             final_matches[key] = list(matches[key])
-        return final_matches
+        return MappingResult(peptide_to_protein=final_matches, protein_sequences=None)
+
+    def map_fasta_with_reduction(self, sequences: list[str]) -> MappingResult:
+        matches: dict[str, set[str]] = {}
+        for seq in sequences:
+            matches[seq] = set()
+        logger.info(f"Mapping {len(sequences)} peptide sequences")
+        # First, build a mapping from gene symbol to its longest protein sequence
+        gene_to_longest_protein = {}
+        gene_to_longest_length: dict[str, int] = {}
+
+        for record in SeqIO.parse(self.mapping_table_path, "fasta"):
+            gene_symbol = extract_gene_symbol(
+                record.description,
+                self.fasta_type,
+                split_by=self.split_by,
+                split_index=self.split_index,
+            )
+            seq_str = str(record.seq)
+            seq_len = len(seq_str)
+            if (
+                gene_symbol not in gene_to_longest_length
+                or seq_len > gene_to_longest_length[gene_symbol]
+            ):
+                gene_to_longest_length[gene_symbol] = seq_len
+                gene_to_longest_protein[gene_symbol] = seq_str
+
+        protein_sequences: dict[str, str] = {}
+        # Now, map sequences only if they are present in the longest protein sequence for that gene
+        for gene_symbol, protein_seq in gene_to_longest_protein.items():
+            mapped = False
+            for sequence in sequences:
+                if sequence in protein_seq:
+                    matches[sequence].add(gene_symbol)
+                    mapped = True
+            if mapped:
+                protein_sequences[gene_symbol] = protein_seq
+
+        final_matches: dict[str, list[str]] = {}
+        for key in matches:
+            final_matches[key] = list(matches[key])
+        return MappingResult(
+            peptide_to_protein=final_matches, protein_sequences=protein_sequences
+        )

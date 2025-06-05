@@ -133,8 +133,12 @@ class XLDataSet:
             mapper = custom_mapper
         mapping_results = mapper.map_sequences(list(peptide_sequences))
         for group in network.values():
-            group.a.mapped_proteins = mapping_results[group.a.sequence]
-            group.b.mapped_proteins = mapping_results[group.b.sequence]
+            group.a.mapped_proteins = mapping_results.peptide_to_protein[
+                group.a.sequence
+            ]
+            group.b.mapped_proteins = mapping_results.peptide_to_protein[
+                group.b.sequence
+            ]
         return cls(network, omic_data)
 
 
