@@ -83,18 +83,20 @@ class ParsimonySelector:
             protein_pair_groups[conn_id].append(protein_pair)
         while len(peptide_names) > 0:
             max_connections = 0
-            best_pairs = []
+            best_pairs: set[str] = (
+                set()
+            )  # set so there is no bias towards larger groups
             for conn_id in protein_pair_groups:
                 n_conn = protein_pair_groups[conn_id][0].overlap(peptide_names)
                 if max_connections < n_conn:
                     max_connections = n_conn
-                    best_pairs = [conn_id]
+                    best_pairs = set(conn_id)
                 elif max_connections == n_conn:
-                    best_pairs.append(conn_id)
+                    best_pairs.add(conn_id)
             selected_index = random.randint(
                 0, len(best_pairs) - 1
             )  # select one random index to move forward
-            best_pair_group = protein_pair_groups[best_pairs[selected_index]]
+            best_pair_group = protein_pair_groups[list(best_pairs)[selected_index]]
             peptide_names.difference_update(best_pair_group[0].connections)
             status = (
                 PrioritizationStatus.PARSIMONY_SELECTED

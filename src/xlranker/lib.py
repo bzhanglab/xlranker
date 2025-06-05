@@ -108,6 +108,7 @@ class XLDataSet:
         cls,
         network_path: str,
         omics_data_folder: str,
+        custom_mapper: PeptideMapper | None = None,
         custom_mapping_path: str | None = None,
         is_fasta: bool = True,
         split_by: str | None = "|",
@@ -121,16 +122,23 @@ class XLDataSet:
         for group in network.values():
             peptide_sequences.add(group.a.sequence)
             peptide_sequences.add(group.b.sequence)
-        mapper = PeptideMapper(
-            mapping_table_path=custom_mapping_path,
-            split_by=split_by,
-            split_index=split_index,
-            is_fasta=is_fasta,
-        )
+        if custom_mapper is None:
+            mapper = PeptideMapper(
+                mapping_table_path=custom_mapping_path,
+                split_by=split_by,
+                split_index=split_index,
+                is_fasta=is_fasta,
+            )
+        else:
+            mapper = custom_mapper
         mapping_results = mapper.map_sequences(list(peptide_sequences))
         for group in network.values():
-            group.a.mapped_proteins = mapping_results[group.a.sequence]
-            group.b.mapped_proteins = mapping_results[group.b.sequence]
+            group.a.mapped_proteins = mapping_results.peptide_to_protein[
+                group.a.sequence
+            ]
+            group.b.mapped_proteins = mapping_results.peptide_to_protein[
+                group.b.sequence
+            ]
         return cls(network, omic_data)
 
 
