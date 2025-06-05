@@ -28,4 +28,5 @@ dev = [
     "mkdocstrings[python]>=0.29.1",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
+    "types-pyyaml>=6.0.12.20250516",
 ]
