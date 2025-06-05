@@ -15,8 +15,20 @@ The input data for `xlranker` are:
 [Peptide Pairs](input_data/peptide_pairs.md)
 :   TSV file showing all of the identified Peptide Pairs in the dataset.
 
-(*Optional*) [Custom Mapping Table](input_data/custom_mapping_table.md)
-:   `xlranker` uses gencode v48 to map peptide sequences to proteins. You can provide a custom peptide sequence mapping table in FASTA format or a TSV table. Please read documentation for requirements.
+[Omic Data](input_data/omic_data.md)
+:   Omic data used by the machine learning model for prioritizing ambiguous pairs
+
+Custom Sequence Mapping (**Strongly Recommended**, *Optional*)
+:   By default, `xlranker` uses the human UNIPROT (accessed 5-30-2025) one sequence per gene to map peptide sequences to proteins. It is strongly recommended that you provide the same database used for mapping the proteomics data. You can provide either a [FASTA file](input_data/fasta.md) or a [TSV table](input_data/custom_mapping_table.md) with mapping pre-computed Please read documentation for requirements.
+
+The typical file structure for the input looks like
+
+```text
+omic_data/
+├── protein.tsv
+└── rna.tsv
+peptide_network.tsv
+```
 
 ## Running the Pipeline
 
@@ -30,7 +42,7 @@ The input data for `xlranker` are:
 For most users, you would want to run the full pipeline. This can be achieved by running the following command:
 
 ```bash
-xlranker start peptide_pairs.tsv
+xlranker start peptide_network.tsv omic_data/
 ```
 
 This example assumes `peptide_pairs.tsv` is already prepared according to the instructions above and is in the current working directory.
