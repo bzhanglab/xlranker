@@ -30,4 +30,5 @@ dev = [
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
     "seaborn>=0.13.2",
+    "types-pyyaml>=6.0.12.20250516",
 ]

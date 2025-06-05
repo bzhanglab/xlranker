@@ -1,5 +1,4 @@
-"""
-Model Process:
+"""Model Process:
 
 1. Identify Positive Dataset
     - All representative pairs from parsimonious selection
@@ -9,16 +8,17 @@ Model Process:
 
 import logging
 import random
-from typing import Any
+from typing import Any, Container
+
 import numpy as np
 import polars as pl
+import xgboost
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
-import xgboost
 
-from xlranker.bio.pairs import ProteinPair, PrioritizationStatus
-from xlranker.lib import XLDataSet
+from xlranker.bio.pairs import PrioritizationStatus, ProteinPair
 from xlranker.config import config
+from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class PrioritizationModel:
     positives: list[ProteinPair]
     to_predict: list[ProteinPair]
     dataset: XLDataSet
-    existing_pairs: set[tuple[str, str]]
+    existing_pairs: set[Container[str]]
     model_config: ModelConfig
     n_features: int
     gmts: list[list[set[str]]]
@@ -90,9 +90,9 @@ class PrioritizationModel:
     def __init__(
         self,
         dataset: XLDataSet,
-        model_config: ModelConfig = ModelConfig(),
-        gmt_list: list[list[set[str]]] = load_gmts(),
-        ppi_db: pl.DataFrame = load_default_ppi(),
+        model_config: ModelConfig | None = None,
+        gmt_list: list[list[set[str]]] | None = None,
+        ppi_db: pl.DataFrame | None = None,
     ):
         self.dataset = dataset
         self.positives = []
@@ -103,16 +103,34 @@ class PrioritizationModel:
                     self.positives.append(protein_pair)
                 case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
                     self.to_predict.append(protein_pair)
-        self.existing_pairs: set[tuple[str, str]] = set(
+        self.existing_pairs = set(
             tuple(sorted([p.a.name, p.b.name]))
             for p in self.dataset.protein_pairs.values()
         )
         self.n_features = len(self.to_predict[0].abundance_dict()) - 1
+        if model_config is None:
+            model_config = ModelConfig()
         self.model_config = model_config
+        if gmt_list is None:
+            gmt_list = load_gmts()
         self.gmts = gmt_list
+        if ppi_db is None:
+            ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
 
     def is_ppi(self, a: str, b: str) -> float:
+        """Determine if protein a and protein b has a known ppi in  ppi_db.
+
+        Order of `a` and `b` does not matter.
+
+        Args:
+            a (str): First protein
+            b (str): Second protein
+
+        Returns:
+            float: Return float with 1.0 meaning there is a known ppi in the db
+
+        """
         if a > b:
             c = a
             a = b
@@ -149,7 +167,7 @@ class PrioritizationModel:
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         protein_ids = list(self.dataset.proteins.keys())
 
-        generated: set[tuple[str, str]] = set()
+        generated: set[Container[str]] = set()
 
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
@@ -166,14 +184,18 @@ class PrioritizationModel:
             generated.add(pair_key)
         return negatives
 
-    def construct_predict_df(self) -> pl.DataFrame:
+    def construct_df_from_pairs(
+        self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
+    ) -> pl.DataFrame:
         df_array: list[dict[str, str | int | float | None]] = []
         is_first = True
         headers = ["pair"]  # headers in the correct order
-        schema: dict[str, Any] = {"pair": pl.String()}
-        for pair in self.to_predict:
+        schema: dict[str, pl.DataType] = {"pair": pl.String()}
+        for pair in pair_list:
             pair_dict = pair.abundance_dict()
             pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+            if has_label:
+                pair_dict["label"] = label_value
             df_array.append(pair_dict)
             if is_first:
                 is_first = False
@@ -183,8 +205,11 @@ class PrioritizationModel:
                         schema[header] = pl.Float64()
         return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
 
+    def construct_predict_df(self) -> pl.DataFrame:
+        return self.construct_df_from_pairs(self.to_predict, has_label=False)
+
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
-        """generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair
+        """Generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair.
 
         Args:
             negative_pairs (list[ProteinPair]): the list of negative pairs to add to DataFrame
@@ -193,27 +218,13 @@ class PrioritizationModel:
             pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
 
         """
-        df_array: list[dict[str, str | int | float | None]] = []
-        headers = ["pair"]  # headers in the correct order
-        is_first = True
-        schema = {"pair": pl.String()}
-        for pair in self.positives:
-            pair_dict = pair.abundance_dict()
-            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
-            pair_dict["label"] = 1.0
-            df_array.append(pair_dict)
-            if is_first:
-                for header in pair_dict.keys():
-                    if "pair" != header:
-                        headers.append(header)
-                        schema[header] = pl.Float64()
-                is_first = False
-        for pair in negative_pairs:
-            pair_dict = pair.abundance_dict()
-            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
-            pair_dict["label"] = 0.0
-            df_array.append(pair_dict)
-        return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
+        positive_df = self.construct_df_from_pairs(
+            self.positives, has_label=True, label_value=1.0
+        )
+        negative_df = self.construct_df_from_pairs(
+            negative_pairs, has_label=True, label_value=0.0
+        )
+        return pl.concat([positive_df, negative_df])
 
     def run_model(self):
         random_seed = random.random() * 100000
@@ -282,7 +293,7 @@ class PrioritizationModel:
 
             auc_score = roc_auc_score(y_test_run, y_test_pred_run)
             aucs.append(auc_score)
-            logger.info(f"ROC AUC for run {run + 1}: {round(auc_score, 3)}")
+            logger.info(f"ROC AUC for run {run + 1}: {auc_score:.2f}")
             all_test_labels.append(y_test_run)
             all_test_preds.append(y_test_pred_run)
             run_ids.append(run)
@@ -303,20 +314,22 @@ class PrioritizationModel:
         )  # TODO: Have output directory be configurable
 
     def get_selected(self) -> list[ProteinPair]:
-        """get all `ProteinPair`s that were accepted
+        """Get all `ProteinPair`s that were accepted
 
         Returns:
             list[ProteinPair]: All machine-learning selected pairs predicted by this model
+
         """
         return [
             p for p in self.to_predict if p.status == PrioritizationStatus.ML_SELECTED
         ]
 
     def get_selections(self) -> list[ProteinPair]:
-        """get the best pair for each protein pair subgroup
+        """Get the best pair for each protein pair subgroup
 
         Returns:
             list[ProteinPair]: list of the protein pairs that were accepted
+
         """
         best_score: dict[str, float] = {}
         for pair in self.to_predict:
@@ -328,7 +341,7 @@ class PrioritizationModel:
         for pair in self.to_predict:
             if (
                 pair.score == best_score[pair.connectivity_id()]
-            ):  # ! This allows for multiple pairs to be accepted
+            ):  # FIX: This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED

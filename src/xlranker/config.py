@@ -6,6 +6,7 @@ import json
 class Config:
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
+    reduce_fasta = False  # Reduce FASTA file by only keeping the largest sequence
 
 
 config = Config()

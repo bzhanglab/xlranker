@@ -7,6 +7,7 @@
         "mkdocstrings",
         "omic",
         "omics",
+        "prioritizer",
         "UNIPROT",
         "xlranker"
     ]
