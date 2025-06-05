@@ -184,14 +184,18 @@ class PrioritizationModel:
             generated.add(pair_key)
         return negatives
 
-    def construct_predict_df(self) -> pl.DataFrame:
+    def construct_df_from_pairs(
+        self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
+    ) -> pl.DataFrame:
         df_array: list[dict[str, str | int | float | None]] = []
         is_first = True
         headers = ["pair"]  # headers in the correct order
-        schema = {"pair": pl.String()}
-        for pair in self.to_predict:
+        schema: dict[str, pl.DataType] = {"pair": pl.String()}
+        for pair in pair_list:
             pair_dict = pair.abundance_dict()
             pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+            if has_label:
+                pair_dict["label"] = label_value
             df_array.append(pair_dict)
             if is_first:
                 is_first = False
@@ -200,6 +204,9 @@ class PrioritizationModel:
                         headers.append(header)
                         schema[header] = pl.Float64()
         return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
+
+    def construct_predict_df(self) -> pl.DataFrame:
+        return self.construct_df_from_pairs(self.to_predict, has_label=False)
 
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
         """Generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair.
@@ -211,27 +218,13 @@ class PrioritizationModel:
             pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
 
         """
-        df_array: list[dict[str, str | int | float | None]] = []
-        headers = ["pair"]  # headers in the correct order
-        is_first = True
-        schema = {"pair": pl.String()}
-        for pair in self.positives:
-            pair_dict = pair.abundance_dict()
-            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
-            pair_dict["label"] = 1.0
-            df_array.append(pair_dict)
-            if is_first:
-                for header in pair_dict.keys():
-                    if "pair" != header:
-                        headers.append(header)
-                        schema[header] = pl.Float64()
-                is_first = False
-        for pair in negative_pairs:
-            pair_dict = pair.abundance_dict()
-            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
-            pair_dict["label"] = 0.0
-            df_array.append(pair_dict)
-        return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
+        positive_df = self.construct_df_from_pairs(
+            self.positives, has_label=True, label_value=1.0
+        )
+        negative_df = self.construct_df_from_pairs(
+            negative_pairs, has_label=True, label_value=0.0
+        )
+        return pl.concat([positive_df, negative_df])
 
     def run_model(self):
         random_seed = random.random() * 100000
