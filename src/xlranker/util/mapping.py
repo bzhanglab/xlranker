@@ -25,13 +25,15 @@ def extract_gene_symbol_uniprot(fasta_description: str) -> str:
     """Get the gene symbol from a UNIPROT style FASTA description.
 
     Method:
-        1. Split the description by spaces
-        2. Find split with GN= (Gene Name)
-        3. Remove GN= from split and return
+
+    1. Split the description by spaces
+    2. Find split with GN= (Gene Name)
+    3. Remove GN= from split and return
 
     If split with GN= not found, return the UNIPROT symbol.
-        1. Using first split (when splitting by space), split again by |
-        2. If there is at least 2 elements in split, return second element
+
+    1. Using first split (when splitting by space), split again by |
+    2. If there is at least 2 elements in split, return second element
 
     If can't get UNIPROT symbol, return original description.
 
@@ -56,13 +58,15 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
     """Get the gene symbol from a UNIPROT style FASTA description.
 
     Method:
-        1. Split the description by spaces
-        2. Find split with GN= (Gene Name)
-        3. Remove GN= from split and return
+
+    1. Split the description by spaces
+    2. Find split with GN= (Gene Name)
+    3. Remove GN= from split and return
 
     If split with GN= not found, return the UNIPROT symbol.
-        1. Using first split (when splitting by space), split again by |
-        2. If there is at least 2 elements in split, return second element
+
+    1. Using first split (when splitting by space), split again by |
+    2. If there is at least 2 elements in split, return second element
 
     If can't get UNIPROT symbol, return original description.
 
@@ -189,6 +193,7 @@ class PeptideMapper:
         return self.map_fasta_no_reduction(sequences)
 
     def map_fasta_no_reduction(self, sequences: list[str]) -> MappingResult:
+        logger.debug("Mapping FASTA file without reduction")
         matches: dict[str, set[str]] = {}
         for seq in sequences:
             matches[seq] = set()
@@ -211,6 +216,7 @@ class PeptideMapper:
         return MappingResult(peptide_to_protein=final_matches, protein_sequences=None)
 
     def map_fasta_with_reduction(self, sequences: list[str]) -> MappingResult:
+        logger.debug("Mapping FASTA file with reduction")
         matches: dict[str, set[str]] = {}
         for seq in sequences:
             matches[seq] = set()
