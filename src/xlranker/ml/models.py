@@ -36,7 +36,7 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 }
 
 
-def in_same_set(a, b, sets: list[list[set[str]]]) -> bool:
+def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
     for gmt in sets:
         for gene_set in gmt:
             if a in gene_set and b in gene_set:
@@ -63,6 +63,7 @@ class ModelConfig:
         attrs = {
             "runs": (int, lambda x: x >= 1),
             "folds": (int, lambda x: x >= 1),
+            "xgb_params": (dict, None),
         }
         for attr, (typ, cond) in attrs.items():
             value = getattr(self, attr, None)
@@ -141,6 +142,9 @@ class PrioritizationModel:
             float: Return float with 1.0 meaning there is a known ppi in the db
 
         """
+        if config.human_only:  # Capitalize to ensure consistent case
+            a = a.upper()
+            b = b.upper()
         if a > b:
             c = a
             a = b
