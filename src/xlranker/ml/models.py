@@ -94,6 +94,14 @@ class PrioritizationModel:
         gmt_list: list[list[set[str]]] | None = None,
         ppi_db: pl.DataFrame | None = None,
     ):
+        """Initialize PrioritizationModel
+
+        Args:
+            dataset (XLDataSet): XL data set that needs prioritization. Requires Parsimony Analysis to have been performed.
+            model_config (ModelConfig | None, optional): Config for the model. If None use defaults. Defaults to None.
+            gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
+            ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
+        """
         self.dataset = dataset
         self.positives = []
         self.to_predict = []
@@ -227,6 +235,7 @@ class PrioritizationModel:
         return pl.concat([positive_df, negative_df])
 
     def run_model(self):
+        """Run the model and get predictions for all protein pairs."""
         random_seed = random.random() * 100000
 
         predict_df = self.construct_predict_df()
