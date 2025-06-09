@@ -1,12 +1,10 @@
 import logging
 import random
 import cyclopts
-from xlranker.parsimony.selection import ParsimonySelector
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util.mapping import PeptideMapper
-import xlranker.data as xlr_data
 from xlranker.lib import XLDataSet, setup_logging
-from typing import Annotated
+from typing import Annotated, Any
 import json
 import yaml
 import questionary
@@ -16,7 +14,7 @@ app = cyclopts.App()
 logger = logging.getLogger(__name__)
 
 
-def load_config(path: str) -> dict:
+def load_config(path: str) -> dict[str, Any]:
     if path.endswith(".json"):
         return json.load(open(path))
     elif path.endswith(".yaml") or path.endswith(".yml"):
@@ -25,7 +23,7 @@ def load_config(path: str) -> dict:
         raise ValueError("Unsupported config file format.")
 
 
-def save_config(path: str, config_obj: dict) -> None:
+def save_config(path: str, config_obj: dict[str, Any]) -> None:
     if path.endswith(".json"):
         json.dump(config_obj, open(path, "w"))
     elif path.endswith(".yaml") or path.endswith(".yml"):
@@ -43,6 +41,7 @@ def is_folder(path_to_validate: str) -> bool | str:
 
 @app.command()
 def init() -> None:
+    """Generate new XLRanker project with a config file."""
     network = questionary.path(
         "Path to your peptide sequence network:",
     ).ask()
@@ -118,40 +117,6 @@ def test_fasta(
 
 
 @app.command()
-def test(
-    verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
-):
-    setup_logging(verbose)
-    mapper = PeptideMapper()
-    print(mapper.map_sequences(["VVEPKR", "MGSGKK"]))
-
-
-@app.command()
-def test_loading():
-    df = xlr_data.load_default_ppi()
-    print(df.head())
-
-
-@app.command()
-def test_prioritization(network: str, omic_folder: str):
-    setup_logging()
-    logger.info("Loading data")
-    dataset = XLDataSet.load_from_network(network, omic_folder)
-    logging.info("Building protein data")
-    dataset.build_proteins()
-    prioritizer = ParsimonySelector(dataset)
-    logging.info("Running prioritization")
-    prioritizer.run()
-    logging.info("Saving results")
-    tsv_data = ["pair_id\tstatus\tgroup_id"]
-    for protein_pair_groups in prioritizer.protein_groups.values():
-        for protein_pair in protein_pair_groups:
-            tsv_data.append(protein_pair.to_tsv())
-    with open("output.tsv", "w") as w:
-        w.write("\n".join(tsv_data))
-
-
-@app.command()
 def start(
     network: Annotated[str, cyclopts.Parameter(name=["--network", "-n"])],
     data_folder: Annotated[str, cyclopts.Parameter(name=["--data-folder", "-d"])],
@@ -221,7 +186,7 @@ def start(
     )
 
     # run the full pipeline
-    run_full_pipeline(data_set)
+    _ = run_full_pipeline(data_set)
 
 
 def cli():
