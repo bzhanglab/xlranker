@@ -86,6 +86,7 @@ class PrioritizationModel:
     n_features: int
     gmts: list[list[set[str]]]
     ppi_db: pl.DataFrame
+    default_ppi: bool
 
     def __init__(
         self,
@@ -123,6 +124,7 @@ class PrioritizationModel:
             gmt_list = load_gmts()
         self.gmts = gmt_list
         if ppi_db is None:
+            self.default_ppi = True
             ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
 
@@ -201,7 +203,10 @@ class PrioritizationModel:
         schema: dict[str, pl.DataType] = {"pair": pl.String()}
         for pair in pair_list:
             pair_dict = pair.abundance_dict()
-            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+            if (
+                config.human_only or not self.default_ppi
+            ):  # Can only add if only human or if using custom PPI DB
+                pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
             if has_label:
                 pair_dict["label"] = label_value
             df_array.append(pair_dict)
