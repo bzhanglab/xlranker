@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import json
+from typing import Any
 
 
 @dataclass
@@ -15,9 +16,15 @@ class Config:
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
+    human_only: bool = True  # Is all data human only?
 
 
 config = Config()
+
+
+def set_config_from_dict(config_dict: dict[str, Any]) -> None:
+    for key in config_dict:
+        setattr(config, key, config_dict[key])
 
 
 def load_from_json(json_file: str) -> None:

@@ -88,7 +88,7 @@ def init() -> None:
         if is_fasta:
             output_config["fasta_type"] = fasta_type
     output_path = questionary.path(
-        "Output for config (JSON or YAML):",
+        "Output file for config (JSON or YAML format):",
         validate=lambda x: True
         if x.lower().endswith(".json")
         or x.lower().endswith(".yaml")
@@ -179,16 +179,16 @@ def start(
     `xlranker start network.tsv omic_data_folder/ -s 42`
 
     Args:
-        network (Annotated[str, cyclopts.Parameter, optional): path to TSV file containing peptide network.
-        data_folder (Annotated[str, cyclopts.Parameter, optional): folder containing the omics data for the model prediction.
-        config_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, read and load options from config file. Can be in JSON or YAML format.
-        seed (Annotated[int  |  None, cyclopts.Parameter, optional): seed for machine learning pipeline. If not set, seed is randomly selected.
-        verbose (Annotated[bool, cyclopts.Parameter, optional): enable verbose logging.
-        log_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, saves logging to path
-        mapping_table (Annotated[ str  |  None, cyclopts.Parameter, optional): path to custom mapping table for peptide sequences
-        split (Annotated[ str  |  None, cyclopts.Parameter, optional): character used for splitting the FASTA file header
-        gs_index (Annotated[int  |  None, cyclopts.Parameter, optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
-        is_fasta (Annotated[bool, cyclopts.Parameter, optional): Enable if mapping table is a FASTA file.
+        network (Annotated[str, cyclopts.Parameter], optional): path to TSV file containing peptide network.
+        data_folder (Annotated[str, cyclopts.Parameter], optional): folder containing the omics data for the model prediction.
+        config_file (Annotated[ str  |  None, cyclopts.Parameter], optional): if set, read and load options from config file. Can be in JSON or YAML format.
+        seed (Annotated[int  |  None, cyclopts.Parameter], optional): seed for machine learning pipeline. If not set, seed is randomly selected.
+        verbose (Annotated[bool, cyclopts.Parameter], optional): enable verbose logging.
+        log_file (Annotated[ str  |  None, cyclopts.Parameter], optional): if set, saves logging to path
+        mapping_table (Annotated[ str  |  None, cyclopts.Parameter], optional): path to custom mapping table for peptide sequences
+        split (Annotated[ str  |  None, cyclopts.Parameter], optional): character used for splitting the FASTA file header
+        gs_index (Annotated[int  |  None, cyclopts.Parameter], optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
+        is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
 
     """
 
@@ -220,6 +220,7 @@ def start(
         split_index=gs_index,
     )
 
+    # run the full pipeline
     run_full_pipeline(data_set)
 
 
