@@ -15,3 +15,10 @@ def run_full_pipeline(
     model.run_model()
     model.get_selections()
     return data_set
+
+
+def parsimony_only(data_set: XLDataSet) -> XLDataSet:
+    data_set.build_proteins()  # TODO: Determine if this should be done when loaded/initialized
+    parsimony = ParsimonySelector(data_set)
+    parsimony.run()
+    return data_set

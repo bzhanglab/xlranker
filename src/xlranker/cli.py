@@ -2,6 +2,7 @@ import logging
 import random
 import cyclopts
 from xlranker.parsimony.selection import ParsimonySelector
+from xlranker.pipeline import run_full_pipeline
 from xlranker.util.mapping import PeptideMapper
 import xlranker.data as xlr_data
 from xlranker.lib import XLDataSet, setup_logging
@@ -210,7 +211,7 @@ def start(
         seed = random.randint(0, 10000000)
         logger.info(f"Randomly generated seed: {seed}")
 
-    _data_set = XLDataSet.load_from_network(
+    data_set = XLDataSet.load_from_network(
         network,
         data_folder,
         custom_mapping_path=mapping_table,
@@ -218,6 +219,8 @@ def start(
         split_by=split,
         split_index=gs_index,
     )
+
+    run_full_pipeline(data_set)
 
 
 def cli():

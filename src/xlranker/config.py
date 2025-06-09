@@ -4,9 +4,17 @@ import json
 
 @dataclass
 class Config:
+    """config for XLRanker
+
+    Attributes:
+        fragile (bool): Default to False. If True, throw error on any warning
+        detailed (bool): Default to False. If True, perform more analysis about dataset
+        reduce_fasta (bool): Default to True. If True, when a gene has multiple sequences, only accept longest sequence as the canonical sequence.
+    """
+
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
-    reduce_fasta = False  # Reduce FASTA file by only keeping the largest sequence
+    reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
 
 
 config = Config()
