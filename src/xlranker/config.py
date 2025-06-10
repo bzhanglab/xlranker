@@ -3,14 +3,24 @@ import json
 from typing import Any
 
 
+DEFAULT_CONFIG = {
+    "seed": None,
+    "custom_mapping_table": None,
+    "is_fasta": True,
+    "fasta_type": "UNIPROT",
+    "only_human": True,
+}
+
+
 @dataclass
 class Config:
-    """config for XLRanker
+    """Config for XLRanker
 
     Attributes:
         fragile (bool): Default to False. If True, throw error on any warning
         detailed (bool): Default to False. If True, perform more analysis about dataset
         reduce_fasta (bool): Default to True. If True, when a gene has multiple sequences, only accept longest sequence as the canonical sequence.
+
     """
 
     fragile: bool = False  # Break on any warning

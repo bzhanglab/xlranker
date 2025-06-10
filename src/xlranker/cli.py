@@ -4,6 +4,7 @@ import cyclopts
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util.mapping import PeptideMapper
 from xlranker.lib import XLDataSet, setup_logging
+from xlranker.config import DEFAULT_CONFIG
 from typing import Annotated, Any
 import json
 import yaml
@@ -15,17 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 def load_config(path: str) -> dict[str, Any]:
-    if path.endswith(".json"):
+    if path.lower().endswith(".json"):
         return json.load(open(path))
-    elif path.endswith(".yaml") or path.endswith(".yml"):
+    elif path.lower().endswith(".yaml") or path.lower().endswith(".yml"):
         return yaml.safe_load(open(path))
     else:
         raise ValueError("Unsupported config file format.")
 
 
 def save_config(path: str, config_obj: dict[str, Any]) -> None:
+    path = path.lower()
     if path.endswith(".json"):
-        json.dump(config_obj, open(path, "w"))
+        return json.dump(config_obj, open(path, "w"))
     elif path.endswith(".yaml") or path.endswith(".yml"):
         return yaml.dump(config_obj, open(path, "w"))
     raise ValueError("Unsupported config file format.")
@@ -40,8 +42,27 @@ def is_folder(path_to_validate: str) -> bool | str:
 
 
 @app.command()
-def init() -> None:
-    """Generate new XLRanker project with a config file."""
+def init(
+    default: bool = False,
+    output: Annotated[str | None, cyclopts.Parameter(name=["--output", "-o"])] = None,
+) -> None:
+    """Initialize a config file. If no default flag provided, config is created through a interactive form.
+
+    Args:
+        default (bool, optional): Create a simple default config. Defaults to False.
+        output (str | None, optional): Output config file. Can either be JSON or YAML format. Defaults to None.
+
+    Raises:
+        ValueError: raises ValueError if output is not set when default is passed
+
+    """
+
+    if default:
+        if output is None:
+            raise ValueError("Output must be specified if using default!")
+        save_config(output, DEFAULT_CONFIG)
+        return
+
     network = questionary.path(
         "Path to your peptide sequence network:",
     ).ask()
