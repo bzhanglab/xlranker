@@ -67,6 +67,14 @@ class ModelConfig:
         folds: int = 5,
         xgb_params: dict[str, Any] = DEFAULT_XGB_PARAMS,
     ):
+        """Config for the prioritization model
+
+        Args:
+            runs (int, optional): the number of model runs. Defaults to 10.
+            folds (int, optional): number of folds per run. Defaults to 5.
+            xgb_params (dict[str, Any], optional): dictionary of parameters for the XGBoost model. Defaults to DEFAULT_XGB_PARAMS.
+
+        """
         self.runs = runs
         self.folds = folds
         self.xgb_params = xgb_params
@@ -210,6 +218,17 @@ class PrioritizationModel:
     def construct_df_from_pairs(
         self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
     ) -> pl.DataFrame:
+        """Construct a DataFrame from the list of Protein Pairs
+
+        Args:
+            pair_list (list[ProteinPair]): list of protein pairs to get the dataframe from
+            has_label (bool): if True, adds label column to dataframe
+            label_value (float, optional): value assigned to the label column. Defaults to 0.0 (negative).
+
+        Returns:
+            pl.DataFrame: DataFrame object with the first column being the pair ID, following columns with abundances for the proteins. If `has_label` is true, last column is label with a value of `label_value`.
+
+        """
         df_array: list[dict[str, str | int | float | None]] = []
         is_first = True
         headers = ["pair"]  # headers in the correct order
@@ -367,11 +386,14 @@ class PrioritizationModel:
                 best_score[conn_id] = pair.score
             elif best_score[conn_id] < pair.score:
                 best_score[conn_id] = pair.score
+        selected: set[str] = set()
         for pair in self.to_predict:
             if (
                 pair.score == best_score[pair.connectivity_id()]
+                and pair.connectivity_id() not in selected
             ):  # FIXME: This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
+                selected.add(pair.connectivity_id())
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED
         return self.get_selected()
