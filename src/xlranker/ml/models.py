@@ -4,6 +4,7 @@
     - All representative pairs from parsimonious selection
 2. Generate Negative Dataset
     - Random protein pairs that are not candidate pairs
+
 """
 
 import logging
@@ -37,6 +38,17 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 
 
 def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
+    """Check if a and b are located in the same set in any of the exclusive sets provided
+
+    Args:
+        a (str): entity a
+        b (str): entity b
+        sets (list[list[set[str]]]): list of gmts, which are lists of sets
+
+    Returns:
+        bool: True if a and b both located in at least one set
+
+    """
     for gmt in sets:
         for gene_set in gmt:
             if a in gene_set and b in gene_set:
@@ -73,10 +85,6 @@ class ModelConfig:
                 return False
         return True
 
-    def as_dict(self) -> dict[str, Any]:
-        # Utility to get all config as a dict
-        return {k: getattr(self, k) for k in self.__dict__}
-
 
 class PrioritizationModel:
     positives: list[ProteinPair]
@@ -103,6 +111,7 @@ class PrioritizationModel:
             model_config (ModelConfig | None, optional): Config for the model. If None use defaults. Defaults to None.
             gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
             ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
+
         """
         self.dataset = dataset
         self.positives = []
@@ -245,6 +254,7 @@ class PrioritizationModel:
 
     def run_model(self):
         """Run the model and get predictions for all protein pairs."""
+
         random_seed = random.random() * 100000
 
         predict_df = self.construct_predict_df()
@@ -323,6 +333,7 @@ class PrioritizationModel:
 
         predict_df = predict_df.with_columns(pl.Series("prediction", mean_predictions))
         predict_df.write_csv("model_output.tsv", separator="\t")
+
         # Print summary statistics
         logger.info(
             f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
@@ -359,7 +370,7 @@ class PrioritizationModel:
         for pair in self.to_predict:
             if (
                 pair.score == best_score[pair.connectivity_id()]
-            ):  # FIX: This allows for multiple pairs to be accepted
+            ):  # FIXME: This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED

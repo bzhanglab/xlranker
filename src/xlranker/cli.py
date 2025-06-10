@@ -77,10 +77,15 @@ def init() -> None:
         case _:
             is_fasta = True
             mapping_table_path = None
+    if mapping_table_path is not None:
+        only_human = questionary.confirm("Is your data only human data?").ask()
+    else:
+        only_human = True
     output_config = {
         "network": network,
-        "omic_data": omic_data,
+        "data_folder": omic_data,
         "is_fasta": is_fasta,
+        "only_human": only_human,
     }
     if mapping_table_path is not None:
         output_config["mapping_table"] = mapping_table_path
@@ -118,8 +123,10 @@ def test_fasta(
 
 @app.command()
 def start(
-    network: Annotated[str, cyclopts.Parameter(name=["--network", "-n"])],
-    data_folder: Annotated[str, cyclopts.Parameter(name=["--data-folder", "-d"])],
+    network: Annotated[str | None, cyclopts.Parameter(name=["--network", "-n"])] = None,
+    data_folder: Annotated[
+        str | None, cyclopts.Parameter(name=["--data-folder", "-d"])
+    ] = None,
     config_file: Annotated[
         str | None, cyclopts.Parameter(name=["--config", "-c"])
     ] = None,
@@ -160,9 +167,19 @@ def start(
     if config_file is not None:
         config_data = load_config(config_file)
     else:
-        config_data = {}
+        config_data = {}  # TODO: Change this to a default config
+
+    # Check if network and data_folder are set, which are required
 
     # Use CLI arg if provided, otherwise fall back to config
+    network = network if network is not None else config_data.get("network", None)
+    data_folder = (
+        data_folder if data_folder is not None else config_data.get("data_folder", None)
+    )
+    if network is None:
+        raise ValueError("network not provided in command or in config!")
+    if data_folder is None:
+        raise ValueError("data_folder not provided in command or in config!")
     seed = seed if seed is not None else config_data.get("seed", None)
     verbose = verbose or config_data.get("verbose", False)
     log_file = log_file or config_data.get("log_file", None)
