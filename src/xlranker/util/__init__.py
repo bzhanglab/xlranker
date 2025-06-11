@@ -1,7 +1,17 @@
 import polars as pl
-
+import random
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein
+
+
+def set_seed(seed: int) -> None:
+    """Set seed to provide consistent results between runs
+
+    Args:
+        seed (int): number to initialize random number generators with
+
+    """
+    random.seed(seed)
 
 
 def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:

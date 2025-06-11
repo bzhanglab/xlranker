@@ -2,6 +2,7 @@ import logging
 import random
 import cyclopts
 from xlranker.pipeline import run_full_pipeline
+from xlranker.util import set_seed
 from xlranker.util.mapping import PeptideMapper
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.config import DEFAULT_CONFIG
@@ -188,7 +189,7 @@ def start(
     if config_file is not None:
         config_data = load_config(config_file)
     else:
-        config_data = {}  # TODO: Change this to a default config
+        config_data = DEFAULT_CONFIG
 
     # Check if network and data_folder are set, which are required
 
@@ -213,6 +214,8 @@ def start(
     if seed is None:
         seed = random.randint(0, 10000000)
         logger.info(f"Randomly generated seed: {seed}")
+
+    set_seed(seed)
 
     data_set = XLDataSet.load_from_network(
         network,
