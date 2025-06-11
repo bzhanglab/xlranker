@@ -36,7 +36,7 @@ peptide_network.tsv
 
     To test the pipeline or view the input data formatting, download the example data below
 
-    [:octicons-download-16: Download example.tar.gz](#){ .md-button .md-button--secondary }
+    [:octicons-download-16: Download example.tar.gz](../downloads/example_data.tar.gz){ .md-button .md-button--secondary }
 
 
 For most users, you would want to run the full pipeline. This can be achieved by running the following command:
