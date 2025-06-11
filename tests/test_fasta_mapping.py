@@ -55,9 +55,10 @@ def test_custom_table(tmp_path):
     sequences = ["LHYTTIM", "AVAWTLGVSHS", "PLLALPPQGPPG"]
     res = mapper.map_sequences(sequences)
     assert res.peptide_to_protein["LHYTTIM"] == ["OR4F5"]
-    assert res.peptide_to_protein["AVAWTLGVSHS"] == ["OR4F16", "OR4F29"] or res[
-        "AVAWTLGVSHS"
-    ] == [
+    assert res.peptide_to_protein["AVAWTLGVSHS"] == [
+        "OR4F16",
+        "OR4F29",
+    ] or res.peptide_to_protein["AVAWTLGVSHS"] == [
         "OR4F29",
         "OR4F16",
     ]

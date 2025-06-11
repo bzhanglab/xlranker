@@ -1,25 +1,127 @@
 import logging
 import random
 import cyclopts
-from xlranker.parsimony.selection import ParsimonySelector
+from xlranker.pipeline import run_full_pipeline
+from xlranker.util import set_seed
 from xlranker.util.mapping import PeptideMapper
-import xlranker.ml.data as xlr_data
 from xlranker.lib import XLDataSet, setup_logging
-from typing import Annotated
+from xlranker.config import DEFAULT_CONFIG
+from typing import Annotated, Any
 import json
 import yaml
+import questionary
+import os
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
 
 
-def load_config(path: str) -> dict:
-    if path.endswith(".json"):
+def load_config(path: str) -> dict[str, Any]:
+    if path.lower().endswith(".json"):
         return json.load(open(path))
-    elif path.endswith(".yaml") or path.endswith(".yml"):
+    elif path.lower().endswith(".yaml") or path.lower().endswith(".yml"):
         return yaml.safe_load(open(path))
     else:
         raise ValueError("Unsupported config file format.")
+
+
+def save_config(path: str, config_obj: dict[str, Any]) -> None:
+    path = path.lower()
+    if path.endswith(".json"):
+        return json.dump(config_obj, open(path, "w"))
+    elif path.endswith(".yaml") or path.endswith(".yml"):
+        return yaml.dump(config_obj, open(path, "w"))
+    raise ValueError("Unsupported config file format.")
+
+
+def is_folder(path_to_validate: str) -> bool | str:
+    return (
+        True
+        if not os.path.isfile(path_to_validate)
+        else "Input a directory, not an existing file."
+    )
+
+
+@app.command()
+def init(
+    default: bool = False,
+    output: Annotated[str | None, cyclopts.Parameter(name=["--output", "-o"])] = None,
+) -> None:
+    """Initialize a config file. If no default flag provided, config is created through a interactive form.
+
+    Args:
+        default (bool, optional): Create a simple default config. Defaults to False.
+        output (str | None, optional): Output config file. Can either be JSON or YAML format. Defaults to None.
+
+    Raises:
+        ValueError: raises ValueError if output is not set when default is passed
+
+    """
+
+    if default:
+        if output is None:
+            raise ValueError("Output must be specified if using default!")
+        save_config(output, DEFAULT_CONFIG)
+        return
+
+    network = questionary.path(
+        "Path to your peptide sequence network:",
+    ).ask()
+    omic_data = questionary.path(
+        "Path to omic data folder:",
+        only_directories=True,
+        validate=is_folder,
+    ).ask()
+    mapping_table = questionary.select(
+        "What mapping table will you use?",
+        choices=[
+            "Custom FASTA database",
+            "TSV Table",
+            "Default: Human UNIPROT from May 2025",
+        ],
+    ).ask()
+    fasta_type = None
+    match mapping_table:
+        case "Custom FASTA database":
+            is_fasta = True
+            fasta_type = questionary.select(
+                "Type of FASTA file:", choices=["GENCODE", "UNIPROT"]
+            ).ask()
+            mapping_table_path = questionary.path(
+                "Path to fasta file:",
+                validate=lambda x: True
+                if x.lower().endswith(".fa") or x.lower().endswith(".fasta")
+                else "Please input a FASTA file (.fasta or .fa)",
+            ).ask()
+        case "TSV Table":
+            is_fasta = False
+            mapping_table_path = questionary.path("Path to TSV file:").ask()
+        case _:
+            is_fasta = True
+            mapping_table_path = None
+    if mapping_table_path is not None:
+        only_human = questionary.confirm("Is your data only human data?").ask()
+    else:
+        only_human = True
+    output_config = {
+        "network": network,
+        "data_folder": omic_data,
+        "is_fasta": is_fasta,
+        "only_human": only_human,
+    }
+    if mapping_table_path is not None:
+        output_config["mapping_table"] = mapping_table_path
+        if is_fasta:
+            output_config["fasta_type"] = fasta_type
+    output_path = questionary.path(
+        "Output file for config (JSON or YAML format):",
+        validate=lambda x: True
+        if x.lower().endswith(".json")
+        or x.lower().endswith(".yaml")
+        or x.lower().endswith(".yml")
+        else "File must end with .json, .yaml, or .yml",
+    ).ask()
+    save_config(output_path, output_config)
 
 
 @app.command()
@@ -42,44 +144,12 @@ def test_fasta(
 
 
 @app.command()
-def test(
-    verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
-):
-    setup_logging(verbose)
-    mapper = PeptideMapper()
-    print(mapper.map_sequences(["VVEPKR", "MGSGKK"]))
-
-
-@app.command()
-def test_loading():
-    df = xlr_data.load_default_ppi()
-    print(df.head())
-
-
-@app.command()
-def test_prioritization(network: str, omic_folder: str):
-    setup_logging()
-    logger.info("Loading data")
-    dataset = XLDataSet.load_from_network(network, omic_folder)
-    logging.info("Building protein data")
-    dataset.build_proteins()
-    prioritizer = ParsimonySelector(dataset)
-    logging.info("Running prioritization")
-    prioritizer.run()
-    logging.info("Saving results")
-    tsv_data = ["pair_id\tstatus\tgroup_id"]
-    for protein_pair_groups in prioritizer.protein_groups.values():
-        for protein_pair in protein_pair_groups:
-            tsv_data.append(protein_pair.to_tsv())
-    with open("output.tsv", "w") as w:
-        w.write("\n".join(tsv_data))
-
-
-@app.command()
 def start(
-    network: Annotated[str, cyclopts.Parameter(name=["--network", "-n"])],
-    data_folder: Annotated[str, cyclopts.Parameter(name=["--data-folder", "-d"])],
-    config_path: Annotated[
+    network: Annotated[str | None, cyclopts.Parameter(name=["--network", "-n"])] = None,
+    data_folder: Annotated[
+        str | None, cyclopts.Parameter(name=["--data-folder", "-d"])
+    ] = None,
+    config_file: Annotated[
         str | None, cyclopts.Parameter(name=["--config", "-c"])
     ] = None,
     seed: Annotated[int | None, cyclopts.Parameter(name=["--seed", "-s"])] = None,
@@ -103,27 +173,35 @@ def start(
     `xlranker start network.tsv omic_data_folder/ -s 42`
 
     Args:
-        network (Annotated[str, cyclopts.Parameter, optional): path to TSV file containing peptide network.
-        data_folder (Annotated[str, cyclopts.Parameter, optional): folder containing the omics data for the model prediction.
-        config_path (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, read and load options from config file. Can be in JSON or YAML format.
-        seed (Annotated[int  |  None, cyclopts.Parameter, optional): seed for machine learning pipeline. If not set, seed is randomly selected.
-        verbose (Annotated[bool, cyclopts.Parameter, optional): enable verbose logging.
-        log_file (Annotated[ str  |  None, cyclopts.Parameter, optional): if set, saves logging to path
-        mapping_table (Annotated[ str  |  None, cyclopts.Parameter, optional): path to custom mapping table for peptide sequences
-        split (Annotated[ str  |  None, cyclopts.Parameter, optional): character used for splitting the FASTA file header
-        gs_index (Annotated[int  |  None, cyclopts.Parameter, optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
-        is_fasta (Annotated[bool, cyclopts.Parameter, optional): Enable if mapping table is a FASTA file.
+        network (Annotated[str, cyclopts.Parameter], optional): path to TSV file containing peptide network.
+        data_folder (Annotated[str, cyclopts.Parameter], optional): folder containing the omics data for the model prediction.
+        config_file (Annotated[ str  |  None, cyclopts.Parameter], optional): if set, read and load options from config file. Can be in JSON or YAML format.
+        seed (Annotated[int  |  None, cyclopts.Parameter], optional): seed for machine learning pipeline. If not set, seed is randomly selected.
+        verbose (Annotated[bool, cyclopts.Parameter], optional): enable verbose logging.
+        log_file (Annotated[ str  |  None, cyclopts.Parameter], optional): if set, saves logging to path
+        mapping_table (Annotated[ str  |  None, cyclopts.Parameter], optional): path to custom mapping table for peptide sequences
+        split (Annotated[ str  |  None, cyclopts.Parameter], optional): character used for splitting the FASTA file header
+        gs_index (Annotated[int  |  None, cyclopts.Parameter], optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
+        is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
 
     """
 
-    if config_path is not None:
-        config_data = load_config(config_path)
+    if config_file is not None:
+        config_data = load_config(config_file)
     else:
-        config_data = {}
+        config_data = DEFAULT_CONFIG
+
+    # Check if network and data_folder are set, which are required
 
     # Use CLI arg if provided, otherwise fall back to config
-    # network = network or config_data.get("network", "network.tsv")
-    # data_folder = data_folder or config_data.get("data_folder", "omic_data")
+    network = network if network is not None else config_data.get("network", None)
+    data_folder = (
+        data_folder if data_folder is not None else config_data.get("data_folder", None)
+    )
+    if network is None:
+        raise ValueError("network not provided in command or in config!")
+    if data_folder is None:
+        raise ValueError("data_folder not provided in command or in config!")
     seed = seed if seed is not None else config_data.get("seed", None)
     verbose = verbose or config_data.get("verbose", False)
     log_file = log_file or config_data.get("log_file", None)
@@ -137,7 +215,9 @@ def start(
         seed = random.randint(0, 10000000)
         logger.info(f"Randomly generated seed: {seed}")
 
-    _data_set = XLDataSet.load_from_network(
+    set_seed(seed)
+
+    data_set = XLDataSet.load_from_network(
         network,
         data_folder,
         custom_mapping_path=mapping_table,
@@ -145,6 +225,9 @@ def start(
         split_by=split,
         split_index=gs_index,
     )
+
+    # run the full pipeline
+    _ = run_full_pipeline(data_set)
 
 
 def cli():

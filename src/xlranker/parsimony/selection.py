@@ -90,7 +90,8 @@ class ParsimonySelector:
                 n_conn = protein_pair_groups[conn_id][0].overlap(peptide_names)
                 if max_connections < n_conn:
                     max_connections = n_conn
-                    best_pairs = set(conn_id)
+                    best_pairs = set()
+                    best_pairs.add(conn_id)
                 elif max_connections == n_conn:
                     best_pairs.add(conn_id)
             selected_index = random.randint(

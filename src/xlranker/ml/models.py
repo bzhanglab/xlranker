@@ -4,6 +4,7 @@
     - All representative pairs from parsimonious selection
 2. Generate Negative Dataset
     - Random protein pairs that are not candidate pairs
+
 """
 
 import logging
@@ -19,7 +20,7 @@ from sklearn.model_selection import StratifiedKFold
 from xlranker.bio.pairs import PrioritizationStatus, ProteinPair
 from xlranker.config import config
 from xlranker.lib import XLDataSet
-from xlranker.ml.data import load_default_ppi, load_gmts
+from xlranker.data import load_default_ppi, load_gmts
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,18 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 }
 
 
-def in_same_set(a, b, sets: list[list[set[str]]]) -> bool:
+def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
+    """Check if a and b are located in the same set in any of the exclusive sets provided
+
+    Args:
+        a (str): entity a
+        b (str): entity b
+        sets (list[list[set[str]]]): list of gmts, which are lists of sets
+
+    Returns:
+        bool: True if a and b both located in at least one set
+
+    """
     for gmt in sets:
         for gene_set in gmt:
             if a in gene_set and b in gene_set:
@@ -55,6 +67,14 @@ class ModelConfig:
         folds: int = 5,
         xgb_params: dict[str, Any] = DEFAULT_XGB_PARAMS,
     ):
+        """Config for the prioritization model
+
+        Args:
+            runs (int, optional): the number of model runs. Defaults to 10.
+            folds (int, optional): number of folds per run. Defaults to 5.
+            xgb_params (dict[str, Any], optional): dictionary of parameters for the XGBoost model. Defaults to DEFAULT_XGB_PARAMS.
+
+        """
         self.runs = runs
         self.folds = folds
         self.xgb_params = xgb_params
@@ -63,6 +83,7 @@ class ModelConfig:
         attrs = {
             "runs": (int, lambda x: x >= 1),
             "folds": (int, lambda x: x >= 1),
+            "xgb_params": (dict, None),
         }
         for attr, (typ, cond) in attrs.items():
             value = getattr(self, attr, None)
@@ -71,10 +92,6 @@ class ModelConfig:
             if cond and not cond(value):
                 return False
         return True
-
-    def as_dict(self) -> dict[str, Any]:
-        # Utility to get all config as a dict
-        return {k: getattr(self, k) for k in self.__dict__}
 
 
 class PrioritizationModel:
@@ -86,6 +103,7 @@ class PrioritizationModel:
     n_features: int
     gmts: list[list[set[str]]]
     ppi_db: pl.DataFrame
+    default_ppi: bool
 
     def __init__(
         self,
@@ -94,6 +112,15 @@ class PrioritizationModel:
         gmt_list: list[list[set[str]]] | None = None,
         ppi_db: pl.DataFrame | None = None,
     ):
+        """Initialize PrioritizationModel
+
+        Args:
+            dataset (XLDataSet): XL data set that needs prioritization. Requires Parsimony Analysis to have been performed.
+            model_config (ModelConfig | None, optional): Config for the model. If None use defaults. Defaults to None.
+            gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
+            ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
+
+        """
         self.dataset = dataset
         self.positives = []
         self.to_predict = []
@@ -115,6 +142,7 @@ class PrioritizationModel:
             gmt_list = load_gmts()
         self.gmts = gmt_list
         if ppi_db is None:
+            self.default_ppi = True
             ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
 
@@ -131,6 +159,9 @@ class PrioritizationModel:
             float: Return float with 1.0 meaning there is a known ppi in the db
 
         """
+        if config.human_only:  # Capitalize to ensure consistent case
+            a = a.upper()
+            b = b.upper()
         if a > b:
             c = a
             a = b
@@ -147,8 +178,8 @@ class PrioritizationModel:
             n (int): the number of pairs to generate
 
         Raises:
-            ValueError: Raised if the value of n is larger than what is possible
-                        and if config.fragile is `True`.
+            ValueError: Raised if the value of `n` is larger than what is possible
+                        and if config.fragile is True
 
         Returns:
             list[ProteinPair]: list of negative protein pairs
@@ -187,13 +218,27 @@ class PrioritizationModel:
     def construct_df_from_pairs(
         self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
     ) -> pl.DataFrame:
+        """Construct a DataFrame from the list of Protein Pairs
+
+        Args:
+            pair_list (list[ProteinPair]): list of protein pairs to get the dataframe from
+            has_label (bool): if True, adds label column to dataframe
+            label_value (float, optional): value assigned to the label column. Defaults to 0.0 (negative).
+
+        Returns:
+            pl.DataFrame: DataFrame object with the first column being the pair ID, following columns with abundances for the proteins. If `has_label` is true, last column is label with a value of `label_value`.
+
+        """
         df_array: list[dict[str, str | int | float | None]] = []
         is_first = True
         headers = ["pair"]  # headers in the correct order
         schema: dict[str, pl.DataType] = {"pair": pl.String()}
         for pair in pair_list:
             pair_dict = pair.abundance_dict()
-            pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+            if (
+                config.human_only or not self.default_ppi
+            ):  # Can only add if only human or if using custom PPI DB
+                pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
             if has_label:
                 pair_dict["label"] = label_value
             df_array.append(pair_dict)
@@ -227,6 +272,8 @@ class PrioritizationModel:
         return pl.concat([positive_df, negative_df])
 
     def run_model(self):
+        """Run the model and get predictions for all protein pairs."""
+
         random_seed = random.random() * 100000
 
         predict_df = self.construct_predict_df()
@@ -305,6 +352,7 @@ class PrioritizationModel:
 
         predict_df = predict_df.with_columns(pl.Series("prediction", mean_predictions))
         predict_df.write_csv("model_output.tsv", separator="\t")
+
         # Print summary statistics
         logger.info(
             f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
@@ -338,11 +386,14 @@ class PrioritizationModel:
                 best_score[conn_id] = pair.score
             elif best_score[conn_id] < pair.score:
                 best_score[conn_id] = pair.score
+        selected: set[str] = set()
         for pair in self.to_predict:
             if (
                 pair.score == best_score[pair.connectivity_id()]
-            ):  # FIX: This allows for multiple pairs to be accepted
+                and pair.connectivity_id() not in selected
+            ):  # FIXME: This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
+                selected.add(pair.connectivity_id())
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED
         return self.get_selected()

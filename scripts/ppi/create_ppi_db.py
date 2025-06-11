@@ -11,6 +11,15 @@ df = pl.read_csv(
     new_columns=["P1", "P2"],
 )
 
+# consistent case
+
+df = df.with_columns(
+    [
+        pl.col("P1").str.to_uppercase().alias("P1"),
+        pl.col("P2").str.to_uppercase().alias("P2"),
+    ]
+)
+
 # make sure first column is lower value
 df = df.with_columns(
     [
