@@ -1,1 +1,0 @@
-::: xlranker.bio.pairs.ProteinPair

@@ -4,6 +4,7 @@ class Protein:
     Attributes:
         name (str): Name of the protein
         abundance (float | None): Abundance value of the protein
+
     """
 
     name: str
@@ -44,6 +45,7 @@ def sort_proteins(a: Protein, b: Protein) -> tuple[Protein, Protein]:
 
     Returns:
         tuple[Protein, Protein]: protein tuple where the first protein is the higher abundant protein
+
     """
     if a.abundance() is None:
         if b.abundance() is None:

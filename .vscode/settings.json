@@ -10,5 +10,8 @@
         "prioritizer",
         "UNIPROT",
         "xlranker"
-    ]
+    ],
+    "todo-tree.tree.showBadges": true,
+    "todo-tree.tree.disableCompactFolders": false,
+    "todo-tree.tree.showCountsInTree": false
 }

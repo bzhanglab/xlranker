@@ -391,7 +391,7 @@ class PrioritizationModel:
             if (
                 pair.score == best_score[pair.connectivity_id()]
                 and pair.connectivity_id() not in selected
-            ):  # FIXME: This allows for multiple pairs to be accepted
+            ):  # FIXME This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
                 selected.add(pair.connectivity_id())
             else:
