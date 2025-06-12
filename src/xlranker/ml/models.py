@@ -292,9 +292,7 @@ class PrioritizationModel:
             logger.info(f"Model on run {run + 1}/{self.model_config.runs}")
             np.random.seed(int(random_seed + run))
             train_df = self.construct_training_df(
-                self.get_negatives(
-                    len(self.positives)
-                )  # TODO: Make number of negatives a parameter
+                self.get_negatives(len(self.positives))
             )
 
             X = train_df.drop(["pair", "label"]).to_numpy()
