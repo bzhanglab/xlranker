@@ -17,7 +17,8 @@ import xgboost
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
-from xlranker.bio.pairs import PrioritizationStatus, ProteinPair
+from xlranker.bio.pairs import ProteinPair
+from xlranker.bio.pairs import PrioritizationStatus
 from xlranker.config import config
 from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
@@ -355,9 +356,7 @@ class PrioritizationModel:
         logger.info(
             f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
         )
-        logger.info(
-            "Results saved to: ."
-        )  # TODO: Have output directory be configurable
+        logger.info("Results saved to: .")  # TODO Have output directory be configurable
 
     def get_selected(self) -> list[ProteinPair]:
         """Get all `ProteinPair`s that were accepted

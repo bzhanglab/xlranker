@@ -1,7 +1,30 @@
-from xlranker.bio import PrioritizationStatus
+from enum import Enum, auto
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
 from xlranker.util import get_pair_id, safe_a_greater_or_equal_to_b
+
+
+class PrioritizationStatus(Enum):
+    """Prioritization status for a protein pair"""
+
+    NOT_ANALYZED = auto()
+    "No analysis performed yet"
+
+    # Parsimony-based statuses
+
+    PARSIMONY_NOT_SELECTED = auto()
+    "Another entity was selected in group or cannot be selected"
+    PARSIMONY_SELECTED = auto()
+    "Selected as the representative for group."
+    PARSIMONY_AMBIGUOUS = auto()
+    "No clear candidate from parsimony analysis. Needs ML model."
+
+    # Machine Learning-based statuses
+
+    ML_NOT_SELECTED = auto()
+    "Other candidate had higher score in group"
+    ML_SELECTED = auto()
+    "Highest ML score in group"
 
 
 class GroupedEntity:

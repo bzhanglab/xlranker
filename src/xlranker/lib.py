@@ -6,8 +6,8 @@ from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import PeptideMapper
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from .bio import PrioritizationStatus, Protein
-from .bio.pairs import PeptidePair
+from .bio import Protein
+from .bio.pairs import PeptidePair, PrioritizationStatus
 from .bio.pairs import ProteinPair
 
 logger = logging.getLogger(__name__)
