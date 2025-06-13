@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 def read_data_matrix(
     data_path: str, additional_null_values: list[str] = []
 ) -> pl.DataFrame:
-    """reads data matrix into a Polars DataFrame
+    """Reads data matrix into a Polars DataFrame with samples/measurements being columns.
 
     Format:
-     - Has Header (any names allowed)
-     - null/missing values: "", "NA". More can be added.
+     - Has header (any names allowed).
+     - First column must be the protein/gene followed by measurements.
+     - Null/missing values: "", "NA". More can be added.
 
     Args:
         data_path (str): path to the data matrix
@@ -40,7 +41,7 @@ def base_name(file_path: Path | str) -> str:
 def read_data_folder(
     folder_path: str, additional_null_values=[]
 ) -> dict[str, pl.DataFrame]:
-    """reads all TSV files in a folder
+    """Reads all TSV files in a folder
 
     Args:
         folder_path (str): path of the folder that contains files ending in .tsv
@@ -73,6 +74,7 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
 
     Returns:
         list[PeptideGroup]: list of PeptideGroup representing the network
+
     """
     try:
         with open(network_path) as r:
@@ -112,10 +114,11 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
 
 
 def read_mapping_table_file(file_path: str) -> dict[str, list[str]]:
-    """read mapping file where the first column is the peptide sequence and the following columns are proteins that map to that sequence
+    """Read mapping file where the first column is the peptide sequence and the following columns are proteins that map to that sequence.
 
     Args:
         file_path (str): path to the tab-separated mapping table
+
     """
     try:
         with open(file_path, mode="r") as r:

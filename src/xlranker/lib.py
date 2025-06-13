@@ -129,7 +129,7 @@ class XLDataSet:
             split_index (int | None, optional): _description_. Defaults to 3.
 
         Returns:
-            XLDataSet: _description_
+            XLDataSet: XLDataSet with peptide pairs and omics data loaded
         """
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
