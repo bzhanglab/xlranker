@@ -4,6 +4,14 @@ from typing import override
 
 @dataclass
 class Peptide:
+    """Peptide sequence object
+
+    Attributes:
+        sequence (str): Peptide sequence from peptide network
+        mapped_proteins (list[str]): list of all proteins mapping to sequence
+
+    """
+
     sequence: str
     mapped_proteins: list[str]
 
