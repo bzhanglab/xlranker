@@ -20,6 +20,7 @@ class Config:
         fragile (bool): Default to False. If True, throw error on any warning
         detailed (bool): Default to False. If True, perform more analysis about dataset
         reduce_fasta (bool): Default to True. If True, when a gene has multiple sequences, only accept longest sequence as the canonical sequence.
+        output (str): Default to "xlranker_output/". Directory where output files are saved.
 
     """
 
@@ -27,12 +28,20 @@ class Config:
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
+    output: str = "xlranker_output/"  # output directory
 
 
 config = Config()
 
 
 def set_config_from_dict(config_dict: dict[str, Any]) -> None:
+    """set config from a dict object
+
+    Args:
+        config_dict (dict[str, Any]): dictionary with config settings
+
+    """
+
     for key in config_dict:
         setattr(config, key, config_dict[key])
 
@@ -42,6 +51,7 @@ def load_from_json(json_file: str) -> None:
 
     Args:
         json_file (str): path to JSON file
+
     """
     with open(json_file) as r:
         json_obj = json.load(r)

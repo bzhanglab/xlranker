@@ -1,4 +1,4 @@
-from xlranker.bio import PrioritizationStatus
+from xlranker.bio.pairs import PrioritizationStatus
 from xlranker.bio.pairs import PeptidePair
 from xlranker.bio.pairs import ProteinPair
 from xlranker.lib import XLDataSet

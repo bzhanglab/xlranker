@@ -9,7 +9,9 @@ from xlranker.util import get_pair_id
 logger = logging.getLogger(__name__)
 
 
-def read_data_matrix(data_path: str, additional_null_values=[]) -> pl.DataFrame:
+def read_data_matrix(
+    data_path: str, additional_null_values: list[str] = []
+) -> pl.DataFrame:
     """reads data matrix into a Polars DataFrame
 
     Format:
@@ -22,6 +24,7 @@ def read_data_matrix(data_path: str, additional_null_values=[]) -> pl.DataFrame:
 
     Returns:
         pl.DataFrame: Polars DataFrame of the input data
+
     """
     null_values = ["", "NA"]
     null_values.extend(additional_null_values)
@@ -30,7 +33,7 @@ def read_data_matrix(data_path: str, additional_null_values=[]) -> pl.DataFrame:
     )
 
 
-def base_name(file_path) -> str:
+def base_name(file_path: Path | str) -> str:
     return Path(file_path).stem
 
 
@@ -48,6 +51,7 @@ def read_data_folder(
 
     Returns:
         list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read by the read_data_matrix function
+
     """
     file_glob = Path(folder_path).glob("*.tsv")
     file_list: list[Path] = list(file_glob)

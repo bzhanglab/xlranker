@@ -17,7 +17,8 @@ import xgboost
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
-from xlranker.bio.pairs import PrioritizationStatus, ProteinPair
+from xlranker.bio.pairs import ProteinPair
+from xlranker.bio.pairs import PrioritizationStatus
 from xlranker.config import config
 from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
@@ -292,9 +293,7 @@ class PrioritizationModel:
             logger.info(f"Model on run {run + 1}/{self.model_config.runs}")
             np.random.seed(int(random_seed + run))
             train_df = self.construct_training_df(
-                self.get_negatives(
-                    len(self.positives)
-                )  # TODO: Make number of negatives a parameter
+                self.get_negatives(len(self.positives))
             )
 
             X = train_df.drop(["pair", "label"]).to_numpy()
@@ -357,9 +356,7 @@ class PrioritizationModel:
         logger.info(
             f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
         )
-        logger.info(
-            "Results saved to: ."
-        )  # TODO: Have output directory be configurable
+        logger.info("Results saved to: .")  # TODO Have output directory be configurable
 
     def get_selected(self) -> list[ProteinPair]:
         """Get all `ProteinPair`s that were accepted
@@ -391,7 +388,7 @@ class PrioritizationModel:
             if (
                 pair.score == best_score[pair.connectivity_id()]
                 and pair.connectivity_id() not in selected
-            ):  # FIXME: This allows for multiple pairs to be accepted
+            ):  # FIXME This allows for multiple pairs to be accepted
                 pair.status = PrioritizationStatus.ML_SELECTED
                 selected.add(pair.connectivity_id())
             else:
