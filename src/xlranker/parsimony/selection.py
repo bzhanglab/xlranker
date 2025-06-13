@@ -76,7 +76,9 @@ class ParsimonySelector:
             self.protein_groups[group_id] = []
         self.protein_groups[group_id].append(protein_pair)
         for peptide_pair_id in protein_pair.connections:
-            self.assign_peptide_pair(self.data_set.network[peptide_pair_id], group_id)
+            self.assign_peptide_pair(
+                self.data_set.peptide_pairs[peptide_pair_id], group_id
+            )
 
     def assign_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
         if peptide_pair.in_group:
@@ -96,7 +98,7 @@ class ParsimonySelector:
 
     def create_groups(self) -> None:
         next_group_id = 1
-        for pair in self.data_set.network.values():
+        for pair in self.data_set.peptide_pairs.values():
             if pair.in_group or len(pair.connections) == 0:
                 continue
             self.assign_peptide_pair(pair, next_group_id)

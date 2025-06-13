@@ -52,7 +52,7 @@ class XLDataSet:
         peptides (dict[str, Peptide]): dictionary of Peptide objects
     """
 
-    network: dict[str, PeptidePair]
+    peptide_pairs: dict[str, PeptidePair]
     omic_data: dict[str, pl.DataFrame]
     proteins: dict[str, Protein]
     protein_pairs: dict[str, ProteinPair]
@@ -60,7 +60,7 @@ class XLDataSet:
     def __init__(
         self, network: dict[str, PeptidePair], omic_data: dict[str, pl.DataFrame]
     ):
-        self.network = network
+        self.peptide_pairs = network
         self.omic_data = omic_data
         self.protein_pairs = {}
         self.proteins = {}
@@ -72,7 +72,7 @@ class XLDataSet:
             remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
         """
         all_proteins: set[str] = set()
-        for p_peptide_pairs in self.network.values():
+        for p_peptide_pairs in self.peptide_pairs.values():
             all_proteins = all_proteins.union(set(p_peptide_pairs.a.mapped_proteins))
             all_proteins = all_proteins.union(set(p_peptide_pairs.b.mapped_proteins))
         for protein in all_proteins:
@@ -82,7 +82,7 @@ class XLDataSet:
                     self.omic_data[omic_file], protein
                 )
             self.proteins[protein] = Protein(protein, abundances)
-        for peptide_pair in self.network.values():
+        for peptide_pair in self.peptide_pairs.values():
             peptide_pair_id = get_pair_id(peptide_pair.a, peptide_pair.b)
             for protein_a_name in peptide_pair.a.mapped_proteins:
                 protein_a = self.proteins[protein_a_name]
