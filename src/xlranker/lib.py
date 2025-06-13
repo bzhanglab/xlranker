@@ -3,7 +3,7 @@ import logging
 import polars as pl
 
 from xlranker.util import get_abundance, get_pair_id
-from xlranker.util.mapping import PeptideMapper
+from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta_type
 from xlranker.util.readers import read_data_folder, read_network_file
 
 from .bio import Protein
@@ -50,6 +50,7 @@ class XLDataSet:
 
     Attributes:
         peptides (dict[str, Peptide]): dictionary of Peptide objects
+
     """
 
     peptide_pairs: dict[str, PeptidePair]
@@ -66,10 +67,11 @@ class XLDataSet:
         self.proteins = {}
 
     def build_proteins(self, remove_intra: bool = True) -> None:
-        """build protein pairs of the XLDataSet network
+        """Build protein pairs of the XLDataSet network
 
         Args:
             remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
+
         """
         all_proteins: set[str] = set()
         for p_peptide_pairs in self.peptide_pairs.values():
@@ -113,7 +115,22 @@ class XLDataSet:
         is_fasta: bool = True,
         split_by: str | None = "|",
         split_index: int | None = 3,
+        fasta_type: str | FastaType = "UNIPROT",
     ) -> "XLDataSet":
+        """Create a XLDataSet object from a network file.
+
+        Args:
+            network_path (str): path to the peptide pairs
+            omics_data_folder (str): folder containing the omic data
+            custom_mapper (PeptideMapper | None, optional): PeptideMapper object that should be used for mapping. If None, create peptide mapper using other parameters. Defaults to None.
+            custom_mapping_path (str | None, optional): _description_. Defaults to None.
+            is_fasta (bool, optional): _description_. Defaults to True.
+            split_by (str | None, optional): _description_. Defaults to "|".
+            split_index (int | None, optional): _description_. Defaults to 3.
+
+        Returns:
+            XLDataSet: _description_
+        """
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
         network = read_network_file(network_path)
@@ -122,12 +139,15 @@ class XLDataSet:
         for group in network.values():
             peptide_sequences.add(group.a.sequence)
             peptide_sequences.add(group.b.sequence)
+        if isinstance(fasta_type, str):
+            fasta_type = convert_str_to_fasta_type(fasta_type)
         if custom_mapper is None:
             mapper = PeptideMapper(
                 mapping_table_path=custom_mapping_path,
                 split_by=split_by,
                 split_index=split_index,
                 is_fasta=is_fasta,
+                fasta_type=fasta_type,
             )
         else:
             mapper = custom_mapper

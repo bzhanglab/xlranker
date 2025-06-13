@@ -104,6 +104,17 @@ def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs)
             return extract_gene_symbol_gencode(fasta_description, **kwargs).upper()
 
 
+def convert_str_to_fasta_type(possible_type: str) -> FastaType:
+    possible_type = possible_type.upper()
+    match possible_type:
+        case "UNIPROT":
+            return FastaType.UNIPROT
+        case "GENCODE":
+            return FastaType.GENCODE
+        case _:
+            return FastaType.UNIPROT
+
+
 class PeptideMapper:
     """Peptide mapper class.
 
