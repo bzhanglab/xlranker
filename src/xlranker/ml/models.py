@@ -105,6 +105,7 @@ class PrioritizationModel:
     gmts: list[list[set[str]]]
     ppi_db: pl.DataFrame
     default_ppi: bool
+    xgboost_model: xgboost.XGBClassifier
 
     def __init__(
         self,
@@ -394,3 +395,6 @@ class PrioritizationModel:
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED
         return self.get_selected()
+
+    def save_model(self, file_path: str) -> None:
+        self.xgboost_model.save_model(file_path)
