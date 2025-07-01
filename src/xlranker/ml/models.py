@@ -385,7 +385,10 @@ class PrioritizationModel:
 
         """
         return [
-            p for p in self.to_predict if p.status == PrioritizationStatus.ML_SELECTED
+            p
+            for p in self.to_predict
+            if p.status == PrioritizationStatus.ML_PRIMARY_SELECTED
+            or p.status == PrioritizationStatus.ML_SECONDARY_SELECTED
         ]
 
     def get_selections(self) -> list[ProteinPair]:
@@ -413,7 +416,7 @@ class PrioritizationModel:
                 pair.score == best_score[pair.connectivity_id()]
                 and pair.connectivity_id() not in selected
             ):
-                pair.status = PrioritizationStatus.ML_SELECTED
+                pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
                 selected.add(pair.connectivity_id())
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED

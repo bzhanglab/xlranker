@@ -23,8 +23,10 @@ class PrioritizationStatus(Enum):
 
     ML_NOT_SELECTED = auto()
     "Other candidate had higher score in group"
-    ML_SELECTED = auto()
-    "Highest ML score in group"
+    ML_PRIMARY_SELECTED = auto()
+    "Highest ML score in group or primary selection"
+    ML_SECONDARY_SELECTED = auto()
+    "High confidence ML score in group or secondary selection"
 
 
 class GroupedEntity:
