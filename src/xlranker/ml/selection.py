@@ -90,11 +90,11 @@ class ThresholdSelector(PairSelector):
                 elif (
                     pair.pair_id < best_pair[pair.connectivity_id()].pair_id
                 ):  # alphabetically sort
-                    best_pair[
-                        pair.connectivity_id()
-                    ].status = (
+                    best_pair[pair.connectivity_id()].status = (
                         PrioritizationStatus.ML_SECONDARY_SELECTED
-                    )  # replace previous best, but keep as secondary
+                        if pair.score >= self.threshold
+                        else PrioritizationStatus.ML_NOT_SELECTED
+                    )  # replace previous best, but keep as secondary if above threshold
                     pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
                     best_pair[pair.connectivity_id()] = pair
             elif pair.score >= self.threshold:  # select if above threshold

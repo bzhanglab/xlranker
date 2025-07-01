@@ -24,6 +24,7 @@ from xlranker.bio.pairs import PrioritizationStatus
 from xlranker.config import config
 from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
+from xlranker.ml.selection import BestSelector, PairSelector
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,7 @@ class PrioritizationModel:
     ppi_db: pl.DataFrame
     default_ppi: bool
     xgboost_model: xgboost.XGBClassifier
+    pair_selector: PairSelector
 
     def __init__(
         self,
@@ -115,6 +117,7 @@ class PrioritizationModel:
         model_config: ModelConfig | None = None,
         gmt_list: list[list[set[str]]] | None = None,
         ppi_db: pl.DataFrame | None = None,
+        pair_selector: PairSelector = BestSelector(with_secondary=False),
     ):
         """Initialize PrioritizationModel
 
@@ -123,7 +126,7 @@ class PrioritizationModel:
             model_config (ModelConfig | None, optional): Config for the model. If None use defaults. Defaults to None.
             gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
             ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
-
+            pair_selector (PairSelector,  optional): Pair selector
         """
         self.dataset = dataset
         self.positives = []
@@ -150,6 +153,7 @@ class PrioritizationModel:
             self.default_ppi = True
             ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
+        self.pair_selector = pair_selector
 
     def is_intra(self, a: str, b: str) -> float:
         if config.human_only:  # Capitalize to ensure consistent case
@@ -398,29 +402,7 @@ class PrioritizationModel:
             list[ProteinPair]: list of the protein pairs that were accepted
 
         """
-        best_score: dict[str, float] = {}
-        subgroups: dict[str, int] = {}
-        subgroup_id = 1
-        for pair in self.to_predict:
-            conn_id = pair.connectivity_id()
-            if conn_id not in best_score:
-                best_score[conn_id] = pair.score
-                subgroups[conn_id] = subgroup_id
-                subgroup_id += 1
-            elif best_score[conn_id] < pair.score:
-                best_score[conn_id] = pair.score
-        selected: set[str] = set()
-
-        for pair in self.to_predict:
-            if (
-                pair.score == best_score[pair.connectivity_id()]
-                and pair.connectivity_id() not in selected
-            ):
-                pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
-                selected.add(pair.connectivity_id())
-            else:
-                pair.status = PrioritizationStatus.ML_NOT_SELECTED
-            pair.set_subgroup(subgroups[pair.connectivity_id()])
+        self.pair_selector.process(self.to_predict)
         return self.get_selected()
 
     def save_model(self, file_path: str) -> None:
