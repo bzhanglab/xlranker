@@ -1,6 +1,4 @@
-from xlranker.bio.pairs import PrioritizationStatus
-from xlranker.bio.pairs import PeptidePair
-from xlranker.bio.pairs import ProteinPair
+from xlranker.bio.pairs import ProteinPair, PeptidePair, PrioritizationStatus
 from xlranker.lib import XLDataSet
 import logging
 import random
@@ -10,6 +8,36 @@ from dataclasses import dataclass
 from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
+
+
+def select_random(data_set: XLDataSet) -> None:
+    """Resolve ambiguous groups by selected a random pair.
+
+    This is normally done by the machine learning model. However, if training data is not available, this function to resolve the remaining ambiguity.
+
+    Args:
+        data_set (XLDataSet): data set to resolve ambiguity
+
+    """
+    ambiguity: dict[str, list[ProteinPair]] = {}
+    for pair in data_set.protein_pairs.values():
+        if pair.status != PrioritizationStatus.PARSIMONY_AMBIGUOUS:
+            continue  # No ambiguity
+        conn_id = pair.connectivity_id()
+        if conn_id not in ambiguity:
+            ambiguity[conn_id] = []
+        ambiguity[conn_id].append(pair)
+    for conn_id in ambiguity:
+        selected_location = random.randrange(len(ambiguity[conn_id]))
+        for i in range(len(ambiguity[conn_id])):
+            if selected_location == i:
+                ambiguity[conn_id][i].set_status(
+                    PrioritizationStatus.PARSIMONY_SELECTED
+                )
+            else:
+                ambiguity[conn_id][i].set_status(
+                    PrioritizationStatus.PARSIMONY_NOT_SELECTED
+                )
 
 
 @dataclass
@@ -25,6 +53,11 @@ class ParsimonySelector:
     can_prioritize: bool
 
     def __init__(self, data_set: XLDataSet):
+        """Initialize the ParsimonySelector object
+
+        Args:
+            data_set (XLDataSet): cross-linking dataset
+        """
         self.data_set = data_set
         self.protein_groups = {}
         self.peptide_groups = {}
@@ -43,7 +76,9 @@ class ParsimonySelector:
             self.protein_groups[group_id] = []
         self.protein_groups[group_id].append(protein_pair)
         for peptide_pair_id in protein_pair.connections:
-            self.assign_peptide_pair(self.data_set.network[peptide_pair_id], group_id)
+            self.assign_peptide_pair(
+                self.data_set.peptide_pairs[peptide_pair_id], group_id
+            )
 
     def assign_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
         if peptide_pair.in_group:
@@ -63,7 +98,7 @@ class ParsimonySelector:
 
     def create_groups(self) -> None:
         next_group_id = 1
-        for pair in self.data_set.network.values():
+        for pair in self.data_set.peptide_pairs.values():
             if pair.in_group or len(pair.connections) == 0:
                 continue
             self.assign_peptide_pair(pair, next_group_id)
@@ -110,7 +145,7 @@ class ParsimonySelector:
             for protein_pair in pair_group:
                 if (
                     protein_pair.status == PrioritizationStatus.NOT_ANALYZED
-                ):  # if not analyzed then pair is no selected
+                ):  # if not analyzed then pair is not selected
                     protein_pair.set_status(PrioritizationStatus.PARSIMONY_NOT_SELECTED)
 
     def prioritize(self) -> None:

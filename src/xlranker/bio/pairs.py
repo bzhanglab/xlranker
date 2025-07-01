@@ -29,6 +29,7 @@ class PrioritizationStatus(Enum):
 
 class GroupedEntity:
     group_id: int
+    subgroup_id: int
     in_group: bool
     status: PrioritizationStatus
     connections: set[str]
@@ -36,12 +37,19 @@ class GroupedEntity:
     def __init__(self) -> None:
         self.in_group = False
         self.group_id = -1
+        self.subgroup_id = 0
         self.status = PrioritizationStatus.NOT_ANALYZED
         self.connections = set()
 
     def set_group(self, group_id: int) -> None:
         self.in_group = True
         self.group_id = group_id
+
+    def set_subgroup(self, subgroup_id: int) -> None:
+        self.subgroup_id = subgroup_id
+
+    def get_group_string(self) -> str:
+        return f"{self.group_id}.{self.subgroup_id}"
 
     def get_group(self) -> int:
         return self.group_id
@@ -149,7 +157,7 @@ class ProteinPair(GroupedEntity):
         Returns:
             str: TSV representation of the protein pair, including id and status
         """
-        return f"{self.pair_id}\t{self.status}\t{self.get_group()}"
+        return f"{self.pair_id}\t{self.status}\t{self.get_group_string()}"
 
     def __hash__(self) -> int:
         return hash(self.pair_id)

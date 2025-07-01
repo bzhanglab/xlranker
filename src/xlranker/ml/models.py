@@ -10,6 +10,8 @@
 import logging
 import random
 from typing import Any, Container
+from pathlib import Path
+import os
 
 import numpy as np
 import polars as pl
@@ -105,6 +107,7 @@ class PrioritizationModel:
     gmts: list[list[set[str]]]
     ppi_db: pl.DataFrame
     default_ppi: bool
+    xgboost_model: xgboost.XGBClassifier
 
     def __init__(
         self,
@@ -128,6 +131,7 @@ class PrioritizationModel:
         for protein_pair in self.dataset.protein_pairs.values():
             match protein_pair.status:
                 case PrioritizationStatus.PARSIMONY_SELECTED:
+                    # if protein_pair.a.name != protein_pair.b.name:
                     self.positives.append(protein_pair)
                 case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
                     self.to_predict.append(protein_pair)
@@ -146,6 +150,14 @@ class PrioritizationModel:
             self.default_ppi = True
             ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
+
+    def is_intra(self, a: str, b: str) -> float:
+        if config.human_only:  # Capitalize to ensure consistent case
+            a = a.upper()
+            b = b.upper()
+        if a == b:
+            return 1.0
+        return 0.0
 
     def is_ppi(self, a: str, b: str) -> float:
         """Determine if protein a and protein b has a known ppi in  ppi_db.
@@ -240,6 +252,7 @@ class PrioritizationModel:
                 config.human_only or not self.default_ppi
             ):  # Can only add if only human or if using custom PPI DB
                 pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
+                # pair_dict["is_intra"] = self.is_intra(pair.a.name, pair.b.name)
             if has_label:
                 pair_dict["label"] = label_value
             df_array.append(pair_dict)
@@ -349,8 +362,14 @@ class PrioritizationModel:
         for i, protein_pair in enumerate(self.to_predict):
             protein_pair.set_score(mean_predictions[i])
 
+        os.makedirs(
+            config.output, exist_ok=True
+        )  # TODO: Have this done automatically or ask if its okay if exists.
+
         predict_df = predict_df.with_columns(pl.Series("prediction", mean_predictions))
-        predict_df.write_csv("model_output.tsv", separator="\t")
+        predict_df.write_csv(
+            str(Path(config.output).joinpath("model_output.tsv")), separator="\t"
+        )
 
         # Print summary statistics
         logger.info(
@@ -377,20 +396,29 @@ class PrioritizationModel:
 
         """
         best_score: dict[str, float] = {}
+        subgroups: dict[str, int] = {}
+        subgroup_id = 1
         for pair in self.to_predict:
             conn_id = pair.connectivity_id()
             if conn_id not in best_score:
                 best_score[conn_id] = pair.score
+                subgroups[conn_id] = subgroup_id
+                subgroup_id += 1
             elif best_score[conn_id] < pair.score:
                 best_score[conn_id] = pair.score
         selected: set[str] = set()
+
         for pair in self.to_predict:
             if (
                 pair.score == best_score[pair.connectivity_id()]
                 and pair.connectivity_id() not in selected
-            ):  # FIXME This allows for multiple pairs to be accepted
+            ):
                 pair.status = PrioritizationStatus.ML_SELECTED
                 selected.add(pair.connectivity_id())
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED
+            pair.set_subgroup(subgroups[pair.connectivity_id()])
         return self.get_selected()
+
+    def save_model(self, file_path: str) -> None:
+        self.xgboost_model.save_model(file_path)
