@@ -84,15 +84,25 @@ class XLDataSet:
                     self.omic_data[omic_file], protein
                 )
             self.proteins[protein] = Protein(protein, abundances)
-        for peptide_pair in self.peptide_pairs.values():
+        remove_pairs = []
+        for (
+            peptide_pair_key
+        ) in self.peptide_pairs.keys():  # TODO: Make this loop cleaner to read
+            peptide_pair = self.peptide_pairs[peptide_pair_key]
             peptide_pair_id = get_pair_id(peptide_pair.a, peptide_pair.b)
+            had_intra = False
             for protein_a_name in peptide_pair.a.mapped_proteins:
-                protein_a = self.proteins[protein_a_name]
                 for protein_b_name in peptide_pair.b.mapped_proteins:
-                    protein_b = self.proteins[protein_b_name]
-                    if not remove_intra or (
-                        remove_intra and protein_a_name != protein_b_name
-                    ):  # Check if is intra linkage
+                    if remove_intra and protein_a_name == protein_b_name:
+                        had_intra = True
+                        break
+            if had_intra:
+                remove_pairs.append(peptide_pair_key)
+            else:
+                for protein_a_name in peptide_pair.a.mapped_proteins:
+                    protein_a = self.proteins[protein_a_name]
+                    for protein_b_name in peptide_pair.b.mapped_proteins:
+                        protein_b = self.proteins[protein_b_name]
                         protein_pair_id = get_pair_id(protein_a, protein_b)
                         if protein_pair_id not in self.protein_pairs:
                             new_pair = ProteinPair(protein_a, protein_b)
@@ -104,6 +114,8 @@ class XLDataSet:
                                 peptide_pair_id
                             )
                             peptide_pair.add_connection(protein_pair_id)
+        for key in remove_pairs:
+            self.peptide_pairs.pop(key)
 
     @classmethod
     def load_from_network(
