@@ -134,8 +134,11 @@ class PrioritizationModel:
         for protein_pair in self.dataset.protein_pairs.values():
             match protein_pair.status:
                 case PrioritizationStatus.PARSIMONY_SELECTED:
-                    # if protein_pair.a.name != protein_pair.b.name:
-                    self.positives.append(protein_pair)
+                    if (
+                        config.intra_in_training
+                        or protein_pair.a.name != protein_pair.b.name
+                    ):
+                        self.positives.append(protein_pair)
                 case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
                     self.to_predict.append(protein_pair)
         self.existing_pairs = set(
