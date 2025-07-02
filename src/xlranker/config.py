@@ -20,6 +20,7 @@ class Config:
         fragile (bool): Default to False. If True, throw error on any warning
         detailed (bool): Default to False. If True, perform more analysis about dataset
         reduce_fasta (bool): Default to True. If True, when a gene has multiple sequences, only accept longest sequence as the canonical sequence.
+        intra_in_training (bool): Default to False. If True, intra pairs are included in the positive set for model training.
         output (str): Default to "xlranker_output/". Directory where output files are saved.
 
     """
@@ -28,6 +29,7 @@ class Config:
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
+    intra_in_training: bool = False  # allow intra in training data
     output: str = "xlranker_output/"  # output directory
 
 

@@ -2,6 +2,7 @@ import polars as pl
 import random
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein
+import numpy as np
 
 
 def set_seed(seed: int) -> None:
@@ -12,6 +13,7 @@ def set_seed(seed: int) -> None:
 
     """
     random.seed(seed)
+    np.random.seed(int(random.random() * 1000000))
 
 
 def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
