@@ -1,3 +1,40 @@
+from abc import ABC, abstractmethod
+
+
+class ProteinNameExtractor(ABC):
+    @abstractmethod
+    def __init__(self) -> None:
+        super().__init__()
+
+    @abstractmethod
+    def extract(self, isoform_name: str) -> str:
+        pass
+
+
+class NoExtractor(ProteinNameExtractor):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def extract(self, isoform_name: str) -> str:
+        return isoform_name
+
+
+class SplitExtractor(ProteinNameExtractor):
+    split_by: str
+    split_index: int
+
+    def __init__(self, split_by: str, split_index: int) -> None:
+        super().__init__()
+        self.split_by = split_by
+        self.split_index = split_index
+
+    def extract(self, isoform_name: str) -> str:
+        try:
+            return isoform_name.split(self.split_by)[self.split_index]
+        except IndexError:
+            return isoform_name
+
+
 class Protein:
     """Protein class that has the name and abundance for the protein
 
@@ -10,14 +47,17 @@ class Protein:
     name: str
     abundances: dict[str, float | None]
     main_column: str
+    protein_name: str
 
     def __init__(
         self,
         name: str,
+        protein_name: str,
         abundances: dict[str, float | None] = {},
         main_column: str | None = None,
     ):
         self.name = name
+        self.protein_name = protein_name
         self.abundances = abundances
         if main_column is None:
             self.main_column = next(iter(abundances))

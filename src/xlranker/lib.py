@@ -83,7 +83,7 @@ class XLDataSet:
                 abundances[omic_file] = get_abundance(
                     self.omic_data[omic_file], protein
                 )
-            self.proteins[protein] = Protein(protein, abundances)
+            self.proteins[protein] = Protein(protein, protein, abundances)
         remove_pairs = []
         for (
             peptide_pair_key
