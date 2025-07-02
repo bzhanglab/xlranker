@@ -74,40 +74,67 @@ class BestSelector(PairSelector):
 
 class ThresholdSelector(PairSelector):
     threshold: float
+    top_n: int | None
 
-    def __init__(self, threshold: float) -> None:
+    def __init__(self, threshold: float, top_n: int | None = None) -> None:
         super().__init__()
         self.threshold = threshold
+        self.top_n = top_n
 
     def process(self, protein_pairs: list[ProteinPair]) -> None:
         best_score = self.assign_subgroups_and_get_best(protein_pairs)
         best_pair: dict[str, ProteinPair] = {}
+        subgroups: dict[int, list[ProteinPair]] = {}
         for pair in protein_pairs:
-            if pair.score == best_score[pair.connectivity_id()]:
-                if pair.connectivity_id() not in best_pair:
+            conn_id = pair.connectivity_id()
+            if pair.score == best_score[conn_id]:
+                if conn_id not in best_pair:
                     pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
-                    best_pair[pair.connectivity_id()] = pair
-                elif (
-                    pair.pair_id < best_pair[pair.connectivity_id()].pair_id
-                ):  # alphabetically sort
-                    best_pair[pair.connectivity_id()].status = (
-                        PrioritizationStatus.ML_SECONDARY_SELECTED
-                        if pair.score >= self.threshold
-                        else PrioritizationStatus.ML_NOT_SELECTED
-                    )  # replace previous best, but keep as secondary if above threshold
+                    best_pair[conn_id] = pair
+                elif pair.pair_id < best_pair[conn_id].pair_id:  # alphabetically sort
+                    best_pair[conn_id].status = PrioritizationStatus.ML_NOT_SELECTED
                     pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
-                    best_pair[pair.connectivity_id()] = pair
-            elif pair.score >= self.threshold:  # select if above threshold
-                pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                    best_pair[conn_id] = pair
             else:
                 pair.status = PrioritizationStatus.ML_NOT_SELECTED
+        for pair in protein_pairs:
+            subgroup = pair.subgroup_id
+            conn_id = pair.connectivity_id()
+            if subgroup not in subgroups:
+                subgroups[subgroup] = []
+            if (
+                pair.score > self.threshold  # greater than threshold
+                and pair.status != PrioritizationStatus.ML_PRIMARY_SELECTED
+            ):  # Check if within
+                subgroups[subgroup].append(pair)
+        for subgroup in subgroups:
+            group_list = subgroups[subgroup]
+            if self.top_n is None:  # Select all
+                for pair in group_list:
+                    pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
+            else:
+                if len(group_list) < self.top_n:  # no need to sort
+                    for pair in group_list:
+                        pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                else:
+                    group_list.sort(
+                        key=lambda pair: (-pair.score, pair.pair_id)
+                    )  # -pair.score makes it so higher scores come first
+                    for i in range(self.top_n - 1):
+                        group_list[
+                            i
+                        ].status = PrioritizationStatus.ML_SECONDARY_SELECTED
 
 
-class WithinBestScoreSelector(PairSelector):
-    top_n: int
+class WithinSelector(PairSelector):
+    top_n: int | None
     within: float
 
-    def __init__(self, top_n: int, within: float) -> None:
+    def __init__(
+        self,
+        within: float,
+        top_n: int | None,
+    ) -> None:
         super().__init__()
         if within > 1 or within < 0:  # TODO: Decide if necessary
             raise ValueError(
@@ -149,12 +176,18 @@ class WithinBestScoreSelector(PairSelector):
                 subgroups[subgroup].append(pair)
         for subgroup in subgroups:
             group_list = subgroups[subgroup]
-            if len(group_list) <= self.top_n:  # no need to sort
+            if self.top_n is None:  # Select all
                 for pair in group_list:
                     pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
             else:
-                group_list.sort(
-                    key=lambda pair: (-pair.score, pair.pair_id)
-                )  # -pair.score makes it so higher scores come first
-                for i in range(self.top_n):
-                    group_list[i].status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                if len(group_list) < self.top_n:  # no need to sort
+                    for pair in group_list:
+                        pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                else:
+                    group_list.sort(
+                        key=lambda pair: (-pair.score, pair.pair_id)
+                    )  # -pair.score makes it so higher scores come first
+                    for i in range(self.top_n - 1):
+                        group_list[
+                            i
+                        ].status = PrioritizationStatus.ML_SECONDARY_SELECTED
