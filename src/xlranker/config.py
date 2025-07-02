@@ -9,6 +9,7 @@ DEFAULT_CONFIG = {
     "is_fasta": True,
     "fasta_type": "UNIPROT",
     "only_human": True,
+    "intra_in_training": False,
 }
 
 
