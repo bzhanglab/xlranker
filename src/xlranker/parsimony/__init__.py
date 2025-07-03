@@ -1,3 +1,3 @@
-from xlranker.parsimony.selection import ParsimonySelector
+from xlranker.parsimony.prioritize import ParsimonySelector
 
 __all__ = ["ParsimonySelector"]

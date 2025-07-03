@@ -10,10 +10,12 @@ from xlranker.util import get_pair_id
 logger = logging.getLogger(__name__)
 
 
-def select_random(data_set: XLDataSet) -> None:
+def select_random(
+    data_set: XLDataSet,
+) -> None:  # FIXME: This needs to be updated to handle the selection process
     """Resolve ambiguous groups by selected a random pair.
 
-    This is normally done by the machine learning model. However, if training data is not available, this function to resolve the remaining ambiguity.
+    This is normally done by the machine learning model. However, if training data is not available, use this function to resolve the remaining ambiguity.
 
     Args:
         data_set (XLDataSet): data set to resolve ambiguity
@@ -32,7 +34,7 @@ def select_random(data_set: XLDataSet) -> None:
         for i in range(len(ambiguity[conn_id])):
             if selected_location == i:
                 ambiguity[conn_id][i].set_status(
-                    PrioritizationStatus.PARSIMONY_SELECTED
+                    PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
                 )
             else:
                 ambiguity[conn_id][i].set_status(
@@ -135,7 +137,7 @@ class ParsimonySelector:
             best_pair_group = protein_pair_groups[list(best_pairs)[selected_index]]
             peptide_names.difference_update(best_pair_group[0].connections)
             status = (
-                PrioritizationStatus.PARSIMONY_SELECTED
+                PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
                 if len(best_pair_group) == 1
                 else PrioritizationStatus.PARSIMONY_AMBIGUOUS
             )
