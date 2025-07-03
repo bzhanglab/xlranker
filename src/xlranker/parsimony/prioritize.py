@@ -136,13 +136,36 @@ class ParsimonySelector:
             )  # select one random index to move forward
             best_pair_group = protein_pair_groups[list(best_pairs)[selected_index]]
             peptide_names.difference_update(best_pair_group[0].connections)
+            intra_pairs: list[ProteinPair] = []
+            # for pair in best_pair_group
             status = (
                 PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
                 if len(best_pair_group) == 1
                 else PrioritizationStatus.PARSIMONY_AMBIGUOUS
             )
             for pair in best_pair_group:
-                pair.set_status(status)
+                if pair.is_intra and len(best_pair_group) > 1:
+                    intra_pairs.append(pair)
+                else:
+                    pair.set_status(status)
+            if len(intra_pairs) > 0:
+                intra_pairs.sort(
+                    key=lambda pair: (
+                        -pair.a.abundance()  # type: ignore
+                        if pair.a.abundance() is not None
+                        else float("-inf"),
+                        pair.a.name,
+                    )
+                )
+                intra_pairs[0].set_status(
+                    PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+                )
+                intra_pairs[0].set_score(1.0 + 0.01 * len(intra_pairs))
+                for i in range(1, len(intra_pairs)):
+                    intra_pairs[i].set_status(
+                        PrioritizationStatus.PARSIMONY_NOT_SELECTED  # Not selected by default
+                    )
+                    intra_pairs[i].set_score(1.0 + 0.01 * (len(intra_pairs) - i))
         for pair_group in protein_pair_groups.values():
             for protein_pair in pair_group:
                 if (
