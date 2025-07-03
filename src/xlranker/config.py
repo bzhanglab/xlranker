@@ -30,7 +30,7 @@ class Config:
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
-    intra_in_training: bool = False  # allow intra in training data
+    intra_in_training: bool = False  # allow intra in training data  # TODO: Consider if should be removed as option
     output: str = "xlranker_output/"  # output directory
 
 
