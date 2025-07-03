@@ -133,7 +133,7 @@ class PrioritizationModel:
         self.to_predict = []
         for protein_pair in self.dataset.protein_pairs.values():
             match protein_pair.status:
-                case PrioritizationStatus.PARSIMONY_SELECTED:
+                case PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED:
                     if (
                         config.intra_in_training
                         or protein_pair.a.name != protein_pair.b.name

@@ -180,7 +180,8 @@ def get_final_network(data_set: XLDataSet) -> list[ProteinPair]:
         for pair in data_set.protein_pairs.values()
         if pair.status == PrioritizationStatus.ML_PRIMARY_SELECTED
         or pair.status == PrioritizationStatus.ML_SECONDARY_SELECTED
-        or pair.status == PrioritizationStatus.PARSIMONY_SELECTED
+        or pair.status == PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+        or pair.status == PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
     ]
 
 

@@ -64,8 +64,10 @@ class Protein:
         else:
             self.main_column = main_column
 
-    def __eq__(self, value):
-        return value.name == self.name
+    def __eq__(self, value) -> bool:
+        if isinstance(value, Protein):
+            return value.protein_name == self.protein_name
+        return False
 
     def __hash__(self) -> int:
         return hash(self.name)
