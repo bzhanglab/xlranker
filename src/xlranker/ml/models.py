@@ -24,7 +24,7 @@ from xlranker.bio.pairs import PrioritizationStatus
 from xlranker.config import config
 from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
-from xlranker.ml.selection import BestSelector, PairSelector
+from xlranker.selection import BestSelector, PairSelector
 
 logger = logging.getLogger(__name__)
 

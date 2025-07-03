@@ -3,6 +3,36 @@ from abc import ABC, abstractmethod
 from xlranker.bio.pairs import PrioritizationStatus, ProteinPair
 
 
+def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[ProteinPair]:
+    return [
+        pair
+        for pair in protein_pairs
+        if pair.status != PrioritizationStatus.PARSIMONY_NOT_SELECTED
+        or pair.score > 1.0
+    ]
+
+
+def assign_unselected_status(protein_pair: ProteinPair) -> None:
+    if protein_pair.score > 1.0:
+        protein_pair.set_status(PrioritizationStatus.PARSIMONY_NOT_SELECTED)
+    else:
+        protein_pair.set_status(PrioritizationStatus.ML_NOT_SELECTED)
+
+
+def assign_secondary_selected_status(protein_pair: ProteinPair) -> None:
+    if protein_pair.score > 1.0:
+        protein_pair.set_status(PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED)
+    else:
+        protein_pair.set_status(PrioritizationStatus.ML_SECONDARY_SELECTED)
+
+
+def assign_primary_selected_status(protein_pair: ProteinPair) -> None:
+    if protein_pair.score > 1.0:
+        protein_pair.set_status(PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED)
+    else:
+        protein_pair.set_status(PrioritizationStatus.ML_PRIMARY_SELECTED)
+
+
 class PairSelector(ABC):
     @abstractmethod
     def __init__(self) -> None:
@@ -20,6 +50,7 @@ class PairSelector(ABC):
         Returns:
             dict[str, float]: dict where key is the connectivity ID (str) and the values are the highest score (float)
         """
+        protein_pairs = filter_for_undecided_pairs(protein_pairs)
         best_score: dict[str, float] = {}
         subgroups: dict[str, int] = {}
         subgroup_id = 1
@@ -56,20 +87,22 @@ class BestSelector(PairSelector):
             else PrioritizationStatus.ML_NOT_SELECTED
         )  # get status for scores with best score but not alphabetically first
         for pair in protein_pairs:
-            if pair.score == best_score[pair.connectivity_id()]:
+            if (
+                pair.score == best_score[pair.connectivity_id()]
+            ):  # NOTE: Multiple pairs with best score only possible if all pairs are inter pairs
                 if pair.connectivity_id() not in best_pair:
-                    pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
+                    assign_primary_selected_status(pair)
                     best_pair[pair.connectivity_id()] = pair
                 elif (
                     pair.pair_id < best_pair[pair.connectivity_id()].pair_id
-                ):  # alphabetically sort
+                ):  # alphabetically sort, only triggered by inter pairs
                     best_pair[
                         pair.connectivity_id()
                     ].status = replaced_status  # replace previous best
-                    pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
+                    assign_primary_selected_status(pair)
                     best_pair[pair.connectivity_id()] = pair
             else:
-                pair.status = PrioritizationStatus.ML_NOT_SELECTED
+                assign_unselected_status(pair)
 
 
 class ThresholdSelector(PairSelector):
@@ -89,14 +122,17 @@ class ThresholdSelector(PairSelector):
             conn_id = pair.connectivity_id()
             if pair.score == best_score[conn_id]:
                 if conn_id not in best_pair:
-                    pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
+                    assign_primary_selected_status(pair)
+                    # pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
                     best_pair[conn_id] = pair
-                elif pair.pair_id < best_pair[conn_id].pair_id:  # alphabetically sort
+                elif (
+                    pair.pair_id < best_pair[conn_id].pair_id
+                ):  # alphabetically sort, only possible if all inter
                     best_pair[conn_id].status = PrioritizationStatus.ML_NOT_SELECTED
                     pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
                     best_pair[conn_id] = pair
             else:
-                pair.status = PrioritizationStatus.ML_NOT_SELECTED
+                assign_unselected_status(pair)
         for pair in protein_pairs:
             subgroup = pair.subgroup_id
             conn_id = pair.connectivity_id()
@@ -105,25 +141,24 @@ class ThresholdSelector(PairSelector):
             if (
                 pair.score > self.threshold  # greater than threshold
                 and pair.status != PrioritizationStatus.ML_PRIMARY_SELECTED
+                and pair.status != PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
             ):  # Check if within
                 subgroups[subgroup].append(pair)
         for subgroup in subgroups:
             group_list = subgroups[subgroup]
             if self.top_n is None:  # Select all
                 for pair in group_list:
-                    pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                    assign_secondary_selected_status(pair)
             else:
                 if len(group_list) < self.top_n:  # no need to sort
                     for pair in group_list:
-                        pair.status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                        assign_secondary_selected_status(pair)
                 else:
                     group_list.sort(
                         key=lambda pair: (-pair.score, pair.pair_id)
                     )  # -pair.score makes it so higher scores come first
                     for i in range(self.top_n - 1):
-                        group_list[
-                            i
-                        ].status = PrioritizationStatus.ML_SECONDARY_SELECTED
+                        assign_secondary_selected_status(group_list[i])
 
 
 class WithinSelector(PairSelector):

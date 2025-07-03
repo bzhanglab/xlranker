@@ -43,6 +43,7 @@ def extract_gene_symbol_uniprot(fasta_description: str) -> str:
     Returns:
         str: Gene Symbol from description. If can't be extracted, try getting UNIPROT ID.
              If all fails, return original description
+
     """
     splits = fasta_description.split(" ")
     for split in splits:
