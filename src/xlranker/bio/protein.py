@@ -89,12 +89,14 @@ def sort_proteins(a: Protein, b: Protein) -> tuple[Protein, Protein]:
         tuple[Protein, Protein]: protein tuple where the first protein is the higher abundant protein
 
     """
-    if a.abundance() is None:
-        if b.abundance() is None:
+    a_abundance = a.abundance()
+    b_abundance = b.abundance()
+    if a_abundance is None:
+        if b_abundance is None:
             return (a, b)
         return (b, a)
-    if b.abundance() is None:
+    if b_abundance is None:
         return (a, b)
-    if b.abundance() <= a.abundance():
+    if b_abundance <= a_abundance:
         return (a, b)
     return (b, a)
