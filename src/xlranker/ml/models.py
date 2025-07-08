@@ -135,7 +135,7 @@ class PrioritizationModel:
             match protein_pair.status:
                 case PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED:
                     if (
-                        config.intra_in_training
+                        config.advanced.intra_in_training
                         or protein_pair.a.name != protein_pair.b.name
                     ):
                         self.positives.append(protein_pair)
