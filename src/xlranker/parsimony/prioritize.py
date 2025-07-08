@@ -148,6 +148,8 @@ class ParsimonySelector:
                     intra_pairs.append(pair)
                 else:
                     pair.set_status(status)
+                    if len(best_pair_group) == 1:
+                        pair.set_score(1.01)
             if len(intra_pairs) > 0:
                 intra_pairs.sort(
                     key=lambda pair: (

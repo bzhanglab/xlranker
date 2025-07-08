@@ -7,8 +7,11 @@ def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[Protein
     return [
         pair
         for pair in protein_pairs
-        if pair.status != PrioritizationStatus.PARSIMONY_NOT_SELECTED
-        or pair.score > 1.0
+        if not (
+            pair.status == PrioritizationStatus.PARSIMONY_NOT_SELECTED
+            and pair.score == -1.0
+        )
+        and pair.status != PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
     ]
 
 
@@ -20,7 +23,7 @@ def assign_unselected_status(protein_pair: ProteinPair) -> None:
 
 
 def assign_secondary_selected_status(protein_pair: ProteinPair) -> None:
-    if protein_pair.score > 1.0:
+    if protein_pair.score >= 1.01:
         protein_pair.set_status(PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED)
     else:
         protein_pair.set_status(PrioritizationStatus.ML_SECONDARY_SELECTED)
@@ -50,7 +53,7 @@ class PairSelector(ABC):
         Returns:
             dict[str, float]: dict where key is the connectivity ID (str) and the values are the highest score (float)
         """
-        protein_pairs = filter_for_undecided_pairs(protein_pairs)
+        # protein_pairs = filter_for_undecided_pairs(protein_pairs)
         best_score: dict[str, float] = {}
         subgroups: dict[str, int] = {}
         subgroup_id = 1
@@ -118,6 +121,7 @@ class ThresholdSelector(PairSelector):
         best_score = self.assign_subgroups_and_get_best(protein_pairs)
         best_pair: dict[str, ProteinPair] = {}
         subgroups: dict[int, list[ProteinPair]] = {}
+        protein_pairs = filter_for_undecided_pairs(protein_pairs)
         for pair in protein_pairs:
             conn_id = pair.connectivity_id()
             if pair.score == best_score[conn_id]:
