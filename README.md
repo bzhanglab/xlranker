@@ -2,7 +2,7 @@
 <img src="docs/images/logo.svg" alt="Logo" width="80" height="80">
 <h1 style="margin-top: -1pt; margin-bottom: 0pt">XLRanker</h1>
 <!-- Badges -->
-<a target="_blank" style="margin-top: 0pt" href="https://colab.research.google.com/github/bzhanglab">
+<a target="_blank" style="margin-top: 0pt" href="https://colab.research.google.com/github/bzhanglab/xlranker/blob/master/notebooks/xlranker_example.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 </div><br>
@@ -29,4 +29,4 @@ Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) fo
 
 ## Example Notebook
 
-For a quick start, you can check out the example notebook in the `notebooks` directory or [launch a google colab notebook](https://colab.research.google.com/github/bzhanglab/xlranker/blob/main/notebooks/xlranker_example.ipynb) to see how to use the package interactively.
+For a quick start, you can check out the example notebook in the `notebooks` directory or [launch a google colab notebook](https://colab.research.google.com/github/bzhanglab/xlranker/blob/master/notebooks/xlranker_example.ipynb) to see how to use the package interactively.
