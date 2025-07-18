@@ -1,7 +1,7 @@
 [project]
 name = "xlranker"
 version = "0.1.0"
-description = "Add your description here"
+description = "PPI-XL Ranking Tool"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
