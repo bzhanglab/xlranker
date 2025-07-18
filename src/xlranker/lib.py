@@ -2,6 +2,7 @@ import sys
 import logging
 import polars as pl
 
+from xlranker.selection import BestSelector, PairSelector
 from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta_type
 from xlranker.util.readers import read_data_folder, read_network_file
@@ -83,7 +84,7 @@ class XLDataSet:
                 abundances[omic_file] = get_abundance(
                     self.omic_data[omic_file], protein
                 )
-            self.proteins[protein] = Protein(protein, abundances)
+            self.proteins[protein] = Protein(protein, protein, abundances)
         remove_pairs = []
         for (
             peptide_pair_key
@@ -174,13 +175,17 @@ class XLDataSet:
         return cls(network, omic_data)
 
 
-def get_final_network(data_set: XLDataSet) -> list[ProteinPair]:
+def get_final_network(
+    data_set: XLDataSet, pair_selector: PairSelector = BestSelector()
+) -> list[ProteinPair]:
+    pair_selector.process(list(data_set.protein_pairs.values()))
     return [
         pair
         for pair in data_set.protein_pairs.values()
         if pair.status == PrioritizationStatus.ML_PRIMARY_SELECTED
         or pair.status == PrioritizationStatus.ML_SECONDARY_SELECTED
-        or pair.status == PrioritizationStatus.PARSIMONY_SELECTED
+        or pair.status == PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+        or pair.status == PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
     ]
 
 

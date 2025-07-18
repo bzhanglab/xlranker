@@ -6,6 +6,7 @@
         "fasta",
         "gencode",
         "gmts",
+        "isoform",
         "levelname",
         "mkdocstrings",
         "omic",

@@ -9,7 +9,20 @@ DEFAULT_CONFIG = {
     "is_fasta": True,
     "fasta_type": "UNIPROT",
     "only_human": True,
+    "intra_in_training": False,
 }
+
+
+@dataclass
+class AdvancedConfig:
+    """Advanced config options for XLRanker
+
+    Attributes:
+        intra_in_training (bool): Default to False. If True, intra pairs are included in the positive set for model training. # TODO: May remove this option in future versions
+
+    """
+
+    intra_in_training: bool = False  # allow intra in training data
 
 
 @dataclass
@@ -29,8 +42,8 @@ class Config:
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
-    intra_in_training: bool = False  # allow intra in training data
     output: str = "xlranker_output/"  # output directory
+    # advanced: AdvancedConfig = AdvancedConfig()
 
 
 config = Config()

@@ -2,7 +2,7 @@
 
 from xlranker.lib import XLDataSet
 from xlranker.ml.models import PrioritizationModel
-from xlranker.parsimony.selection import ParsimonySelector, select_random
+from xlranker.parsimony.prioritize import ParsimonySelector, select_random
 
 
 def run_full_pipeline(

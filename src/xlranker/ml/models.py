@@ -24,7 +24,7 @@ from xlranker.bio.pairs import PrioritizationStatus
 from xlranker.config import config
 from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
-from xlranker.ml.selection import BestSelector, PairSelector
+from xlranker.selection import BestSelector, PairSelector
 
 logger = logging.getLogger(__name__)
 
@@ -133,9 +133,9 @@ class PrioritizationModel:
         self.to_predict = []
         for protein_pair in self.dataset.protein_pairs.values():
             match protein_pair.status:
-                case PrioritizationStatus.PARSIMONY_SELECTED:
+                case PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED:
                     if (
-                        config.intra_in_training
+                        config.advanced.intra_in_training
                         or protein_pair.a.name != protein_pair.b.name
                     ):
                         self.positives.append(protein_pair)

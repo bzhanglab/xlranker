@@ -14,8 +14,10 @@ class PrioritizationStatus(Enum):
 
     PARSIMONY_NOT_SELECTED = auto()
     "Another entity was selected in group or cannot be selected"
-    PARSIMONY_SELECTED = auto()
-    "Selected as the representative for group."
+    PARSIMONY_PRIMARY_SELECTED = auto()
+    "Selected as the primary representative for group."
+    PARSIMONY_SECONDARY_SELECTED = auto()
+    "Selected as a secondary representative for group. Only possible for intra pairs."
     PARSIMONY_AMBIGUOUS = auto()
     "No clear candidate from parsimony analysis. Needs ML model."
 
@@ -89,6 +91,7 @@ class ProteinPair(GroupedEntity):
     score: float
     is_selected: bool
     pair_id: str
+    is_intra: bool
 
     def __init__(self, protein_a: Protein, protein_b: Protein) -> None:
         """Initialize a ProteinPair object, making sure a is the higher abundant protein. Input order does not matter.
@@ -104,6 +107,7 @@ class ProteinPair(GroupedEntity):
         self.score = -1
         self.is_selected = False
         self.pair_id = get_pair_id(a, b)
+        self.is_intra = a == b
 
     def set_score(self, score: float) -> None:
         """Set the score of the protein pair.
