@@ -43,7 +43,7 @@ class Config:
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
     output: str = "xlranker_output/"  # output directory
-    advanced: AdvancedConfig = AdvancedConfig()
+    # advanced: AdvancedConfig = AdvancedConfig()
 
 
 config = Config()
