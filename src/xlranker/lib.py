@@ -69,7 +69,7 @@ class XLDataSet:
         self.proteins = {}
 
     def build_proteins(self, remove_intra: bool = True) -> None:
-        """Build protein pairs of the XLDataSet network
+        """Build protein pairs of the XLDataSet network.
 
         Args:
             remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
@@ -144,6 +144,7 @@ class XLDataSet:
 
         Returns:
             XLDataSet: XLDataSet with peptide pairs and omics data loaded
+
         """
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
