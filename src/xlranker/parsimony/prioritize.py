@@ -1,11 +1,10 @@
-from xlranker.status import PrioritizationStatus
-from xlranker.bio.pairs import ProteinPair, PeptidePair
-from xlranker.lib import XLDataSet
 import logging
 import random
-
 from dataclasses import dataclass
 
+from xlranker.bio.pairs import PeptidePair, ProteinPair
+from xlranker.lib import XLDataSet
+from xlranker.status import PrioritizationStatus, ReportStatus
 from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
@@ -151,6 +150,9 @@ class ParsimonySelector:
                     pair.set_prioritization_status(status)
                     if len(best_pair_group) == 1:
                         pair.set_score(1.01)
+                        pair.set_report_status(
+                            ReportStatus.CONSERVATIVE
+                        )  # Unambiguous pairs are reported as CONSERVATIVE
             if len(intra_pairs) > 0:
                 intra_pairs.sort(
                     key=lambda pair: (
@@ -164,10 +166,16 @@ class ParsimonySelector:
                     PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
                 )
                 intra_pairs[0].set_score(1.0 + 0.01 * len(intra_pairs))
+                intra_pairs[0].set_report_status(
+                    ReportStatus.MINIMAL
+                )  # Selected intra pairs are reported at least as MINIMAL
                 for i in range(1, len(intra_pairs)):
                     intra_pairs[i].set_prioritization_status(
                         PrioritizationStatus.PARSIMONY_NOT_SELECTED  # Not selected by default
                     )
+                    intra_pairs[i].set_report_status(
+                        ReportStatus.EXPANDED
+                    )  # Secondary intra pairs are reported as EXPANDED
                     intra_pairs[i].set_score(1.0 + 0.01 * (len(intra_pairs) - i))
         for pair_group in protein_pair_groups.values():
             for protein_pair in pair_group:
@@ -178,6 +186,7 @@ class ParsimonySelector:
                     protein_pair.set_prioritization_status(
                         PrioritizationStatus.PARSIMONY_NOT_SELECTED
                     )
+                    protein_pair.set_report_status(ReportStatus.ALL)
 
     def prioritize(self) -> None:
         if not self.can_prioritize:

@@ -1,16 +1,16 @@
-import sys
 import logging
+import sys
+
 import polars as pl
 
-from .status import PrioritizationStatus
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta_type
 from xlranker.util.readers import read_data_folder, read_network_file
 
 from .bio import Protein
-from .bio.pairs import PeptidePair
-from .bio.pairs import ProteinPair
+from .bio.pairs import PeptidePair, ProteinPair
+from .status import PrioritizationStatus
 
 logger = logging.getLogger(__name__)
 

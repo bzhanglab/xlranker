@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from xlranker.status import PrioritizationStatus
 from xlranker.bio.pairs import ProteinPair
+from xlranker.status import PrioritizationStatus, ReportStatus
 
 
 def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[ProteinPair]:
@@ -35,15 +35,21 @@ def assign_secondary_selected_status(protein_pair: ProteinPair) -> None:
         protein_pair.set_prioritization_status(
             PrioritizationStatus.ML_SECONDARY_SELECTED
         )
+    protein_pair.set_report_status(
+        ReportStatus.EXPANDED
+    )  # Secondary selections are reported as EXPANDED
 
 
 def assign_primary_selected_status(protein_pair: ProteinPair) -> None:
     if protein_pair.score > 1.0:
         protein_pair.set_prioritization_status(
             PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
-        )
+        )  # No change to report status for parsimony primary selections, done in parsimony step
     else:
         protein_pair.set_prioritization_status(PrioritizationStatus.ML_PRIMARY_SELECTED)
+        protein_pair.set_report_status(
+            ReportStatus.MINIMAL
+        )  # Primary ML selections are reported as MINIMAL
 
 
 class PairSelector(ABC):
@@ -58,12 +64,13 @@ class PairSelector(ABC):
     def assign_subgroups_and_get_best(
         self, protein_pairs: list[ProteinPair]
     ) -> dict[str, float]:
-        """assign subgroups to pairs and get the best score for each subgroup
+        """Assign subgroups to pairs and get the best score for each subgroup.
 
         Returns:
-            dict[str, float]: dict where key is the connectivity ID (str) and the values are the highest score (float)
+            dict[str, float]: dict where key is the connectivity ID (str)
+                              and the values are the highest score (float)
+
         """
-        # protein_pairs = filter_for_undecided_pairs(protein_pairs)
         best_score: dict[str, float] = {}
         subgroups: dict[str, int] = {}
         subgroup_id = 1
@@ -83,10 +90,15 @@ class BestSelector(PairSelector):
     with_secondary: bool
 
     def __init__(self, with_secondary: bool = False) -> None:
-        """Selects the pair with the highest score. For pairs tied for best score, pair alphabetically first is selected. If with_secondary is True, assign pairs with best score but not alphabetically first as secondary selections.
+        """Select the pair with the highest score.
+
+        For pairs tied for best score, pair alphabetically first is selected.
+        If with_secondary is True, assign pairs with best score but not alphabetically
+        first as secondary selections.
 
         Args:
-            with_secondary (bool, optional): Flag to keep tied pairs that are not the primary selection. Defaults to False.
+            with_secondary (bool, optional): Flag to keep tied pairs. Defaults to False.
+
         """
         super().__init__()
         self.with_secondary = with_secondary
@@ -137,7 +149,6 @@ class ThresholdSelector(PairSelector):
             if pair.score == best_score[conn_id]:
                 if conn_id not in best_pair:
                     assign_primary_selected_status(pair)
-                    # pair.status = PrioritizationStatus.ML_PRIMARY_SELECTED
                     best_pair[conn_id] = pair
                 elif (
                     pair.pair_id < best_pair[conn_id].pair_id

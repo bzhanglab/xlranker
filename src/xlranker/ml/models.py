@@ -8,10 +8,10 @@
 """
 
 import logging
-import random
-from typing import Any, Container
-from pathlib import Path
 import os
+import random
+from pathlib import Path
+from typing import Any, Container
 
 import numpy as np
 import polars as pl
@@ -20,11 +20,11 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
 from xlranker.bio.pairs import ProteinPair
-from xlranker.status import PrioritizationStatus
 from xlranker.config import config
-from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
+from xlranker.lib import XLDataSet
 from xlranker.selection import BestSelector, PairSelector
+from xlranker.status import PrioritizationStatus
 
 logger = logging.getLogger(__name__)
 

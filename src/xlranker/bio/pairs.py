@@ -1,6 +1,6 @@
-from xlranker.status import PrioritizationStatus, ReportStatus
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
+from xlranker.status import PrioritizationStatus, ReportStatus
 from xlranker.util import get_pair_id, safe_a_greater_or_equal_to_b
 
 
@@ -73,6 +73,7 @@ class ProteinPair(GroupedEntity):
         Args:
             protein_a (Protein): First protein in the pair
             protein_b (Protein): Second protein in the pair
+
         """
         super().__init__()
         (a, b) = sort_proteins(protein_a, protein_b)
@@ -82,6 +83,7 @@ class ProteinPair(GroupedEntity):
         self.is_selected = False
         self.pair_id = get_pair_id(a, b)
         self.is_intra = a == b
+        self.report_status = ReportStatus.NONE
 
     def set_score(self, score: float) -> None:
         """Set the score of the protein pair.

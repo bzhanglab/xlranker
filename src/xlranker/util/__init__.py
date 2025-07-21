@@ -1,8 +1,10 @@
-import polars as pl
 import random
+
+import numpy as np
+import polars as pl
+
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein
-import numpy as np
 
 
 def set_seed(seed: int) -> None:
@@ -33,7 +35,9 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
 
 
 def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
-    """returns True if a is greater or equal to b, with checks for None
+    """returns True if a is greater or equal to b, with checks for None.
+
+    None is treated as missing value. Any float is greater than None. If both are None, return True.
 
     Args:
         a (float | None): a value
@@ -43,11 +47,11 @@ def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
         bool: True if a is greater or equal to b. If both are None, return True. Any float is greater than None.
     """
     if a is None:
-        return b is None
+        return b is None  # if a is None, then if b is not None, b is greater
     else:
         if b is None:
-            return True
-        return a >= b
+            return True  # Non-None is always greater than None
+        return a >= b  # both are not None, so compare normally
 
 
 def get_abundance(omic_df: pl.DataFrame, analyte: str) -> float | None:

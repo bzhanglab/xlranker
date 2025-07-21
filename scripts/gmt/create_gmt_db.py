@@ -1,6 +1,6 @@
 import glob
-import pickle
 import gzip
+import pickle
 
 gmts = glob.glob("gmts/*.gmt")
 

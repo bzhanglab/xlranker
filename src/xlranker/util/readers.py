@@ -1,9 +1,10 @@
 import logging
-import polars as pl
-from xlranker.bio import Peptide
-from xlranker.bio.pairs import PeptidePair
 from pathlib import Path
 
+import polars as pl
+
+from xlranker.bio import Peptide
+from xlranker.bio.pairs import PeptidePair
 from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)

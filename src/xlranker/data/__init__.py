@@ -1,10 +1,11 @@
 import gzip
-from importlib.resources import files
 import lzma
 import pickle
-import polars as pl
 import tarfile
 import tempfile
+from importlib.resources import files
+
+import polars as pl
 
 
 def load_default_ppi() -> pl.DataFrame:

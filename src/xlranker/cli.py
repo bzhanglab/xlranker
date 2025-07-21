@@ -1,16 +1,18 @@
+import json
 import logging
+import os
 import random
+from typing import Annotated, Any
+
 import cyclopts
+import questionary
+import yaml
+
+from xlranker.config import DEFAULT_CONFIG
+from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
 from xlranker.util.mapping import PeptideMapper
-from xlranker.lib import XLDataSet, setup_logging
-from xlranker.config import DEFAULT_CONFIG
-from typing import Annotated, Any
-import json
-import yaml
-import questionary
-import os
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
