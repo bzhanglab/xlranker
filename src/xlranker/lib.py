@@ -2,13 +2,14 @@ import sys
 import logging
 import polars as pl
 
+from .status import PrioritizationStatus
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta_type
 from xlranker.util.readers import read_data_folder, read_network_file
 
 from .bio import Protein
-from .bio.pairs import PeptidePair, PrioritizationStatus
+from .bio.pairs import PeptidePair
 from .bio.pairs import ProteinPair
 
 logger = logging.getLogger(__name__)
@@ -182,10 +183,11 @@ def get_final_network(
     return [
         pair
         for pair in data_set.protein_pairs.values()
-        if pair.status == PrioritizationStatus.ML_PRIMARY_SELECTED
-        or pair.status == PrioritizationStatus.ML_SECONDARY_SELECTED
-        or pair.status == PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
-        or pair.status == PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
+        if pair.prioritization_status == PrioritizationStatus.ML_PRIMARY_SELECTED
+        or pair.prioritization_status == PrioritizationStatus.ML_SECONDARY_SELECTED
+        or pair.prioritization_status == PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+        or pair.prioritization_status
+        == PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
     ]
 
 

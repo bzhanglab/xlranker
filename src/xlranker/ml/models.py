@@ -20,7 +20,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
 from xlranker.bio.pairs import ProteinPair
-from xlranker.bio.pairs import PrioritizationStatus
+from xlranker.status import PrioritizationStatus
 from xlranker.config import config
 from xlranker.lib import XLDataSet
 from xlranker.data import load_default_ppi, load_gmts
@@ -132,7 +132,7 @@ class PrioritizationModel:
         self.positives = []
         self.to_predict = []
         for protein_pair in self.dataset.protein_pairs.values():
-            match protein_pair.status:
+            match protein_pair.prioritization_status:
                 case PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED:
                     if protein_pair.a.name != protein_pair.b.name:
                         self.positives.append(protein_pair)
@@ -391,8 +391,8 @@ class PrioritizationModel:
         return [
             p
             for p in self.to_predict
-            if p.status == PrioritizationStatus.ML_PRIMARY_SELECTED
-            or p.status == PrioritizationStatus.ML_SECONDARY_SELECTED
+            if p.prioritization_status == PrioritizationStatus.ML_PRIMARY_SELECTED
+            or p.prioritization_status == PrioritizationStatus.ML_SECONDARY_SELECTED
         ]
 
     def get_selections(self) -> list[ProteinPair]:

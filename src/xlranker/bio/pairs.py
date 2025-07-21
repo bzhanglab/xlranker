@@ -1,48 +1,21 @@
-from enum import Enum, auto
+from xlranker.status import PrioritizationStatus, ReportStatus
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
 from xlranker.util import get_pair_id, safe_a_greater_or_equal_to_b
-
-
-class PrioritizationStatus(Enum):
-    """Prioritization status for a protein pair"""
-
-    NOT_ANALYZED = auto()
-    "No analysis performed yet"
-
-    # Parsimony-based statuses
-
-    PARSIMONY_NOT_SELECTED = auto()
-    "Another entity was selected in group or cannot be selected"
-    PARSIMONY_PRIMARY_SELECTED = auto()
-    "Selected as the primary representative for group."
-    PARSIMONY_SECONDARY_SELECTED = auto()
-    "Selected as a secondary representative for group. Only possible for intra pairs."
-    PARSIMONY_AMBIGUOUS = auto()
-    "No clear candidate from parsimony analysis. Needs ML model."
-
-    # Machine Learning-based statuses
-
-    ML_NOT_SELECTED = auto()
-    "Other candidate had higher score in group"
-    ML_PRIMARY_SELECTED = auto()
-    "Highest ML score in group or primary selection"
-    ML_SECONDARY_SELECTED = auto()
-    "High confidence ML score in group or secondary selection"
 
 
 class GroupedEntity:
     group_id: int
     subgroup_id: int
     in_group: bool
-    status: PrioritizationStatus
+    prioritization_status: PrioritizationStatus
     connections: set[str]
 
     def __init__(self) -> None:
         self.in_group = False
         self.group_id = -1
         self.subgroup_id = 0
-        self.status = PrioritizationStatus.NOT_ANALYZED
+        self.prioritization_status = PrioritizationStatus.NOT_ANALYZED
         self.connections = set()
 
     def set_group(self, group_id: int) -> None:
@@ -58,8 +31,8 @@ class GroupedEntity:
     def get_group(self) -> int:
         return self.group_id
 
-    def set_status(self, status: PrioritizationStatus) -> None:
-        self.status = status
+    def set_prioritization_status(self, status: PrioritizationStatus) -> None:
+        self.prioritization_status = status
 
     def add_connection(self, entity: str) -> None:
         self.connections.add(entity)
@@ -92,6 +65,7 @@ class ProteinPair(GroupedEntity):
     is_selected: bool
     pair_id: str
     is_intra: bool
+    report_status: ReportStatus
 
     def __init__(self, protein_a: Protein, protein_b: Protein) -> None:
         """Initialize a ProteinPair object, making sure a is the higher abundant protein. Input order does not matter.
@@ -117,6 +91,15 @@ class ProteinPair(GroupedEntity):
 
         """
         self.score = score
+
+    def set_report_status(self, status: ReportStatus) -> None:
+        """Set the report status of the protein pair.
+
+        Args:
+            status (ReportStatus): ReportStatus enum value to set the pair to
+
+        """
+        self.report_status = status
 
     def select(self):
         """Set this pair to be selected"""
@@ -163,7 +146,9 @@ class ProteinPair(GroupedEntity):
         Returns:
             str: TSV representation of the protein pair, including id and status
         """
-        return f"{self.pair_id}\t{self.status}\t{self.get_group_string()}"
+        return (
+            f"{self.pair_id}\t{self.prioritization_status}\t{self.get_group_string()}"
+        )
 
     def __hash__(self) -> int:
         return hash(self.pair_id)

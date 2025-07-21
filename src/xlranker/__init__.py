@@ -15,4 +15,5 @@ __all__ = [
     "ml",
     "run_full_pipeline",
     "pipeline",
+    "cli",
 ]
