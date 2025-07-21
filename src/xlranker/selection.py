@@ -156,9 +156,11 @@ class ThresholdSelector(PairSelector):
                     best_pair[
                         conn_id
                     ].prioritization_status = PrioritizationStatus.ML_NOT_SELECTED
+                    best_pair[conn_id].set_report_status(ReportStatus.ALL)
                     pair.prioritization_status = (
                         PrioritizationStatus.ML_PRIMARY_SELECTED
                     )
+                    pair.set_report_status(ReportStatus.MINIMAL)
                     best_pair[conn_id] = pair
             else:
                 assign_unselected_status(pair)
@@ -192,7 +194,7 @@ class ThresholdSelector(PairSelector):
                         assign_secondary_selected_status(group_list[i])
 
 
-class WithinSelector(PairSelector):
+class WithinSelector(PairSelector):  # TODO: Remove this.
     top_n: int | None
     within: float
 

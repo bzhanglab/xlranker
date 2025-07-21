@@ -1,23 +1,30 @@
 from enum import Enum, auto
+from functools import total_ordering
 
 
+@total_ordering
 class ReportStatus(Enum):
     """Pair reporting status"""
 
     CONSERVATIVE = (
-        auto(),
+        0,
         "High confidence pairs, parsimonious unambiguous",
     )
     MINIMAL = (
-        auto(),
+        1,
         "Medium confidence pairs, parsimonious ambiguous included, all peptides represented",
     )
     EXPANDED = (
-        auto(),
+        2,
         "All pairs, including non-parsimonious pairs, high scoring ML pairs",
     )
-    ALL = auto(), "All pairs, regardless of status"
-    NONE = auto(), "No assigned status"
+    ALL = 3, "All pairs, regardless of status"
+    NONE = -1, "No assigned status"
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, ReportStatus):
+            return self.value[0] < other.value[0]
+        return NotImplemented
 
 
 class PrioritizationStatus(Enum):
