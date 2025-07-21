@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import override
 
 
 @dataclass
@@ -19,6 +18,5 @@ class Peptide:
         self.sequence = sequence
         self.mapped_proteins = mapped_proteins
 
-    @override
     def __str__(self) -> str:
         return self.sequence
