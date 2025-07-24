@@ -148,9 +148,7 @@ class ProteinPair(GroupedEntity):
         Returns:
             str: TSV representation of the protein pair, including id and status
         """
-        return (
-            f"{self.pair_id}\t{self.prioritization_status}\t{self.get_group_string()}"
-        )
+        return f"{self.pair_id}\t{self.report_status}\t{self.prioritization_status}\t{self.get_group_string()}"
 
     def __hash__(self) -> int:
         return hash(self.pair_id)

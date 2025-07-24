@@ -51,8 +51,8 @@ class XLDataSet:
     """XLRanker cross-linking dataset object.
 
     Attributes:
-        peptides (dict[str, Peptide]): dictionary of Peptide objects
-
+        network (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
+        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
     """
 
     peptide_pairs: dict[str, PeptidePair]
@@ -68,7 +68,7 @@ class XLDataSet:
         self.protein_pairs = {}
         self.proteins = {}
 
-    def build_proteins(self, remove_intra: bool = True) -> None:
+    def build_proteins(self, remove_intra: bool = False) -> None:
         """Build protein pairs of the XLDataSet network.
 
         Args:
