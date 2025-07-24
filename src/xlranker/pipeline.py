@@ -4,6 +4,7 @@ from xlranker.lib import XLDataSet, get_final_network
 from xlranker.ml.models import PrioritizationModel
 from xlranker.parsimony.prioritize import ParsimonySelector, select_random
 from xlranker.selection import ThresholdSelector
+from xlranker.report import make_all_reports
 
 
 def run_full_pipeline(data_set: XLDataSet, threshold: float = 0.5) -> XLDataSet:
@@ -23,6 +24,7 @@ def run_full_pipeline(data_set: XLDataSet, threshold: float = 0.5) -> XLDataSet:
     model = PrioritizationModel(data_set)
     model.run_model()
     get_final_network(data_set, ThresholdSelector(threshold))
+    make_all_reports(data_set.protein_pairs.values())
     return data_set
 
 
