@@ -1,10 +1,10 @@
-from xlranker.bio.pairs import ProteinPair, PeptidePair, PrioritizationStatus
-from xlranker.lib import XLDataSet
 import logging
 import random
-
 from dataclasses import dataclass
 
+from xlranker.bio.pairs import PeptidePair, ProteinPair
+from xlranker.lib import XLDataSet
+from xlranker.status import PrioritizationStatus, ReportStatus
 from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def select_random(
     """
     ambiguity: dict[str, list[ProteinPair]] = {}
     for pair in data_set.protein_pairs.values():
-        if pair.status != PrioritizationStatus.PARSIMONY_AMBIGUOUS:
+        if pair.prioritization_status != PrioritizationStatus.PARSIMONY_AMBIGUOUS:
             continue  # No ambiguity
         conn_id = pair.connectivity_id()
         if conn_id not in ambiguity:
@@ -33,11 +33,11 @@ def select_random(
         selected_location = random.randrange(len(ambiguity[conn_id]))
         for i in range(len(ambiguity[conn_id])):
             if selected_location == i:
-                ambiguity[conn_id][i].set_status(
+                ambiguity[conn_id][i].set_prioritization_status(
                     PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
                 )
             else:
-                ambiguity[conn_id][i].set_status(
+                ambiguity[conn_id][i].set_prioritization_status(
                     PrioritizationStatus.PARSIMONY_NOT_SELECTED
                 )
 
@@ -147,9 +147,12 @@ class ParsimonySelector:
                 if pair.is_intra and len(best_pair_group) > 1:
                     intra_pairs.append(pair)
                 else:
-                    pair.set_status(status)
+                    pair.set_prioritization_status(status)
                     if len(best_pair_group) == 1:
                         pair.set_score(1.01)
+                        pair.set_report_status(
+                            ReportStatus.CONSERVATIVE
+                        )  # Unambiguous pairs are reported as CONSERVATIVE
             if len(intra_pairs) > 0:
                 intra_pairs.sort(
                     key=lambda pair: (
@@ -159,21 +162,31 @@ class ParsimonySelector:
                         pair.a.name,
                     )
                 )
-                intra_pairs[0].set_status(
+                intra_pairs[0].set_prioritization_status(
                     PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
                 )
                 intra_pairs[0].set_score(1.0 + 0.01 * len(intra_pairs))
+                intra_pairs[0].set_report_status(
+                    ReportStatus.MINIMAL
+                )  # Selected intra pairs are reported at least as MINIMAL
                 for i in range(1, len(intra_pairs)):
-                    intra_pairs[i].set_status(
+                    intra_pairs[i].set_prioritization_status(
                         PrioritizationStatus.PARSIMONY_NOT_SELECTED  # Not selected by default
                     )
+                    intra_pairs[i].set_report_status(
+                        ReportStatus.EXPANDED
+                    )  # Secondary intra pairs are reported as EXPANDED
                     intra_pairs[i].set_score(1.0 + 0.01 * (len(intra_pairs) - i))
         for pair_group in protein_pair_groups.values():
             for protein_pair in pair_group:
                 if (
-                    protein_pair.status == PrioritizationStatus.NOT_ANALYZED
+                    protein_pair.prioritization_status
+                    == PrioritizationStatus.NOT_ANALYZED
                 ):  # if not analyzed then pair is not selected
-                    protein_pair.set_status(PrioritizationStatus.PARSIMONY_NOT_SELECTED)
+                    protein_pair.set_prioritization_status(
+                        PrioritizationStatus.PARSIMONY_NOT_SELECTED
+                    )
+                    protein_pair.set_report_status(ReportStatus.ALL)
 
     def prioritize(self) -> None:
         if not self.can_prioritize:

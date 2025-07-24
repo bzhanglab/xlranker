@@ -1,9 +1,9 @@
 import xlranker.bio
-import xlranker.util
 import xlranker.lib
-import xlranker.parsimony
 import xlranker.ml
+import xlranker.parsimony
 import xlranker.pipeline
+import xlranker.util
 from xlranker.pipeline import run_full_pipeline
 
 __all__ = [
@@ -15,4 +15,5 @@ __all__ = [
     "ml",
     "run_full_pipeline",
     "pipeline",
+    "cli",
 ]

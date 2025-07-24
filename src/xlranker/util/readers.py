@@ -1,10 +1,12 @@
 import logging
-import polars as pl
-from xlranker.bio import Peptide
-from xlranker.bio.pairs import PeptidePair
 from pathlib import Path
 
+import polars as pl
+
+from xlranker.bio import Peptide
+from xlranker.bio.pairs import PeptidePair
 from xlranker.util import get_pair_id
+from xlranker.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ def read_data_folder(
     ret_dict = {}
     for file in file_list:
         ret_dict[base_name(file)] = read_data_matrix(
-            str(file), additional_null_values=additional_null_values
+            str(file), additional_null_values=config.additional_null_values
         )
     return ret_dict
 

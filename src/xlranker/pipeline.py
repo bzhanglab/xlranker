@@ -1,17 +1,18 @@
 """Pipeline helper functions"""
 
-from xlranker.lib import XLDataSet
+from xlranker.lib import XLDataSet, get_final_network
 from xlranker.ml.models import PrioritizationModel
 from xlranker.parsimony.prioritize import ParsimonySelector, select_random
+from xlranker.selection import ThresholdSelector
+from xlranker.report import make_all_reports
 
 
-def run_full_pipeline(
-    data_set: XLDataSet,
-) -> XLDataSet:
-    """Run the full XLRanker pipeline
+def run_full_pipeline(data_set: XLDataSet, threshold: float = 0.5) -> XLDataSet:
+    """Run the full XLRanker pipeline.
 
     Args:
         data_set (XLDataSet): Cross-linking dataset that needs prioritization
+        threshold (float): Score threshold for the expanded report
 
     Returns:
         XLDataSet: XLDataSet with full prioritization
@@ -22,7 +23,8 @@ def run_full_pipeline(
     parsimony.run()
     model = PrioritizationModel(data_set)
     model.run_model()
-    model.get_selections()
+    get_final_network(data_set, ThresholdSelector(threshold))
+    make_all_reports(data_set.protein_pairs.values())
     return data_set
 
 

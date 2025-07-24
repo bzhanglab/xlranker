@@ -1,5 +1,6 @@
-import sys
 import logging
+import sys
+
 import polars as pl
 
 from xlranker.selection import BestSelector, PairSelector
@@ -8,8 +9,8 @@ from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta
 from xlranker.util.readers import read_data_folder, read_network_file
 
 from .bio import Protein
-from .bio.pairs import PeptidePair, PrioritizationStatus
-from .bio.pairs import ProteinPair
+from .bio.pairs import PeptidePair, ProteinPair
+from .status import PrioritizationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,8 @@ class XLDataSet:
     """XLRanker cross-linking dataset object.
 
     Attributes:
-        peptides (dict[str, Peptide]): dictionary of Peptide objects
-
+        network (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
+        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
     """
 
     peptide_pairs: dict[str, PeptidePair]
@@ -67,8 +68,8 @@ class XLDataSet:
         self.protein_pairs = {}
         self.proteins = {}
 
-    def build_proteins(self, remove_intra: bool = True) -> None:
-        """Build protein pairs of the XLDataSet network
+    def build_proteins(self, remove_intra: bool = False) -> None:
+        """Build protein pairs of the XLDataSet network.
 
         Args:
             remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
@@ -143,6 +144,7 @@ class XLDataSet:
 
         Returns:
             XLDataSet: XLDataSet with peptide pairs and omics data loaded
+
         """
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
@@ -182,10 +184,11 @@ def get_final_network(
     return [
         pair
         for pair in data_set.protein_pairs.values()
-        if pair.status == PrioritizationStatus.ML_PRIMARY_SELECTED
-        or pair.status == PrioritizationStatus.ML_SECONDARY_SELECTED
-        or pair.status == PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
-        or pair.status == PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
+        if pair.prioritization_status == PrioritizationStatus.ML_PRIMARY_SELECTED
+        or pair.prioritization_status == PrioritizationStatus.ML_SECONDARY_SELECTED
+        or pair.prioritization_status == PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+        or pair.prioritization_status
+        == PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
     ]
 
 

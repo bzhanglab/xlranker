@@ -1,15 +1,14 @@
 """Mapping related classes and functions."""
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from enum import Enum, auto
 
 from Bio import SeqIO
 
+from xlranker.config import config
 from xlranker.data import get_gencode_fasta
 from xlranker.util.readers import read_mapping_table_file
-
-from xlranker.config import config
 
 logger = logging.getLogger(__name__)
 
