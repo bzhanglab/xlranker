@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 DEFAULT_CONFIG = {
@@ -43,9 +43,12 @@ class Config:
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
     output: str = "xlranker_output/"  # output directory
-    additional_null_values: list[
-        str
-    ] = []  # additional null values to consider when reading data files
+    additional_null_values: list[str] = field(
+        default_factory=list
+    )  # additional null values to consider when reading data files
+    advanced: AdvancedConfig = field(
+        default_factory=AdvancedConfig
+    )  # advanced config options
 
 
 config = Config()
