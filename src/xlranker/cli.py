@@ -12,7 +12,7 @@ from xlranker.config import DEFAULT_CONFIG
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
-from xlranker.util.mapping import PeptideMapper
+from xlranker.util.mapping import FastaType, PeptideMapper
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
@@ -166,6 +166,7 @@ def start(
     split: Annotated[str | None, cyclopts.Parameter(name=["--split"])] = None,
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
+    fasta_type: Annotated[str | None, cyclopts.Parameter(name=["--fasta-type"])] = None,
 ):
     """Run the full prioritization pipeline
 
@@ -186,6 +187,7 @@ def start(
         split (Annotated[ str  |  None, cyclopts.Parameter], optional): character used for splitting the FASTA file header
         gs_index (Annotated[int  |  None, cyclopts.Parameter], optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
         is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
+        fasta_type (Annotated[ str  |  None, cyclopts.Parameter], optional): Type of FASTA file, either "GENCODE" or "UNIPROT". Required if is_fasta is True.
 
     """
 
@@ -212,6 +214,15 @@ def start(
     split = split or config_data.get("split", None)
     gs_index = gs_index if gs_index is not None else config_data.get("gs_index", None)
     is_fasta = is_fasta or config_data.get("is_fasta", False)
+    fasta_type = fasta_type or config_data.get("fasta_type", None)
+    if mapping_table is None and is_fasta:
+        raise ValueError("Mapping table must be provided if is_fasta is True.")
+    fasta_type = fasta_type.strip().upper()  # Strip and upper to ensure consistency
+    if is_fasta and fasta_type not in ["GENCODE", "UNIPROT"]:
+        raise ValueError(
+            "fasta_type must be either 'GENCODE' or 'UNIPROT' if is_fasta is True."
+        )
+    fasta_enum = FastaType.UNIPROT if fasta_type == "UNIPROT" else FastaType.GENCODE
 
     setup_logging(verbose=verbose, log_file=log_file)
     if seed is None:
@@ -219,6 +230,14 @@ def start(
         logger.info(f"Randomly generated seed: {seed}")
 
     set_seed(seed)
+
+    custom_mapper = PeptideMapper(
+        mapping_table_path=mapping_table,
+        fasta_type=fasta_enum,
+        is_fasta=is_fasta,
+        split_index=gs_index,
+        split_by=split,
+    )
 
     data_set = XLDataSet.load_from_network(
         network,

@@ -4,11 +4,14 @@ from typing import Any
 
 DEFAULT_CONFIG = {
     "seed": None,
-    "custom_mapping_table": None,
+    "mapping_table": None,
     "is_fasta": True,
     "fasta_type": "UNIPROT",
     "only_human": True,
     "intra_in_training": False,
+    "advanced": {
+        "intra_in_training": False,  # allow intra in training data
+    },
 }
 
 
@@ -22,6 +25,15 @@ class AdvancedConfig:
     """
 
     intra_in_training: bool = False  # allow intra in training data
+
+
+@dataclass
+class MappingConfig:
+    reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
+    custom_table: str | None = None
+    is_fasta: bool = True
+    split_by: str | None = None
+    split_index: int | None = None
 
 
 @dataclass
@@ -49,6 +61,7 @@ class Config:
     advanced: AdvancedConfig = field(
         default_factory=AdvancedConfig
     )  # advanced config options
+    mapping = field(default_factory=MappingConfig)
 
 
 config = Config()
