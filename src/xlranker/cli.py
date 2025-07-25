@@ -139,9 +139,10 @@ def test_fasta(
     )
     sequences = ["QKTPK", "MGSGKK"]
     mapping_res = mapper.map_sequences(sequences)
+    nl_char = "\n"
     for seq in sequences:
         print(f"Sequence: {seq}")
-        print(f"Results:\n{'\n'.join(mapping_res.peptide_to_protein[seq])}\n")
+        print(f"Results:\n{nl_char.join(mapping_res.peptide_to_protein[seq])}\n")
     print("Verify results are in gene symbol!")
 
 
