@@ -217,7 +217,8 @@ def start(
     fasta_type = fasta_type or config_data.get("fasta_type", None)
     if mapping_table is None and is_fasta:
         raise ValueError("Mapping table must be provided if is_fasta is True.")
-    fasta_type = fasta_type.strip().upper()  # Strip and upper to ensure consistency
+    if fasta_type is not None:
+        fasta_type = fasta_type.strip().upper()  # Strip and upper to ensure consistency
     if is_fasta and fasta_type not in ["GENCODE", "UNIPROT"]:
         raise ValueError(
             "fasta_type must be either 'GENCODE' or 'UNIPROT' if is_fasta is True."
