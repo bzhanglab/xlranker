@@ -53,6 +53,7 @@ class XLDataSet:
     Attributes:
         network (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
         omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
+
     """
 
     peptide_pairs: dict[str, PeptidePair]

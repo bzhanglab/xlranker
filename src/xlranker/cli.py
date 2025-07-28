@@ -231,6 +231,13 @@ def start(
 
     set_seed(seed)
 
+    # Correct unused parameters to -1
+
+    if gs_index is None:
+        gs_index = -1
+    if split is None:
+        split = "-1"
+
     custom_mapper = PeptideMapper(
         mapping_table_path=mapping_table,
         fasta_type=fasta_enum,
@@ -242,7 +249,7 @@ def start(
     data_set = XLDataSet.load_from_network(
         network,
         data_folder,
-        custom_mapping_path=mapping_table,
+        custom_mapper=custom_mapper,
         is_fasta=is_fasta,
         split_by=split,
         split_index=gs_index,
