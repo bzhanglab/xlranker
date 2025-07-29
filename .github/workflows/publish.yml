@@ -56,4 +56,4 @@ jobs:
       - name: Deploy with mike 🚀
         run: |
           git fetch origin gh-pages
-          mike deploy --update-aliases --push ${{  github.ref_name }} latest
+          uv run mike deploy --update-aliases --push ${{  github.ref_name }} latest
