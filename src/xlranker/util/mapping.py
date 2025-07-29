@@ -278,10 +278,18 @@ class PeptideMapper:
         split_index = (
             mapping_config.split_index if mapping_config.split_index is not None else 0
         )
+        if mapping_config.fasta_type is None:
+            fasta_type = FastaType.UNIPROT
+        else:
+            fasta_type: FastaType = (
+                FastaType.GENCODE
+                if mapping_config.fasta_type.lower() == "gencode"
+                else FastaType.UNIPROT
+            )
         return PeptideMapper(
             mapping_table_path=mapping_config.custom_table,
             split_by=split_by,
             split_index=split_index,
             is_fasta=mapping_config.is_fasta,
-            fasta_type=mapping_config.fasta_type,
+            fasta_type=fasta_type,
         )
