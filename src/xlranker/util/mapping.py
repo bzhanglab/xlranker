@@ -6,7 +6,7 @@ from enum import Enum, auto
 
 from Bio import SeqIO
 
-from xlranker.config import config
+from xlranker.config import MappingConfig, config
 from xlranker.data import get_gencode_fasta
 from xlranker.util.readers import read_mapping_table_file
 
@@ -268,4 +268,20 @@ class PeptideMapper:
             final_matches[key] = list(matches[key])
         return MappingResult(
             peptide_to_protein=final_matches, protein_sequences=protein_sequences
+        )
+
+    @staticmethod
+    def from_config(mapping_config: MappingConfig) -> "PeptideMapper":
+        split_by = (
+            mapping_config.split_by if mapping_config.split_by is not None else ""
+        )
+        split_index = (
+            mapping_config.split_index if mapping_config.split_index is not None else 0
+        )
+        return PeptideMapper(
+            mapping_table_path=mapping_config.custom_table,
+            split_by=split_by,
+            split_index=split_index,
+            is_fasta=mapping_config.is_fasta,
+            fasta_type=mapping_config.fasta_type,
         )

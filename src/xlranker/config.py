@@ -2,6 +2,8 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
+from xlranker.util.mapping import FastaType
+
 DEFAULT_CONFIG = {
     "seed": None,
     "mapping_table": None,
@@ -34,6 +36,7 @@ class MappingConfig:
     is_fasta: bool = True
     split_by: str | None = None
     split_index: int | None = None
+    fasta_type: FastaType = FastaType.UNIPROT
 
 
 @dataclass
