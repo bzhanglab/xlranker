@@ -52,12 +52,8 @@ The CLI contains multiple feature flags, such as only using the parsimony select
 ## Output
 
 The output of the pipeline contains two files and a folder
+[model/](#)
+:   Folder containing data from the machine learning model.
 
-[network.tsv](#)
-:   TSV file of the final xl network, with all of the accepted pairs
-
-[info.tsv](#)
-:   TSV file showing all of the protein pairs with information about their prioritization status.
-
-[plots/](#)
-:   Folder containing plots showing model performance and feature importance.
+[reports/](#)
+:   Folder containing protein networks at different confidence levels.
