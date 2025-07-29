@@ -751,6 +751,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    XLRanker Reports
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -762,6 +775,52 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conservative-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conservative Report
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimal Report
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expanded-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expanded Report
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -803,6 +862,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conservative-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conservative Report
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minimal Report
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expanded-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expanded Report
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -819,6 +913,18 @@
 
 <h1 id="xlranker-reports">XLRanker Reports</h1>
 <p>XLRanker generates a variety of reports at different levels of confidence.</p>
+<ol>
+<li>Conservative</li>
+<li>Minimal</li>
+<li>Expanded</li>
+<li>All-inclusive</li>
+</ol>
+<h2 id="conservative-report">Conservative Report</h2>
+<p>The conservative report is the most stringent and includes only the highest confidence interactions. These interactions are protein pairs that are part of a single-membered protein group that was parsimoniously selected. <em>This level may result in not all peptide sequences being represented.</em></p>
+<h2 id="minimal-report">Minimal Report</h2>
+<p>The minimal report includes all the interactions in the minimal report as well as the primarily selected interactions selected from the machine learning model, as well as best intra pair from parsimoniously selected protein groups. This will level will have <strong>all</strong> peptide sequences represented.</p>
+<h2 id="expanded-report">Expanded Report</h2>
+<p>This report includes all interactions selected during the parsimonious and machine learning selection steps.</p>
 
 
 
