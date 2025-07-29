@@ -281,11 +281,7 @@ class PeptideMapper:
         if mapping_config.fasta_type is None:
             fasta_type = FastaType.UNIPROT
         else:
-            fasta_type: FastaType = (
-                FastaType.GENCODE
-                if mapping_config.fasta_type.lower() == "gencode"
-                else FastaType.UNIPROT
-            )
+            fasta_type = convert_str_to_fasta_type(mapping_config.fasta_type)
         return PeptideMapper(
             mapping_table_path=mapping_config.custom_table,
             split_by=split_by,
