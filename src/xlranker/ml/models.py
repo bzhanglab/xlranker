@@ -1,5 +1,6 @@
-"""Model Process:
+"""Prioritization models for ML step.
 
+Model Process:
 1. Identify Positive Dataset
     - All representative pairs from parsimonious selection
 2. Generate Negative Dataset
@@ -60,7 +61,9 @@ def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
     return False
 
 
-class ModelConfig:
+class ModelConfig:  # TODO: Determine if this should go into the config module.
+    """Configuration options for the ML prioritization step."""
+
     runs: int
     folds: int
     xgb_params: dict[str, Any]
@@ -84,6 +87,12 @@ class ModelConfig:
         self.xgb_params = xgb_params
 
     def validate(self) -> bool:
+        """Validate the parameters of the config.
+
+        Returns:
+            bool: True if all parameters are the correct type and meet the minimum value requirements.
+
+        """
         attrs = {
             "runs": (int, lambda x: x >= 1),
             "folds": (int, lambda x: x >= 1),
@@ -99,6 +108,13 @@ class ModelConfig:
 
 
 class PrioritizationModel:
+    """Prioritization model using XGBoost to predict which pair should be selected as the representative.
+
+    Raises:
+        ValueError: Raised if there aren't enough negatives and config.fragile is True.
+
+    """
+
     positives: list[ProteinPair]
     to_predict: list[ProteinPair]
     dataset: XLDataSet
@@ -156,6 +172,16 @@ class PrioritizationModel:
         self.pair_selector = pair_selector
 
     def is_intra(self, a: str, b: str) -> float:
+        """Determine if a and b are intra pairs and represent as float.
+
+        Args:
+            a (str): name of protein a
+            b (str): name of protein b
+
+        Returns:
+            float: 1.0 if a and b have same name, else returns 0.0
+
+        """
         if config.human_only:  # Capitalize to ensure consistent case
             a = a.upper()
             b = b.upper()

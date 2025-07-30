@@ -79,7 +79,14 @@ class XLDataSet:
 
     def __init__(
         self, peptide_pairs: dict[str, PeptidePair], omic_data: dict[str, pl.DataFrame]
-    ):
+    ) -> None:
+        """XLRanker cross-linking dataset object.
+
+        Args:
+            peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
+            omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
+
+        """
         self.peptide_pairs = peptide_pairs
         self.omic_data = omic_data
         self.protein_pairs = {}
