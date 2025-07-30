@@ -53,13 +53,12 @@ def init(
 
     Args:
         default (bool, optional): Create a simple default config. Defaults to False.
-        output (str | None, optional): Output config file. Can either be JSON or YAML format. Defaults to None.
+        output (Annotated[str | None, cyclopts.Parameter], optional): Output config file. Can either be JSON or YAML format. Defaults to None.
 
     Raises:
         ValueError: raises ValueError if output is not set when default is passed
 
     """
-
     if default:
         if output is None:
             raise ValueError("Output must be specified if using default!")
@@ -188,6 +187,9 @@ def start(
         gs_index (Annotated[int  |  None, cyclopts.Parameter], optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
         is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
         fasta_type (Annotated[ str  |  None, cyclopts.Parameter], optional): Type of FASTA file, either "GENCODE" or "UNIPROT". Required if is_fasta is True.
+
+    Raises:
+        ValueError: Raised if mapping parameters are not properly configurable.
 
     """
 

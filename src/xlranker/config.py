@@ -30,6 +30,18 @@ class AdvancedConfig:
 
 @dataclass
 class MappingConfig:
+    """Mapping configuration object
+
+    Attributes:
+        reduce_fasta (bool): If True, only keep longest sequence for duplicated protein entries
+        custom_table (str | None): Path to custom table for peptide mapping. If None use default FASTA file.
+        is_fasta (bool): True if custom table is in FASTA format
+        split_by (str | None): string to split FASTA file for gene symbol extraction
+        split_index (int | None): 0-based index of section containing gene symbol after string splitting
+        fasta_type (str | None): UNIPROT or GENCODE fasta type. If None, will default to UNIPROT
+
+    """
+
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     custom_table: str | None = None
     is_fasta: bool = True
@@ -46,9 +58,11 @@ class Config:
         fragile (bool): Default to False. If True, throw error on any warning
         detailed (bool): Default to False. If True, perform more analysis about dataset
         reduce_fasta (bool): Default to True. If True, when a gene has multiple sequences, only accept longest sequence as the canonical sequence.
-        intra_in_training (bool): Default to False. If True, intra pairs are included in the positive set for model training.
+        human_only (bool): True if all data is human only.
         output (str): Default to "xlranker_output/". Directory where output files are saved.
         additional_null_values (list[str]): Default to []. Additional null values to consider when reading data files.
+        advanced (AdvancedConfig): Advanced configuration options
+        mapping (MappingConfig): Configuration related to peptide sequence mapping.
 
     """
 
