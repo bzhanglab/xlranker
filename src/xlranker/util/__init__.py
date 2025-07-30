@@ -45,6 +45,7 @@ def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
 
     Returns:
         bool: True if a is greater or equal to b. If both are None, return True. Any float is greater than None.
+
     """
     if a is None:
         return b is None  # if a is None, then if b is not None, b is greater
