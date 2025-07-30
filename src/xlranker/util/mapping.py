@@ -7,7 +7,7 @@ from enum import Enum, auto
 from Bio import SeqIO
 
 from xlranker.config import MappingConfig, config
-from xlranker.data import get_gencode_fasta
+from xlranker.data import get_default_fasta
 from xlranker.util.readers import read_mapping_table_file
 
 logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ class PeptideMapper:
         """
         if mapping_table_path is None:
             logger.info("Using default gencode fasta file for peptide mapping")
-            self.mapping_table_path = get_gencode_fasta()
+            self.mapping_table_path = get_default_fasta()
             # Make sure variables match defaults
             split_by = "|"
             split_index = 3
