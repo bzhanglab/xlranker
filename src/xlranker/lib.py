@@ -17,7 +17,16 @@ logger = logging.getLogger(__name__)
 
 def setup_logging(
     verbose: bool = False, log_file: str | None = None, silent_all: bool = False
-):
+) -> None:
+    """Set up logging for XLRanker
+
+    Args:
+        verbose (bool, optional): Use more verbose logging. Sets logging level to DEBUG. Defaults to False.
+        log_file (str | None, optional): Path to log file. If none, no log file is kept. Defaults to None.
+        silent_all (bool, optional): Disable all logging. Defaults to False.
+
+    """
+
     if silent_all:
         # Remove all handlers and disable logging
         logging.getLogger().handlers.clear()
@@ -50,9 +59,15 @@ def setup_logging(
 class XLDataSet:
     """XLRanker cross-linking dataset object.
 
-    Attributes:
-        network (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
+    Args:
+        peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
         omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
+
+    Attributes:
+        peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
+        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
+        proteins (dict[str, Protein]): Dictionary of proteins, where the key is a unique identifier for the protein.
+        protein_pairs (dict[str, ProteinPair]): Dictionary of protein pairs, where the key is a unique identifier for the pair.
 
     """
 
@@ -62,9 +77,9 @@ class XLDataSet:
     protein_pairs: dict[str, ProteinPair]
 
     def __init__(
-        self, network: dict[str, PeptidePair], omic_data: dict[str, pl.DataFrame]
+        self, peptide_pairs: dict[str, PeptidePair], omic_data: dict[str, pl.DataFrame]
     ):
-        self.peptide_pairs = network
+        self.peptide_pairs = peptide_pairs
         self.omic_data = omic_data
         self.protein_pairs = {}
         self.proteins = {}
@@ -138,10 +153,11 @@ class XLDataSet:
             network_path (str): path to the peptide pairs
             omics_data_folder (str): folder containing the omic data
             custom_mapper (PeptideMapper | None, optional): PeptideMapper object that should be used for mapping. If None, create peptide mapper using other parameters. Defaults to None.
-            custom_mapping_path (str | None, optional): _description_. Defaults to None.
-            is_fasta (bool, optional): _description_. Defaults to True.
-            split_by (str | None, optional): _description_. Defaults to "|".
-            split_index (int | None, optional): _description_. Defaults to 3.
+            custom_mapping_path (str | None, optional): If not using custom_mapper, path to mapping table. Defaults to None.
+            is_fasta (bool, optional): True if custom_mapping_path points to FASTA file. Defaults to True.
+            split_by (str | None, optional): character to split FASTA description by. Defaults to "|".
+            split_index (int | None, optional): 0-based index to extract gene symbol from. Defaults to 3.
+            fasta_type (str | FastaType, optional): FASTA file type. str can be "UNIPROT" or "GENCODE". Defaults to "UNIPROT".
 
         Returns:
             XLDataSet: XLDataSet with peptide pairs and omics data loaded
@@ -181,6 +197,16 @@ class XLDataSet:
 def get_final_network(
     data_set: XLDataSet, pair_selector: PairSelector = BestSelector()
 ) -> list[ProteinPair]:
+    """DEPRECIATED: USE REPORTS MODULE. Get the final network of all selected protein pairs.
+
+    Args:
+        data_set (XLDataSet): XL data set after prioritization
+        pair_selector (PairSelector, optional): What kind of pair selector to use for selecting final pairs. Defaults to BestSelector().
+
+    Returns:
+        list[ProteinPair]: list of selected protein pairs
+
+    """
     pair_selector.process(list(data_set.protein_pairs.values()))
     return [
         pair
@@ -194,6 +220,13 @@ def get_final_network(
 
 
 def write_pair_to_network(pairs: list[ProteinPair], output_file: str) -> None:
+    """Write list of protein pairs to a TSV file.
+
+    Args:
+        pairs (list[ProteinPair]): list of protein pairs to save to file.
+        output_file (str): path to write TSV file. Full path must be accessible.
+
+    """
     network_strings = []
     for pair in pairs:
         network_strings.append(f"{pair.a.name}\t{pair.b.name}")
