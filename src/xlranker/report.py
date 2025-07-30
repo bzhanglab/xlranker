@@ -13,11 +13,11 @@ def make_report(
 ) -> None:
     """Write network of protein pairs that have the level of the inputted status or higher.
 
-    Status order (Highest on top)
-    1. Conservative
-    2. Minimal
-    3. Expanded
-    4. All
+    Status order (highest on top):
+        1. Conservative
+        2. Minimal
+        3. Expanded
+        4. All
 
     Args:
         pairs (list[ProteinPair]): list of all protein pairs
