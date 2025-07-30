@@ -6,24 +6,24 @@ from functools import total_ordering
 class ReportStatus(Enum):
     """Pair reporting status"""
 
-    CONSERVATIVE = (
-        0,
-        "High confidence pairs, parsimonious unambiguous",
-    )
-    MINIMAL = (
-        1,
-        "Medium confidence pairs, parsimonious ambiguous included, all peptides represented",
-    )
-    EXPANDED = (
-        2,
-        "All pairs, including non-parsimonious pairs, high scoring ML pairs",
-    )
-    ALL = 3, "All pairs, regardless of status"
-    NONE = -1, "No assigned status"
+    CONSERVATIVE = 0
+    """High confidence pairs, parsimonious unambiguous"""
+
+    MINIMAL = 1
+    """Medium confidence pairs, parsimonious ambiguous included, all peptides represented"""
+
+    EXPANDED = 2
+    """All pairs, including non-parsimonious pairs, high scoring ML pairs"""
+
+    ALL = 3
+    """All pairs, regardless of status"""
+
+    NONE = -1
+    """No assigned status"""
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, ReportStatus):
-            return self.value[0] < other.value[0]
+            return self.value < other.value
         return NotImplemented
 
 
