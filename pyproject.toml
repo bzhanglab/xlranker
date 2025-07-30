@@ -35,3 +35,12 @@ dev = [
     "seaborn>=0.13.2",
     "types-pyyaml>=6.0.12.20250516",
 ]
+
+[tool.ruff.lint]
+external = [
+    "DOC", # pydoclint
+]
+select = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

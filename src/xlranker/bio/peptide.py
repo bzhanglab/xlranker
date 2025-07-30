@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Peptide:
-    """Peptide sequence object
+    """Peptide sequence object.
 
     Args:
         sequence (str): peptide amino acid sequence

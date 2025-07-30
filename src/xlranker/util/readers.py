@@ -43,7 +43,7 @@ def base_name(file_path: Path | str) -> str:
 def read_data_folder(
     folder_path: str, additional_null_values=[]
 ) -> dict[str, pl.DataFrame]:
-    """Reads all TSV files in a folder
+    """Reads all TSV files in a folder.
 
     Args:
         folder_path (str): path of the folder that contains files ending in .tsv
@@ -69,7 +69,7 @@ def read_data_folder(
 
 
 def read_network_file(network_path: str) -> dict[str, PeptidePair]:
-    """reads TSV network file to a list of PeptideGroup
+    """Reads TSV network file to a list of PeptideGroup.
 
     Args:
         network_path (str): path to the TSV file

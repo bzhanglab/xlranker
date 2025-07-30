@@ -1,4 +1,4 @@
-"""Report helper functions"""
+"""Report helper functions."""
 
 from pathlib import Path
 

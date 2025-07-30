@@ -8,7 +8,7 @@ from xlranker.bio.protein import Protein
 
 
 def set_seed(seed: int) -> None:
-    """Set seed to provide consistent results between runs
+    """Set seed to provide consistent results between runs.
 
     Args:
         seed (int): number to initialize random number generators with
@@ -35,7 +35,7 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
 
 
 def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
-    """returns True if a is greater or equal to b, with checks for None.
+    """Returns True if a is greater or equal to b, with checks for None.
 
     None is treated as missing value. Any float is greater than None. If both are None, return True.
 

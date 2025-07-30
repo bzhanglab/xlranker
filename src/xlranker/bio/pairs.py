@@ -41,7 +41,7 @@ class GroupedEntity:
         self.group_id = group_id
 
     def set_subgroup(self, subgroup_id: int) -> None:
-        """Set the subgroup ID for this entity
+        """Set the subgroup ID for this entity.
 
         Args:
             subgroup_id (int): ID of the subgroup
@@ -59,7 +59,7 @@ class GroupedEntity:
         return f"{self.group_id}.{self.subgroup_id}"
 
     def get_group(self) -> int:
-        """Get the group id of this entity
+        """Get the group id of this entity.
 
         Returns:
             int: group ID this entity is a part of
@@ -77,7 +77,7 @@ class GroupedEntity:
         self.prioritization_status = status
 
     def add_connection(self, entity: str) -> None:
-        """Add a connection to a different entity
+        """Add a connection to a different entity.
 
         Args:
             entity (str): String representation of the entity to add
@@ -86,7 +86,7 @@ class GroupedEntity:
         self.connections.add(entity)
 
     def remove_connections(self, entities: set) -> None:
-        """Remove multiple connections from this entity
+        """Remove multiple connections from this entity.
 
         Args:
             entities (set): set of entities to remove connections to
@@ -95,7 +95,7 @@ class GroupedEntity:
         self.connections.difference_update(entities)
 
     def n_connections(self) -> int:
-        """Get number of connections to this entity
+        """Get number of connections to this entity.
 
         Returns:
             int: number of entity connected to this entity
@@ -104,7 +104,7 @@ class GroupedEntity:
         return len(self.connections)
 
     def overlap(self, entities: set[str]) -> int:
-        """Overlap of connections to a set of other entities
+        """Overlap of connections to a set of other entities.
 
         Args:
             entities (set[str]): list of entities to compare to
@@ -116,7 +116,7 @@ class GroupedEntity:
         return len(self.connections.intersection(entities))
 
     def same_connectivity(self, grouped_entity: "GroupedEntity") -> bool:
-        """Determine if another GroupedEntity has the same connection as this entity
+        """Determine if another GroupedEntity has the same connection as this entity.
 
         Args:
             grouped_entity (GroupedEntity): entity to compare to
@@ -135,7 +135,7 @@ class GroupedEntity:
 
 
 class ProteinPair(GroupedEntity):
-    """ProteinPair class that tracks the required data for the pipeline
+    """ProteinPair class that tracks the required data for the pipeline.
 
     Args:
         protein_a (Protein): First protein in the pair
@@ -190,11 +190,11 @@ class ProteinPair(GroupedEntity):
         self.report_status = status
 
     def select(self):
-        """Set this pair to be selected"""
+        """Set this pair to be selected."""
         self.is_selected = True
 
     def __eq__(self, value: "object | ProteinPair") -> bool:
-        """Checks if ProteinPairs are equivalent, without caring for order
+        """Checks if ProteinPairs are equivalent, without caring for order.
 
         Args:
             value (object | ProteinPair): protein pair to compare to
@@ -214,7 +214,7 @@ class ProteinPair(GroupedEntity):
         return False
 
     def abundance_dict(self) -> dict[str, str | float | None]:
-        """Convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value
+        """Convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value.
 
         Returns:
             dict[str, str | float | None]: dictionary where keys are the abundance name and the values being the abundance value
@@ -233,7 +233,7 @@ class ProteinPair(GroupedEntity):
         return ret_val
 
     def to_tsv(self) -> str:
-        """converts object into a TSV string
+        """Converts object into a TSV string.
 
         Returns:
             str: TSV representation of the protein pair, including id and status
@@ -270,7 +270,7 @@ class PeptidePair(GroupedEntity):
         self.pair_id = get_pair_id(peptide_a, peptide_b)
 
     def __hash__(self) -> int:
-        """Get hash of this PeptidePair
+        """Get hash of this PeptidePair.
 
         Returns:
             int: hash generated from pair id

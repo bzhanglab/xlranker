@@ -18,7 +18,7 @@ DEFAULT_CONFIG = {
 
 @dataclass
 class AdvancedConfig:
-    """Advanced config options for XLRanker
+    """Advanced config options for XLRanker.
 
     Attributes:
         intra_in_training (bool): Default to False. If True, intra pairs are included in the positive set for model training. # TODO: May remove this option in future versions
@@ -30,7 +30,7 @@ class AdvancedConfig:
 
 @dataclass
 class MappingConfig:
-    """Mapping configuration object
+    """Mapping configuration object.
 
     Attributes:
         reduce_fasta (bool): If True, only keep longest sequence for duplicated protein entries
@@ -52,7 +52,7 @@ class MappingConfig:
 
 @dataclass
 class Config:
-    """Config for XLRanker
+    """Config for XLRanker.
 
     Attributes:
         fragile (bool): Default to False. If True, throw error on any warning
@@ -84,19 +84,18 @@ config = Config()
 
 
 def set_config_from_dict(config_dict: dict[str, Any]) -> None:
-    """set config from a dict object
+    """Set config from a dict object.
 
     Args:
         config_dict (dict[str, Any]): dictionary with config settings
 
     """
-
     for key in config_dict:
         setattr(config, key, config_dict[key])
 
 
 def load_from_json(json_file: str) -> None:
-    """set config to settings in JSON file
+    """Set config to settings in JSON file.
 
     Args:
         json_file (str): path to JSON file

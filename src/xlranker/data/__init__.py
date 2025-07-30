@@ -9,7 +9,7 @@ import polars as pl
 
 
 def load_default_ppi() -> pl.DataFrame:
-    """load default pre-generated table of known PPIs from parquet file into polars DataFrame. Human only.
+    """Load default pre-generated table of known PPIs from parquet file into polars DataFrame. Human only.
 
     Returns:
         pl.DataFrame: Two column database with column names of P1 and P2 where P1 and P2 have a known PPI.

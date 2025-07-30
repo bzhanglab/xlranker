@@ -55,7 +55,7 @@ class ParsimonySelector:
     can_prioritize: bool
 
     def __init__(self, data_set: XLDataSet):
-        """Initialize the ParsimonySelector object
+        """Initialize the ParsimonySelector object.
 
         Args:
             data_set (XLDataSet): cross-linking dataset

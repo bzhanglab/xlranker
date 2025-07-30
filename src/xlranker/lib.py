@@ -1,3 +1,5 @@
+"""Main module containing the core of the XLRanker tool."""
+
 import logging
 import sys
 
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 def setup_logging(
     verbose: bool = False, log_file: str | None = None, silent_all: bool = False
 ) -> None:
-    """Set up logging for XLRanker
+    """Set up logging for XLRanker.
 
     Args:
         verbose (bool, optional): Use more verbose logging. Sets logging level to DEBUG. Defaults to False.
@@ -26,7 +28,6 @@ def setup_logging(
         silent_all (bool, optional): Disable all logging. Defaults to False.
 
     """
-
     if silent_all:
         # Remove all handlers and disable logging
         logging.getLogger().handlers.clear()

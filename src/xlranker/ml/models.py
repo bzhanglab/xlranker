@@ -42,7 +42,7 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 
 
 def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
-    """Check if a and b are located in the same set in any of the exclusive sets provided
+    """Check if a and b are located in the same set in any of the exclusive sets provided.
 
     Args:
         a (str): entity a
@@ -71,7 +71,7 @@ class ModelConfig:
         folds: int = 5,
         xgb_params: dict[str, Any] = DEFAULT_XGB_PARAMS,
     ):
-        """Config for the prioritization model
+        """Config for the prioritization model.
 
         Args:
             runs (int, optional): the number of model runs. Defaults to 10.
@@ -119,7 +119,7 @@ class PrioritizationModel:
         ppi_db: pl.DataFrame | None = None,
         pair_selector: PairSelector = BestSelector(with_secondary=False),
     ):
-        """Initialize PrioritizationModel
+        """Initialize PrioritizationModel.
 
         Args:
             dataset (XLDataSet): XL data set that needs prioritization. Requires Parsimony Analysis to have been performed.
@@ -235,7 +235,7 @@ class PrioritizationModel:
     def construct_df_from_pairs(
         self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
     ) -> pl.DataFrame:
-        """Construct a DataFrame from the list of Protein Pairs
+        """Construct a DataFrame from the list of Protein Pairs.
 
         Args:
             pair_list (list[ProteinPair]): list of protein pairs to get the dataframe from
@@ -291,7 +291,6 @@ class PrioritizationModel:
 
     def run_model(self):
         """Run the model and get predictions for all protein pairs."""
-
         random_seed = random.random() * 100000
 
         predict_df = self.construct_predict_df()
@@ -382,7 +381,7 @@ class PrioritizationModel:
         logger.info("Results saved to: .")  # TODO Have output directory be configurable
 
     def get_selected(self) -> list[ProteinPair]:
-        """Get all `ProteinPair`s that were accepted
+        """Get all `ProteinPair`s that were accepted.
 
         Returns:
             list[ProteinPair]: All machine-learning selected pairs predicted by this model
@@ -396,7 +395,7 @@ class PrioritizationModel:
         ]
 
     def get_selections(self) -> list[ProteinPair]:
-        """Get the best pair for each protein pair subgroup
+        """Get the best pair for each protein pair subgroup.
 
         Returns:
             list[ProteinPair]: list of the protein pairs that were accepted

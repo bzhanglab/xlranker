@@ -10,7 +10,7 @@ class ProteinNameExtractor(ABC):
 
     @abstractmethod
     def extract(self, isoform_name: str) -> str:
-        """method to extract protein from isoform
+        """Method to extract protein from isoform.
 
         Args:
             isoform_name (str): name of the isoform that needs extraction
@@ -63,7 +63,7 @@ class SplitExtractor(ProteinNameExtractor):
         self.split_index = split_index
 
     def extract(self, isoform_name: str) -> str:
-        """Extract a section from isoform name using split_by and split_index
+        """Extract a section from isoform name using split_by and split_index.
 
         Args:
             isoform_name (str): isoform name needing extraction
@@ -79,7 +79,7 @@ class SplitExtractor(ProteinNameExtractor):
 
 
 class Protein:
-    """Protein class that has the name and abundance for the protein
+    """Protein class that has the name and abundance for the protein.
 
     Args:
         name (str): Name of the protein
@@ -131,7 +131,7 @@ class Protein:
         return False
 
     def __hash__(self) -> int:
-        """get hash representation of this object
+        """Get hash representation of this object.
 
         Returns:
             int: hash using the protein name of this protein

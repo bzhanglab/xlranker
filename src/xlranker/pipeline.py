@@ -1,4 +1,4 @@
-"""Pipeline helper functions"""
+"""Pipeline helper functions."""
 
 from xlranker.lib import XLDataSet, get_final_network
 from xlranker.ml.models import PrioritizationModel

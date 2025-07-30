@@ -48,7 +48,7 @@ def is_folder(path_to_validate: str) -> bool | str:
 def init(
     default: bool = False,
     output: Annotated[str | None, cyclopts.Parameter(name=["--output", "-o"])] = None,
-) -> None:
+) -> None:  # noqa: DOC105
     """Initialize a config file. If no default flag provided, config is created through a interactive form.
 
     Args:
@@ -166,13 +166,12 @@ def start(
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
     fasta_type: Annotated[str | None, cyclopts.Parameter(name=["--fasta-type"])] = None,
-):
-    """Run the full prioritization pipeline
+):  # noqa: DOC105
+    """Run the full prioritization pipeline.
 
     Requires input file to be in the format specified in the project documentation.
 
     Examples:
-
     `xlranker start network.tsv omic_data_folder/ -s 42`
 
     Args:
@@ -192,7 +191,6 @@ def start(
         ValueError: Raised if mapping parameters are not properly configurable.
 
     """
-
     if config_file is not None:
         config_data = load_config(config_file)
     else:

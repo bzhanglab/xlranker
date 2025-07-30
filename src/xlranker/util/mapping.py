@@ -94,7 +94,7 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
 
 @dataclass
 class MappingResult:
-    """Results from mapping peptide sequences to proteins
+    """Results from mapping peptide sequences to proteins.
 
     Args:
         peptide_to_protein (dict[str, list[str]]): Dictionary where keys are peptide sequences and values are the list of proteins that map to that sequence.
@@ -107,7 +107,7 @@ class MappingResult:
 
 
 def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs) -> str:
-    """Extract the gene symbol from a FASTA entry based on fasta_type
+    """Extract the gene symbol from a FASTA entry based on fasta_type.
 
     Args:
         fasta_description (str): FASTA entry string
