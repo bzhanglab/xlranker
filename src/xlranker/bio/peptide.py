@@ -5,6 +5,10 @@ from dataclasses import dataclass
 class Peptide:
     """Peptide sequence object
 
+    Args:
+        sequence (str): peptide amino acid sequence
+        mapped_proteins (list[str]): list of proteins the peptide sequence maps to
+
     Attributes:
         sequence (str): Peptide sequence from peptide network
         mapped_proteins (list[str]): list of all proteins mapping to sequence
