@@ -15,9 +15,6 @@ class GroupedEntity:
         connections (set[str]): List of other grouped entities this entity is connected to.
                                 Values are connection IDs.
 
-    Returns:
-        GroupedEntity: entity with groups
-
     """
 
     group_id: int
@@ -138,7 +135,22 @@ class GroupedEntity:
 
 
 class ProteinPair(GroupedEntity):
-    """ProteinPair class that tracks the required data for the pipeline"""
+    """ProteinPair class that tracks the required data for the pipeline
+
+    Args:
+        protein_a (Protein): First protein in the pair
+        protein_b (Protein): Second protein in the pair
+
+    Attributes:
+        a (Protein): Protein A
+        b (Protein): Protein B
+        score (float): Prioritization score
+        is_selected (bool): True if this pair is selected as a representative pair
+        pair_id (str): str representation of this protein pair
+        is_intra (bool): True if protein a and b are the same
+        report_status (ReportStatus): status of what report group this pair belongs to
+
+    """
 
     a: Protein
     b: Protein
@@ -149,13 +161,6 @@ class ProteinPair(GroupedEntity):
     report_status: ReportStatus
 
     def __init__(self, protein_a: Protein, protein_b: Protein) -> None:
-        """Initialize a ProteinPair object, making sure a is the higher abundant protein. Input order does not matter.
-
-        Args:
-            protein_a (Protein): First protein in the pair
-            protein_b (Protein): Second protein in the pair
-
-        """
         super().__init__()
         (a, b) = sort_proteins(protein_a, protein_b)
         self.a = a
@@ -188,17 +193,19 @@ class ProteinPair(GroupedEntity):
         """Set this pair to be selected"""
         self.is_selected = True
 
-    def __eq__(self, value) -> bool:
+    def __eq__(self, value: "object | ProteinPair") -> bool:
         """Checks if ProteinPairs are equivalent, without caring for order
 
         Args:
-            value (Self): protein pair to compare to
+            value (object | ProteinPair): protein pair to compare to
 
         Returns:
             bool: True if protein pairs are equivalent, regardless of a and b order
 
         """
         if value.__class__ != self.__class__:
+            return False
+        if not isinstance(value, ProteinPair):
             return False
         if self.a == value.a:
             return self.b == value.b
@@ -207,10 +214,10 @@ class ProteinPair(GroupedEntity):
         return False
 
     def abundance_dict(self) -> dict[str, str | float | None]:
-        """convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value
+        """Convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value
 
         Returns:
-            dict[str, float | None]: dictionary where keys are the abundance name and the values being the abundance value
+            dict[str, str | float | None]: dictionary where keys are the abundance name and the values being the abundance value
 
         """
         ret_val: dict[str, str | float | None] = {"pair": self.pair_id}
@@ -241,6 +248,10 @@ class ProteinPair(GroupedEntity):
 class PeptidePair(GroupedEntity):
     """Pair of two peptide sequences. Order of a and b does not matter.
 
+    Args:
+        peptide_a (Peptide): Peptide A
+        peptide_b (Peptide): Peptide B
+
     Attributes:
         a (Peptide): Peptide a
         b (Peptide): Peptide b
@@ -263,5 +274,6 @@ class PeptidePair(GroupedEntity):
 
         Returns:
             int: hash generated from pair id
+
         """
         return hash(self.pair_id)
