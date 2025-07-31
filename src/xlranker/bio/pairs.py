@@ -1,3 +1,5 @@
+"""Protein and Peptide pairs."""
+
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
 from xlranker.status import PrioritizationStatus, ReportStatus
@@ -24,6 +26,7 @@ class GroupedEntity:
     connections: set[str]
 
     def __init__(self) -> None:
+        """Initialize a grouped entity."""
         self.in_group = False
         self.group_id = -1
         self.subgroup_id = 0
@@ -161,6 +164,15 @@ class ProteinPair(GroupedEntity):
     report_status: ReportStatus
 
     def __init__(self, protein_a: Protein, protein_b: Protein) -> None:
+        """Initialize the protein pair.
+
+        Order of proteins does not matter.
+
+        Args:
+            protein_a (Protein): the first protein object
+            protein_b (Protein): the second protein object
+
+        """
         super().__init__()
         (a, b) = sort_proteins(protein_a, protein_b)
         self.a = a
@@ -242,6 +254,12 @@ class ProteinPair(GroupedEntity):
         return f"{self.pair_id}\t{self.report_status}\t{self.prioritization_status}\t{self.get_group_string()}"
 
     def __hash__(self) -> int:
+        """Generate a hash representing this protein pair.
+
+        Returns:
+            int: hash generated from the pair_id of this protein pair.
+
+        """
         return hash(self.pair_id)
 
 
@@ -264,6 +282,15 @@ class PeptidePair(GroupedEntity):
     pair_id: str
 
     def __init__(self, peptide_a: Peptide, peptide_b: Peptide) -> None:
+        """Peptide sequence pairs. Used for parsimonious selection.
+
+        Input order does not matter.
+
+        Args:
+            peptide_a (Peptide): first peptide object
+            peptide_b (Peptide): second peptide object
+
+        """
         super().__init__()
         self.a = peptide_a
         self.b = peptide_b

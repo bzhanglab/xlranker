@@ -143,6 +143,7 @@ class PrioritizationModel:
             gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
             ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
             pair_selector (PairSelector,  optional): Pair selector
+
         """
         self.dataset = dataset
         self.positives = []
@@ -295,6 +296,12 @@ class PrioritizationModel:
         return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
 
     def construct_predict_df(self) -> pl.DataFrame:
+        """Construct the data frame for pairs that need predictions.
+
+        Returns:
+            pl.DataFrame: Polars DataFrame of the protein pairs needing prediction.
+
+        """
         return self.construct_df_from_pairs(self.to_predict, has_label=False)
 
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
@@ -404,7 +411,7 @@ class PrioritizationModel:
         logger.info(
             f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
         )
-        logger.info("Results saved to: .")  # TODO Have output directory be configurable
+        logger.info("Results saved to: .")
 
     def get_selected(self) -> list[ProteinPair]:
         """Get all `ProteinPair`s that were accepted.
@@ -431,4 +438,10 @@ class PrioritizationModel:
         return self.get_selected()
 
     def save_model(self, file_path: str) -> None:
+        """Save the model using the official XGBoost method.
+
+        Args:
+            file_path (str): path to save model to.
+
+        """
         self.xgboost_model.save_model(file_path)

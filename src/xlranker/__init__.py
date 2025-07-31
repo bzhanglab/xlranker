@@ -1,3 +1,8 @@
+"""Protein-protein cross linking selection tool.
+
+lib is the main package containing the core of the pipeline.
+"""
+
 import xlranker.bio
 import xlranker.lib
 import xlranker.ml

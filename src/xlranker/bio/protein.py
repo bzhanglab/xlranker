@@ -1,3 +1,5 @@
+"""Protein objects and functions."""
+
 from abc import ABC, abstractmethod
 
 
@@ -6,6 +8,7 @@ class ProteinNameExtractor(ABC):
 
     @abstractmethod
     def __init__(self) -> None:
+        """Initialize the protein name extractor."""
         super().__init__()
 
     @abstractmethod
@@ -23,9 +26,14 @@ class ProteinNameExtractor(ABC):
 
 
 class NoExtractor(ProteinNameExtractor):
-    """Protein name extractor that performs no operations."""
+    """Protein name extractor that performs no operations.
+
+    Used when no extraction needed.
+
+    """
 
     def __init__(self) -> None:
+        """Initialize a functionless name extractor."""
         super().__init__()
 
     def extract(self, isoform_name: str) -> str:
@@ -58,6 +66,13 @@ class SplitExtractor(ProteinNameExtractor):
     split_index: int
 
     def __init__(self, split_by: str, split_index: int) -> None:
+        """Initialize the split extractor.
+
+        Args:
+            split_by (str): string or char to split the isoform name by
+            split_index (int): index to extract the protein name from after splitting the isoform name
+
+        """
         super().__init__()
         self.split_by = split_by
         self.split_index = split_index
@@ -108,6 +123,15 @@ class Protein:
         abundances: dict[str, float | None] = {},
         main_column: str | None = None,
     ):
+        """Protein class that has the name and abundance for the protein.
+
+        Args:
+            name (str): Name of the protein
+            protein_name (str): name of the protein specific to the isoform level.
+            abundances (dict[str, float | None]): Abundance values of the protein where keys is the name of the data and the value is the abundance
+            main_column (str | None): column/key in abundance dictionary that represents the main abundance for the protein. Used for sorting the proteins. If none, uses first key in abundances dict.
+
+        """
         self.name = name
         self.protein_name = protein_name
         self.abundances = abundances

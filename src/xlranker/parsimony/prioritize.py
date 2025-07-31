@@ -1,3 +1,5 @@
+"""Classes and methods for the main prioritization for the parsimonious selection step."""
+
 import logging
 import random
 from dataclasses import dataclass
@@ -44,11 +46,29 @@ def select_random(
 
 @dataclass
 class ParsimonyGroup:
+    """Group of protein pairs and peptide pairs in the bipartite graph.
+
+    Attributes:
+        protein_pairs (list[ProteinPair]): list of the protein pairs on the right side of the graph.
+        peptide_pairs (list[PeptidePair]): list of the peptide pairs on the left side of the graph.
+
+    """
+
     protein_pairs: list[ProteinPair]
     peptide_pairs: list[PeptidePair]
 
 
 class ParsimonySelector:
+    """Selector for the parsimonious selection step.
+
+    Attributes:
+        data_set (XLDataSet): The cross-linking dataset requiring selection.
+        protein_groups (dict[int, list[ProteinPair]]): dictionary of the protein groups where the key is the group ID.
+        peptide_groups (dict[int, list[PeptidePair]]): dictionary of the peptide groups where the key is the group ID.
+        can_prioritize (bool): True if the dataset has groups assigned and is ready for prioritization.
+
+    """
+
     data_set: XLDataSet
     protein_groups: dict[int, list[ProteinPair]]
     peptide_groups: dict[int, list[PeptidePair]]
@@ -67,6 +87,15 @@ class ParsimonySelector:
         self.network = None
 
     def assign_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
+        """Assign a group id to a protein pair and propagate the group to connected components.
+
+        Args:
+            protein_pair (ProteinPair): 
+            group_id (int): _description_
+
+        Raises:
+            ValueError: _description_
+        """
         if protein_pair.in_group:
             if protein_pair.group_id != group_id:
                 raise ValueError(
