@@ -1,3 +1,5 @@
+"""Functions for reading data files, mapping files, and networks."""
+
 import logging
 from pathlib import Path
 
@@ -37,6 +39,22 @@ def read_data_matrix(
 
 
 def base_name(file_path: Path | str) -> str:
+    """Get the base name from a path.
+
+    Example:
+        ```
+        file_path = "example/test.tsv"
+        base = base_name(file_path) # base = "test"
+        assert base == "test"
+        ```
+
+    Args:
+        file_path (Path | str): path of file to get base name of
+
+    Returns:
+        str: the base file name
+
+    """
     return Path(file_path).stem
 
 

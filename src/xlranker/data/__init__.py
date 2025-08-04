@@ -1,3 +1,5 @@
+"""Retrieve datasets required for the pipeline."""
+
 import gzip
 import lzma
 import pickle
@@ -22,7 +24,7 @@ def load_default_ppi() -> pl.DataFrame:
 def load_gmts() -> list[list[set[str]]]:
     """Load gmt collection. Used to determine negative sets for ML step.
 
-    Contains Gene Ontology Biological Process and Reactome/
+    Contains Gene Ontology Biological Process and Reactome.
 
     Returns:
         list[list[set[str]]]: list of gmts, which are collections of sets.

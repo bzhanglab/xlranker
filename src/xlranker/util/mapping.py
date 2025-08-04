@@ -72,6 +72,7 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
 
     Args:
         fasta_description (str): FASTA description string
+        **kwargs: See below.
 
     Kwargs:
         split_by (str): Character to split description string
@@ -112,6 +113,7 @@ def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs)
     Args:
         fasta_description (str): FASTA entry string
         fasta_type (FastaType): FastaType of the FASTA file. Either UNIPROT or GENCODE
+        **kwargs: See below.
 
     Kwargs:
         split_by (str): Character to split description string. Only used if FastaType is GENCODE.
