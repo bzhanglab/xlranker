@@ -1,3 +1,5 @@
+"""Tests for the custom mapping table format."""
+
 import logging
 
 import xlranker
@@ -11,7 +13,12 @@ SEQ2\tPROT4
 
 
 def test_custom_table(tmp_path):
-    """tests mapping results with duplicated entries. first entry should be prioritized"""
+    """Tests mapping results with duplicated entries. First entry should be prioritized.
+
+    Args:
+        tmp_path (Path): temporary path to save custom table to.
+
+    """
     temp_file = tmp_path / "table.tsv"
     temp_file.write_text(DUPLICATE_PEPTIDE_SEQ)
     res = xlranker.util.readers.read_mapping_table_file(temp_file)
@@ -20,7 +27,13 @@ def test_custom_table(tmp_path):
 
 
 def test_duplicate_entry(tmp_path, caplog):
-    """checks to see if log warns user of the duplicated sequence"""
+    """Checks to see if log warns user of the duplicated sequence.
+
+    Args:
+        tmp_path: temporary path to save custom table to.
+        caplog: object to capture log to verify contents.
+
+    """
     temp_file = tmp_path / "table.tsv"
     temp_file.write_text(DUPLICATE_PEPTIDE_SEQ)
     with caplog.at_level(logging.WARNING):

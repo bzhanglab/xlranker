@@ -1,34 +1,45 @@
+"""Status enums."""
+
 from enum import Enum, auto
 from functools import total_ordering
 
 
 @total_ordering
 class ReportStatus(Enum):
-    """Pair reporting status"""
+    """Pair reporting status."""
 
-    CONSERVATIVE = (
-        0,
-        "High confidence pairs, parsimonious unambiguous",
-    )
-    MINIMAL = (
-        1,
-        "Medium confidence pairs, parsimonious ambiguous included, all peptides represented",
-    )
-    EXPANDED = (
-        2,
-        "All pairs, including non-parsimonious pairs, high scoring ML pairs",
-    )
-    ALL = 3, "All pairs, regardless of status"
-    NONE = -1, "No assigned status"
+    CONSERVATIVE = 0
+    """High confidence pairs, parsimonious unambiguous"""
+
+    MINIMAL = 1
+    """Medium confidence pairs, parsimonious ambiguous included, all peptides represented"""
+
+    EXPANDED = 2
+    """All pairs, including non-parsimonious pairs, high scoring ML pairs"""
+
+    ALL = 3
+    """All pairs, regardless of status"""
+
+    NONE = -1
+    """No assigned status"""
 
     def __lt__(self, other: object) -> bool:
+        """Determine if report status has lower value (lower value means higher confidence).
+
+        Args:
+            other (object): object to compare to
+
+        Returns:
+            bool: True if this status is higher priority. False if equal or lower priority.
+
+        """
         if isinstance(other, ReportStatus):
-            return self.value[0] < other.value[0]
+            return self.value < other.value
         return NotImplemented
 
 
 class PrioritizationStatus(Enum):
-    """Prioritization status for a protein pair"""
+    """Prioritization status for a protein pair."""
 
     NOT_ANALYZED = auto()
     "No analysis performed yet"

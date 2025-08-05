@@ -1,3 +1,5 @@
+"""Methods and classes for the final selection of protein pairs after Parsimony and ML processing."""
+
 from abc import ABC, abstractmethod
 
 from xlranker.bio.pairs import ProteinPair
@@ -5,6 +7,15 @@ from xlranker.status import PrioritizationStatus, ReportStatus
 
 
 def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[ProteinPair]:
+    """Only get pairs that don't have any selected status.
+
+    Args:
+        protein_pairs (list[ProteinPair]): list of protein pairs to filter.
+
+    Returns:
+        list[ProteinPair]: list of all protein pairs still needing a selection status.
+
+    """
     return [
         pair
         for pair in protein_pairs
@@ -17,7 +28,13 @@ def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[Protein
     ]
 
 
-def assign_unselected_status(protein_pair: ProteinPair) -> None:
+def assign_not_selected_status(protein_pair: ProteinPair) -> None:
+    """Assign the correct not selected status to protein pair.
+
+    Args:
+        protein_pair (ProteinPair): protein pair needing status assignment.
+
+    """
     if protein_pair.score > 1.0:
         protein_pair.set_prioritization_status(
             PrioritizationStatus.PARSIMONY_NOT_SELECTED
@@ -27,6 +44,12 @@ def assign_unselected_status(protein_pair: ProteinPair) -> None:
 
 
 def assign_secondary_selected_status(protein_pair: ProteinPair) -> None:
+    """Assign the correct secondary selected status to protein pair.
+
+    Args:
+        protein_pair (ProteinPair): protein pair needing status assignment.
+
+    """
     if protein_pair.score >= 1.01:
         protein_pair.set_prioritization_status(
             PrioritizationStatus.PARSIMONY_SECONDARY_SELECTED
@@ -41,6 +64,12 @@ def assign_secondary_selected_status(protein_pair: ProteinPair) -> None:
 
 
 def assign_primary_selected_status(protein_pair: ProteinPair) -> None:
+    """Assign the correct primary selected status to protein pair.
+
+    Args:
+        protein_pair (ProteinPair): protein pair needing status assignment.
+
+    """
     if protein_pair.score > 1.0:
         protein_pair.set_prioritization_status(
             PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
@@ -53,12 +82,21 @@ def assign_primary_selected_status(protein_pair: ProteinPair) -> None:
 
 
 class PairSelector(ABC):
+    """Abstract class describing methods for a protein pair selector."""
+
     @abstractmethod
     def __init__(self) -> None:
+        """Initialize the pair selector."""
         super().__init__()
 
     @abstractmethod
     def process(self, protein_pairs: list[ProteinPair]) -> None:
+        """Process and assign all protein pairs a status.
+
+        Args:
+            protein_pairs (list[ProteinPair]): protein pairs to process.
+
+        """
         pass
 
     def assign_subgroups_and_get_best(
@@ -87,6 +125,13 @@ class PairSelector(ABC):
 
 
 class BestSelector(PairSelector):
+    """PairSelector that only keeps the best score. Optionally can allow secondary selections for ties.
+
+    Attributes:
+        with_secondary (bool): if True, assign secondary selections to tied protein pairs.
+
+    """
+
     with_secondary: bool
 
     def __init__(self, with_secondary: bool = False) -> None:
@@ -104,6 +149,12 @@ class BestSelector(PairSelector):
         self.with_secondary = with_secondary
 
     def process(self, protein_pairs: list[ProteinPair]) -> None:
+        """Process and assign all protein pairs a status.
+
+        Args:
+            protein_pairs (list[ProteinPair]): protein pairs to process.
+
+        """
         best_score = self.assign_subgroups_and_get_best(protein_pairs)
         best_pair: dict[str, ProteinPair] = {}
         replaced_status = (
@@ -127,19 +178,39 @@ class BestSelector(PairSelector):
                     assign_primary_selected_status(pair)
                     best_pair[pair.connectivity_id()] = pair
             else:
-                assign_unselected_status(pair)
+                assign_not_selected_status(pair)
 
 
 class ThresholdSelector(PairSelector):
+    """PairSelector that selects all pairs that pass a scoring threshold.
+
+    Attributes:
+        threshold (float): minimum scoring threshold for pair to be selected.
+        top_n (int | None): if not None, only keep top_n pairs in a group above threshold.
+    """
+
     threshold: float
     top_n: int | None
 
     def __init__(self, threshold: float, top_n: int | None = None) -> None:
+        """Initialize the ThresholdSelector.
+
+        Args:
+            threshold (float): minimum scoring threshold for pair to be selected.
+            top_n (int | None, optional): if not None, only keep top_n pairs in a group above threshold. Defaults to None.
+
+        """
         super().__init__()
         self.threshold = threshold
         self.top_n = top_n
 
     def process(self, protein_pairs: list[ProteinPair]) -> None:
+        """Process and assign all protein pairs a status.
+
+        Args:
+            protein_pairs (list[ProteinPair]): protein pairs to process.
+
+        """
         best_score = self.assign_subgroups_and_get_best(protein_pairs)
         best_pair: dict[str, ProteinPair] = {}
         subgroups: dict[int, list[ProteinPair]] = {}
@@ -163,7 +234,7 @@ class ThresholdSelector(PairSelector):
                     pair.set_report_status(ReportStatus.MINIMAL)
                     best_pair[conn_id] = pair
             else:
-                assign_unselected_status(pair)
+                assign_not_selected_status(pair)
         for pair in protein_pairs:
             subgroup = pair.subgroup_id
             conn_id = pair.connectivity_id()
@@ -192,81 +263,3 @@ class ThresholdSelector(PairSelector):
                     )  # -pair.score makes it so higher scores come first
                     for i in range(self.top_n - 1):
                         assign_secondary_selected_status(group_list[i])
-
-
-class WithinSelector(PairSelector):  # TODO: Remove this.
-    top_n: int | None
-    within: float
-
-    def __init__(
-        self,
-        within: float,
-        top_n: int | None,
-    ) -> None:
-        super().__init__()
-        if within > 1 or within < 0:  # TODO: Decide if necessary
-            raise ValueError(
-                "within must be between 0 and 1 for WithinBestScoreSelector!"
-            )
-        self.top_n = top_n
-        self.within = within
-
-    def process(self, protein_pairs: list[ProteinPair]) -> None:
-        best_score = self.assign_subgroups_and_get_best(protein_pairs)
-        best_pair: dict[str, ProteinPair] = {}
-        subgroups: dict[int, list[ProteinPair]] = {}
-        for pair in protein_pairs:
-            if pair.score == best_score[pair.connectivity_id()]:
-                if pair.connectivity_id() not in best_pair:
-                    pair.prioritization_status = (
-                        PrioritizationStatus.ML_PRIMARY_SELECTED
-                    )
-                    best_pair[pair.connectivity_id()] = pair
-                elif (
-                    pair.pair_id < best_pair[pair.connectivity_id()].pair_id
-                ):  # alphabetically sort
-                    best_pair[
-                        pair.connectivity_id()
-                    ].prioritization_status = (
-                        PrioritizationStatus.ML_NOT_SELECTED
-                    )  # replace previous best
-                    pair.prioritization_status = (
-                        PrioritizationStatus.ML_PRIMARY_SELECTED
-                    )
-                    best_pair[pair.connectivity_id()] = pair
-            else:
-                pair.prioritization_status = PrioritizationStatus.ML_NOT_SELECTED
-        for pair in protein_pairs:
-            subgroup = pair.subgroup_id
-            conn_id = pair.connectivity_id()
-            if subgroup not in subgroups:
-                subgroups[subgroup] = []
-            if (
-                best_score[conn_id] * (1.0 - self.within) <= pair.score
-                and pair.prioritization_status
-                != PrioritizationStatus.ML_PRIMARY_SELECTED
-            ):  # Check if within
-                subgroups[subgroup].append(pair)
-        for subgroup in subgroups:
-            group_list = subgroups[subgroup]
-            if self.top_n is None:  # Select all
-                for pair in group_list:
-                    pair.prioritization_status = (
-                        PrioritizationStatus.ML_SECONDARY_SELECTED
-                    )
-            else:
-                if len(group_list) < self.top_n:  # no need to sort
-                    for pair in group_list:
-                        pair.prioritization_status = (
-                            PrioritizationStatus.ML_SECONDARY_SELECTED
-                        )
-                else:
-                    group_list.sort(
-                        key=lambda pair: (-pair.score, pair.pair_id)
-                    )  # -pair.score makes it so higher scores come first
-                    for i in range(self.top_n - 1):
-                        group_list[
-                            i
-                        ].prioritization_status = (
-                            PrioritizationStatus.ML_SECONDARY_SELECTED
-                        )

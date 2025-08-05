@@ -1,5 +1,6 @@
-"""Model Process:
+"""Prioritization models for ML step.
 
+Model Process:
 1. Identify Positive Dataset
     - All representative pairs from parsimonious selection
 2. Generate Negative Dataset
@@ -42,7 +43,7 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 
 
 def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
-    """Check if a and b are located in the same set in any of the exclusive sets provided
+    """Check if a and b are located in the same set in any of the exclusive sets provided.
 
     Args:
         a (str): entity a
@@ -60,7 +61,9 @@ def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
     return False
 
 
-class ModelConfig:
+class ModelConfig:  # TODO: Determine if this should go into the config module.
+    """Configuration options for the ML prioritization step."""
+
     runs: int
     folds: int
     xgb_params: dict[str, Any]
@@ -71,7 +74,7 @@ class ModelConfig:
         folds: int = 5,
         xgb_params: dict[str, Any] = DEFAULT_XGB_PARAMS,
     ):
-        """Config for the prioritization model
+        """Config for the prioritization model.
 
         Args:
             runs (int, optional): the number of model runs. Defaults to 10.
@@ -84,6 +87,12 @@ class ModelConfig:
         self.xgb_params = xgb_params
 
     def validate(self) -> bool:
+        """Validate the parameters of the config.
+
+        Returns:
+            bool: True if all parameters are the correct type and meet the minimum value requirements.
+
+        """
         attrs = {
             "runs": (int, lambda x: x >= 1),
             "folds": (int, lambda x: x >= 1),
@@ -99,6 +108,13 @@ class ModelConfig:
 
 
 class PrioritizationModel:
+    """Prioritization model using XGBoost to predict which pair should be selected as the representative.
+
+    Raises:
+        ValueError: Raised if there aren't enough negatives and config.fragile is True.
+
+    """
+
     positives: list[ProteinPair]
     to_predict: list[ProteinPair]
     dataset: XLDataSet
@@ -119,7 +135,7 @@ class PrioritizationModel:
         ppi_db: pl.DataFrame | None = None,
         pair_selector: PairSelector = BestSelector(with_secondary=False),
     ):
-        """Initialize PrioritizationModel
+        """Initialize PrioritizationModel.
 
         Args:
             dataset (XLDataSet): XL data set that needs prioritization. Requires Parsimony Analysis to have been performed.
@@ -127,6 +143,7 @@ class PrioritizationModel:
             gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
             ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
             pair_selector (PairSelector,  optional): Pair selector
+
         """
         self.dataset = dataset
         self.positives = []
@@ -156,6 +173,16 @@ class PrioritizationModel:
         self.pair_selector = pair_selector
 
     def is_intra(self, a: str, b: str) -> float:
+        """Determine if a and b are intra pairs and represent as float.
+
+        Args:
+            a (str): name of protein a
+            b (str): name of protein b
+
+        Returns:
+            float: 1.0 if a and b have same name, else returns 0.0
+
+        """
         if config.human_only:  # Capitalize to ensure consistent case
             a = a.upper()
             b = b.upper()
@@ -235,7 +262,7 @@ class PrioritizationModel:
     def construct_df_from_pairs(
         self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
     ) -> pl.DataFrame:
-        """Construct a DataFrame from the list of Protein Pairs
+        """Construct a DataFrame from the list of Protein Pairs.
 
         Args:
             pair_list (list[ProteinPair]): list of protein pairs to get the dataframe from
@@ -269,6 +296,12 @@ class PrioritizationModel:
         return pl.DataFrame(df_array, schema=pl.Schema(schema)).select(headers)
 
     def construct_predict_df(self) -> pl.DataFrame:
+        """Construct the data frame for pairs that need predictions.
+
+        Returns:
+            pl.DataFrame: Polars DataFrame of the protein pairs needing prediction.
+
+        """
         return self.construct_df_from_pairs(self.to_predict, has_label=False)
 
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
@@ -291,7 +324,6 @@ class PrioritizationModel:
 
     def run_model(self):
         """Run the model and get predictions for all protein pairs."""
-
         random_seed = random.random() * 100000
 
         predict_df = self.construct_predict_df()
@@ -379,10 +411,10 @@ class PrioritizationModel:
         logger.info(
             f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
         )
-        logger.info("Results saved to: .")  # TODO Have output directory be configurable
+        logger.info("Results saved to: .")
 
     def get_selected(self) -> list[ProteinPair]:
-        """Get all `ProteinPair`s that were accepted
+        """Get all `ProteinPair`s that were accepted.
 
         Returns:
             list[ProteinPair]: All machine-learning selected pairs predicted by this model
@@ -396,7 +428,7 @@ class PrioritizationModel:
         ]
 
     def get_selections(self) -> list[ProteinPair]:
-        """Get the best pair for each protein pair subgroup
+        """Get the best pair for each protein pair subgroup.
 
         Returns:
             list[ProteinPair]: list of the protein pairs that were accepted
@@ -406,4 +438,10 @@ class PrioritizationModel:
         return self.get_selected()
 
     def save_model(self, file_path: str) -> None:
+        """Save the model using the official XGBoost method.
+
+        Args:
+            file_path (str): path to save model to.
+
+        """
         self.xgboost_model.save_model(file_path)

@@ -1,3 +1,5 @@
+"""Command Line Interface for XLRanker."""
+
 import json
 import logging
 import os
@@ -19,6 +21,18 @@ logger = logging.getLogger(__name__)
 
 
 def load_config(path: str) -> dict[str, Any]:
+    """Load a JSON or YAML config to dictionary from path.
+
+    Args:
+        path (str): path to JSON or YAML file
+
+    Raises:
+        ValueError: raised if config does not end in .json, .yaml, or .yml
+
+    Returns:
+        dict[str, Any]: dictionary representing the config
+
+    """
     if path.lower().endswith(".json"):
         return json.load(open(path))
     elif path.lower().endswith(".yaml") or path.lower().endswith(".yml"):
@@ -28,6 +42,16 @@ def load_config(path: str) -> dict[str, Any]:
 
 
 def save_config(path: str, config_obj: dict[str, Any]) -> None:
+    """Save config to path in either JSON or YAML format.
+
+    Args:
+        path (str): path to write config to
+        config_obj (dict[str, Any]): config to save
+
+    Raises:
+        ValueError: raised if path does not end in .json, .yaml, or .yml
+
+    """
     path = path.lower()
     if path.endswith(".json"):
         return json.dump(config_obj, open(path, "w"))
@@ -37,6 +61,15 @@ def save_config(path: str, config_obj: dict[str, Any]) -> None:
 
 
 def is_folder(path_to_validate: str) -> bool | str:
+    """Check if the input path is a folder for form verification.
+
+    Args:
+        path_to_validate (str): path to check
+
+    Returns:
+        bool | str: returns True if is_folder, else provide error message.
+
+    """
     return (
         True
         if not os.path.isfile(path_to_validate)
@@ -48,18 +81,17 @@ def is_folder(path_to_validate: str) -> bool | str:
 def init(
     default: bool = False,
     output: Annotated[str | None, cyclopts.Parameter(name=["--output", "-o"])] = None,
-) -> None:
+) -> None:  # noqa: DOC105
     """Initialize a config file. If no default flag provided, config is created through a interactive form.
 
     Args:
         default (bool, optional): Create a simple default config. Defaults to False.
-        output (str | None, optional): Output config file. Can either be JSON or YAML format. Defaults to None.
+        output (Annotated[str | None, cyclopts.Parameter], optional): Output config file. Can either be JSON or YAML format. Defaults to None.
 
     Raises:
         ValueError: raises ValueError if output is not set when default is passed
 
     """
-
     if default:
         if output is None:
             raise ValueError("Output must be specified if using default!")
@@ -127,26 +159,6 @@ def init(
 
 
 @app.command()
-def test_fasta(
-    fasta_file: str,
-    split: str,
-    gs_index: int,
-    verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
-):
-    setup_logging(verbose=verbose)
-    mapper = PeptideMapper(
-        mapping_table_path=fasta_file, split_by=split, split_index=gs_index
-    )
-    sequences = ["QKTPK", "MGSGKK"]
-    mapping_res = mapper.map_sequences(sequences)
-    nl_char = "\n"
-    for seq in sequences:
-        print(f"Sequence: {seq}")
-        print(f"Results:\n{nl_char.join(mapping_res.peptide_to_protein[seq])}\n")
-    print("Verify results are in gene symbol!")
-
-
-@app.command()
 def start(
     network: Annotated[str | None, cyclopts.Parameter(name=["--network", "-n"])] = None,
     data_folder: Annotated[
@@ -167,13 +179,12 @@ def start(
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
     fasta_type: Annotated[str | None, cyclopts.Parameter(name=["--fasta-type"])] = None,
-):
-    """Run the full prioritization pipeline
+):  # noqa: DOC105
+    """Run the full prioritization pipeline.
 
     Requires input file to be in the format specified in the project documentation.
 
     Examples:
-
     `xlranker start network.tsv omic_data_folder/ -s 42`
 
     Args:
@@ -189,8 +200,10 @@ def start(
         is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
         fasta_type (Annotated[ str  |  None, cyclopts.Parameter], optional): Type of FASTA file, either "GENCODE" or "UNIPROT". Required if is_fasta is True.
 
-    """
+    Raises:
+        ValueError: Raised if mapping parameters are not properly configurable.
 
+    """
     if config_file is not None:
         config_data = load_config(config_file)
     else:
@@ -261,4 +274,5 @@ def start(
 
 
 def cli():
+    """Start the CLI."""
     app()

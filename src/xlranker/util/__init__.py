@@ -1,3 +1,5 @@
+"""Pipeline utility functions and classes."""
+
 import random
 
 import numpy as np
@@ -8,7 +10,7 @@ from xlranker.bio.protein import Protein
 
 
 def set_seed(seed: int) -> None:
-    """Set seed to provide consistent results between runs
+    """Set seed to provide consistent results between runs.
 
     Args:
         seed (int): number to initialize random number generators with
@@ -19,6 +21,18 @@ def set_seed(seed: int) -> None:
 
 
 def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
+    """Get a string representation of the pair. Input order independent.
+
+    Order is determine alphabetically.
+
+    Args:
+        a (Protein | Peptide): entity a
+        b (Protein | Peptide): entity b
+
+    Returns:
+        str: pair representation with entities separated by '+'.
+
+    """
     name_a = ""
     name_b = ""
     if isinstance(a, Protein):
@@ -35,7 +49,7 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
 
 
 def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
-    """returns True if a is greater or equal to b, with checks for None.
+    """Returns True if a is greater or equal to b, with checks for None.
 
     None is treated as missing value. Any float is greater than None. If both are None, return True.
 
@@ -45,6 +59,7 @@ def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
 
     Returns:
         bool: True if a is greater or equal to b. If both are None, return True. Any float is greater than None.
+
     """
     if a is None:
         return b is None  # if a is None, then if b is not None, b is greater
@@ -54,7 +69,20 @@ def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
         return a >= b  # both are not None, so compare normally
 
 
-def get_abundance(omic_df: pl.DataFrame, analyte: str) -> float | None:
+def get_abundance(
+    omic_df: pl.DataFrame, analyte: str, use_median=False
+) -> float | None:
+    """Get the mean or median abundance of an analyte from an omics dataset.
+
+    Args:
+        omic_df (pl.DataFrame): Polars dataframe containing the omics data, with the first column being the index.
+        analyte (str): analyte that should have an exact match in omic_df.
+        use_median (bool): Aggregate samples by median instead of mean. Defaults to False.
+
+    Returns:
+        float | None: abundance value or None if not found.
+
+    """
     # Assume first column is the index/search space
     index_col = omic_df.columns[0]
     # Filter rows where index_col matches analyte
@@ -66,9 +94,11 @@ def get_abundance(omic_df: pl.DataFrame, analyte: str) -> float | None:
     if not value_cols:
         return None
     # Compute mean across all value columns for the analyte row(s)
-    mean_val = (
+    all_vals = (
         filtered.select([pl.col(col).mean() for col in value_cols]).to_numpy().flatten()
     )
-    if mean_val.size == 0:
+    if all_vals.size == 0:
         return None
-    return float(mean_val.mean())
+    if use_median:  # use median?
+        return float(np.median(all_vals))
+    return float(all_vals.mean())

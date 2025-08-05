@@ -1,3 +1,5 @@
+"""Classes and methods for the main prioritization for the parsimonious selection step."""
+
 import logging
 import random
 from dataclasses import dataclass
@@ -44,18 +46,36 @@ def select_random(
 
 @dataclass
 class ParsimonyGroup:
+    """Group of protein pairs and peptide pairs in the bipartite graph.
+
+    Attributes:
+        protein_pairs (list[ProteinPair]): list of the protein pairs on the right side of the graph.
+        peptide_pairs (list[PeptidePair]): list of the peptide pairs on the left side of the graph.
+
+    """
+
     protein_pairs: list[ProteinPair]
     peptide_pairs: list[PeptidePair]
 
 
 class ParsimonySelector:
+    """Selector for the parsimonious selection step.
+
+    Attributes:
+        data_set (XLDataSet): The cross-linking dataset requiring selection.
+        protein_groups (dict[int, list[ProteinPair]]): dictionary of the protein groups where the key is the group ID.
+        peptide_groups (dict[int, list[PeptidePair]]): dictionary of the peptide groups where the key is the group ID.
+        can_prioritize (bool): True if the dataset has groups assigned and is ready for prioritization.
+
+    """
+
     data_set: XLDataSet
     protein_groups: dict[int, list[ProteinPair]]
     peptide_groups: dict[int, list[PeptidePair]]
     can_prioritize: bool
 
     def __init__(self, data_set: XLDataSet):
-        """Initialize the ParsimonySelector object
+        """Initialize the ParsimonySelector object.
 
         Args:
             data_set (XLDataSet): cross-linking dataset
@@ -67,8 +87,18 @@ class ParsimonySelector:
         self.network = None
 
     def assign_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
+        """Assign a group id to a protein pair and propagate the group to connected components.
+
+        Args:
+            protein_pair (ProteinPair): Protein pair requiring assignment.
+            group_id (int): group ID to assign to this pair and other pairs connected to it.
+
+        Raises:
+            ValueError: Raised if a different group ID has been assigned to this protein pair.
+
+        """
         if protein_pair.in_group:
-            if protein_pair.group_id != group_id:
+            if protein_pair.group_id != group_id:  # TODO: May be removed
                 raise ValueError(
                     f"Protein Pair {protein_pair} has incorrect group id. Expected {group_id}. Got {protein_pair.group_id}."
                 )
@@ -83,6 +113,16 @@ class ParsimonySelector:
             )
 
     def assign_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
+        """Assign a group id to a peptide pair and propagate the group to connected components.
+
+        Args:
+            peptide_pair (PeptidePair): Peptide pair requiring assignment.
+            group_id (int): group ID to assign to this pair and other pairs connected to it.
+
+        Raises:
+            ValueError: Raised if a different group ID has been assigned to this peptide pair.
+
+        """
         if peptide_pair.in_group:
             if peptide_pair.group_id != group_id:
                 raise ValueError(
@@ -99,6 +139,7 @@ class ParsimonySelector:
             )
 
     def create_groups(self) -> None:
+        """Assign group IDs to all pairs in the dataset."""
         next_group_id = 1
         for pair in self.data_set.peptide_pairs.values():
             if pair.in_group or len(pair.connections) == 0:
@@ -108,6 +149,12 @@ class ParsimonySelector:
         self.can_prioritize = True
 
     def prioritize_group(self, group_id: int) -> None:
+        """Perform parsimonious selection for the larged connected component.
+
+        Args:
+            group_id (int): group ID to prioritize.
+
+        """
         peptide_names = set(
             [get_pair_id(pep.a, pep.b) for pep in self.peptide_groups[group_id]]
         )
@@ -189,6 +236,7 @@ class ParsimonySelector:
                     protein_pair.set_report_status(ReportStatus.ALL)
 
     def prioritize(self) -> None:
+        """Start the parsimonious prioritization of each group."""
         if not self.can_prioritize:
             logger.warning(
                 "Parsimony group creation not performed before prioritization. Running now."
@@ -198,5 +246,6 @@ class ParsimonySelector:
             self.prioritize_group(group)
 
     def run(self) -> None:
+        """Run the full parsimonious selection."""
         self.create_groups()
         self.prioritize()

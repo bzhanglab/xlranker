@@ -1,4 +1,7 @@
-# Input file is a TSV file with two columns constituting a known PPI
+"""Creates a Polars dataframe with P1 and P2 columns where each row is a set of proteins with known PPI.
+
+Input file is a TSV file with two columns constituting a known PPI
+"""
 
 import polars as pl
 

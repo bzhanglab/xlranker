@@ -7,7 +7,7 @@ from enum import Enum, auto
 from Bio import SeqIO
 
 from xlranker.config import MappingConfig, config
-from xlranker.data import get_gencode_fasta
+from xlranker.data import get_default_fasta
 from xlranker.util.readers import read_mapping_table_file
 
 logger = logging.getLogger(__name__)
@@ -72,6 +72,9 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
 
     Args:
         fasta_description (str): FASTA description string
+        **kwargs: See below.
+
+    Kwargs:
         split_by (str): Character to split description string
         split_index (str): Index (0-based) of gene symbol after splitting.
                            All characters after first space are removed.
@@ -92,11 +95,35 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
 
 @dataclass
 class MappingResult:
+    """Results from mapping peptide sequences to proteins.
+
+    Args:
+        peptide_to_protein (dict[str, list[str]]): Dictionary where keys are peptide sequences and values are the list of proteins that map to that sequence.
+        protein_sequences (dict[str, str] | None): Optional dictionary where keys are protein names and values are those proteins sequence. Used for linkage location. None if sequence not available (i.e. mapping table)
+
+    """
+
     peptide_to_protein: dict[str, list[str]]
     protein_sequences: dict[str, str] | None
 
 
 def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs) -> str:
+    """Extract the gene symbol from a FASTA entry based on fasta_type.
+
+    Args:
+        fasta_description (str): FASTA entry string
+        fasta_type (FastaType): FastaType of the FASTA file. Either UNIPROT or GENCODE
+        **kwargs: See below.
+
+    Kwargs:
+        split_by (str): Character to split description string. Only used if FastaType is GENCODE.
+        split_index (str): Index (0-based) of gene symbol after splitting.
+                           All characters after first space are removed.
+                           Only used if FastaType is GENCODE.
+
+    Returns:
+        str: the gene symbol extracted from the FASTA entry
+    """
     match fasta_type:
         case FastaType.UNIPROT:
             return extract_gene_symbol_uniprot(fasta_description).upper()
@@ -105,6 +132,15 @@ def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs)
 
 
 def convert_str_to_fasta_type(possible_type: str) -> FastaType:
+    """Convert string to FastaType enum. Case insensitive.
+
+    Args:
+        possible_type (str): string to convert to FastaType.
+
+    Returns:
+        FastaType: FastaType.GENCODE if possible_type is GENCODE. FastaType.UNIPROT for all other cases.
+
+    """
     possible_type = possible_type.upper()
     match possible_type:
         case "UNIPROT":
@@ -112,7 +148,7 @@ def convert_str_to_fasta_type(possible_type: str) -> FastaType:
         case "GENCODE":
             return FastaType.GENCODE
         case _:
-            return FastaType.UNIPROT
+            return FastaType.UNIPROT  # TODO: Determine if new UNKNOWN type should be created. Maybe a possible error?
 
 
 class PeptideMapper:
@@ -153,7 +189,7 @@ class PeptideMapper:
         """
         if mapping_table_path is None:
             logger.info("Using default gencode fasta file for peptide mapping")
-            self.mapping_table_path = get_gencode_fasta()
+            self.mapping_table_path = get_default_fasta()
             # Make sure variables match defaults
             split_by = "|"
             split_index = 3
@@ -199,11 +235,29 @@ class PeptideMapper:
         return map_res
 
     def map_fasta(self, sequences: list[str]) -> MappingResult:
+        """Map the provided sequences to proteins using a FASTA file.
+
+        Args:
+            sequences (list[str]): list of peptide sequences to map.
+
+        Returns:
+            MappingResult: Result of the mapping.
+
+        """
         if config.reduce_fasta:
             return self.map_fasta_with_reduction(sequences)
         return self.map_fasta_no_reduction(sequences)
 
     def map_fasta_no_reduction(self, sequences: list[str]) -> MappingResult:
+        """Maps the provided sequences to proteins using the original FASTA file.
+
+        Args:
+            sequences (list[str]): list of peptide sequences to map.
+
+        Returns:
+            MappingResult: Result of the mapping.
+
+        """
         logger.debug("Mapping FASTA file without reduction")
         matches: dict[str, set[str]] = {}
         for seq in sequences:
@@ -227,11 +281,23 @@ class PeptideMapper:
         return MappingResult(peptide_to_protein=final_matches, protein_sequences=None)
 
     def map_fasta_with_reduction(self, sequences: list[str]) -> MappingResult:
+        """Maps the provided sequences to proteins with a modified FASTA file where only the longest sequence is kept for duplicated proteins.
+
+        Duplicate proteins are proteins that share the same gene symbol identification.
+
+        Args:
+            sequences (list[str]): list of peptide sequences to map.
+
+        Returns:
+            MappingResult: Result of the mapping.
+
+        """
         logger.debug("Mapping FASTA file with reduction")
         matches: dict[str, set[str]] = {}
         for seq in sequences:
             matches[seq] = set()
         logger.info(f"Mapping {len(sequences)} peptide sequences")
+
         # First, build a mapping from gene symbol to its longest protein sequence
         gene_to_longest_protein = {}
         gene_to_longest_length: dict[str, int] = {}
@@ -253,6 +319,7 @@ class PeptideMapper:
                 gene_to_longest_protein[gene_symbol] = seq_str
 
         protein_sequences: dict[str, str] = {}
+
         # Now, map sequences only if they are present in the longest protein sequence for that gene
         for gene_symbol, protein_seq in gene_to_longest_protein.items():
             mapped = False
@@ -272,6 +339,15 @@ class PeptideMapper:
 
     @staticmethod
     def from_config(mapping_config: MappingConfig) -> "PeptideMapper":
+        """Create a PeptideMapper from a MappingConfig object.
+
+        Args:
+            mapping_config (MappingConfig): mapping config to build PeptideMapper.
+
+        Returns:
+            PeptideMapper: PeptideMapper built according to config options.
+
+        """
         split_by = (
             mapping_config.split_by if mapping_config.split_by is not None else ""
         )
@@ -281,11 +357,7 @@ class PeptideMapper:
         if mapping_config.fasta_type is None:
             fasta_type = FastaType.UNIPROT
         else:
-            fasta_type: FastaType = (
-                FastaType.GENCODE
-                if mapping_config.fasta_type.lower() == "gencode"
-                else FastaType.UNIPROT
-            )
+            fasta_type = convert_str_to_fasta_type(mapping_config.fasta_type)
         return PeptideMapper(
             mapping_table_path=mapping_config.custom_table,
             split_by=split_by,

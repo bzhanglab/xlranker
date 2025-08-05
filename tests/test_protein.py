@@ -1,3 +1,5 @@
+"""Tests for protein sorting and other Protein functions."""
+
 import xlranker as xlr
 
 SMALL_PROTEIN = xlr.bio.Protein(
@@ -15,6 +17,7 @@ MISSING_B = xlr.bio.Protein(
 
 
 def test_protein_order_with_one_null():
+    """Test that proteins that have null abundances are sorted lower than non-missing."""
     # small protein should always come first
     assert xlr.bio.protein.sort_proteins(SMALL_PROTEIN, MISSING_A) == (
         SMALL_PROTEIN,
@@ -27,6 +30,7 @@ def test_protein_order_with_one_null():
 
 
 def test_protein_order_with_both_null():
+    """Test order of proteins does not change when both have null abundances."""
     # Output should be same order as input
     assert xlr.bio.protein.sort_proteins(MISSING_B, MISSING_A) == (
         MISSING_B,
@@ -39,6 +43,7 @@ def test_protein_order_with_both_null():
 
 
 def test_protein_order_no_nulls():
+    """Test that that the larger protein is returned first in tuple."""
     # Big protein should always come first
     assert xlr.bio.protein.sort_proteins(SMALL_PROTEIN, BIG_PROTEIN) == (
         BIG_PROTEIN,

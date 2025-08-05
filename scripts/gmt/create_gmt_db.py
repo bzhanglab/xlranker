@@ -1,3 +1,5 @@
+"""Script that builds a list of list of sets representing all of the GMTs located in the gmts folder."""
+
 import glob
 import gzip
 import pickle

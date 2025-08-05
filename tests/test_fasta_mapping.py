@@ -1,3 +1,5 @@
+"""FASTA related mapping tests."""
+
 import xlranker
 import xlranker.util
 import xlranker.util.mapping
@@ -42,7 +44,7 @@ QPLC"""
 
 
 def test_custom_table(tmp_path):
-    """tests fasta mapping with snippet from gencode v48"""
+    """Tests fasta mapping with snippet from gencode v48."""
     temp_file = tmp_path / "fasta_snippet.fa"
     temp_file.write_text(FASTA_SNIPPET)
     mapper = xlranker.util.mapping.PeptideMapper(

@@ -1,5 +1,7 @@
 site_name: XLRanker
 site_url: https://bzhanlab.github.io/XLRanker
+repo_url: https://github.com/bzhanglab/xlranker
+repo_name: bzhanglab/xlranker
 theme:
   name: material
   logo: images/logo.svg
