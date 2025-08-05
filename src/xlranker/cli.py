@@ -1,3 +1,5 @@
+"""Command Line Interface for XLRanker."""
+
 import json
 import logging
 import os
@@ -19,6 +21,18 @@ logger = logging.getLogger(__name__)
 
 
 def load_config(path: str) -> dict[str, Any]:
+    """Load a JSON or YAML config to dictionary from path.
+
+    Args:
+        path (str): path to JSON or YAML file
+
+    Raises:
+        ValueError: raised if config does not end in .json, .yaml, or .yml
+
+    Returns:
+        dict[str, Any]: dictionary representing the config
+
+    """
     if path.lower().endswith(".json"):
         return json.load(open(path))
     elif path.lower().endswith(".yaml") or path.lower().endswith(".yml"):
@@ -28,6 +42,16 @@ def load_config(path: str) -> dict[str, Any]:
 
 
 def save_config(path: str, config_obj: dict[str, Any]) -> None:
+    """Save config to path in either JSON or YAML format.
+
+    Args:
+        path (str): path to write config to
+        config_obj (dict[str, Any]): config to save
+
+    Raises:
+        ValueError: raised if path does not end in .json, .yaml, or .yml
+
+    """
     path = path.lower()
     if path.endswith(".json"):
         return json.dump(config_obj, open(path, "w"))
@@ -37,6 +61,15 @@ def save_config(path: str, config_obj: dict[str, Any]) -> None:
 
 
 def is_folder(path_to_validate: str) -> bool | str:
+    """Check if the input path is a folder for form verification.
+
+    Args:
+        path_to_validate (str): path to check
+
+    Returns:
+        bool | str: returns True if is_folder, else provide error message.
+
+    """
     return (
         True
         if not os.path.isfile(path_to_validate)
@@ -123,26 +156,6 @@ def init(
         else "File must end with .json, .yaml, or .yml",
     ).ask()
     save_config(output_path, output_config)
-
-
-@app.command()
-def test_fasta(
-    fasta_file: str,
-    split: str,
-    gs_index: int,
-    verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
-):
-    setup_logging(verbose=verbose)
-    mapper = PeptideMapper(
-        mapping_table_path=fasta_file, split_by=split, split_index=gs_index
-    )
-    sequences = ["QKTPK", "MGSGKK"]
-    mapping_res = mapper.map_sequences(sequences)
-    nl_char = "\n"
-    for seq in sequences:
-        print(f"Sequence: {seq}")
-        print(f"Results:\n{nl_char.join(mapping_res.peptide_to_protein[seq])}\n")
-    print("Verify results are in gene symbol!")
 
 
 @app.command()
@@ -261,4 +274,5 @@ def start(
 
 
 def cli():
+    """Start the CLI."""
     app()

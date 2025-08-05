@@ -1,3 +1,5 @@
+"""Config related classes and methods. Contains the global config object."""
+
 import json
 from dataclasses import dataclass, field
 from typing import Any

@@ -139,6 +139,7 @@ def convert_str_to_fasta_type(possible_type: str) -> FastaType:
 
     Returns:
         FastaType: FastaType.GENCODE if possible_type is GENCODE. FastaType.UNIPROT for all other cases.
+
     """
     possible_type = possible_type.upper()
     match possible_type:

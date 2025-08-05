@@ -1,3 +1,5 @@
+"""FASTA related mapping tests."""
+
 import xlranker
 import xlranker.util
 import xlranker.util.mapping
