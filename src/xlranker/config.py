@@ -93,7 +93,14 @@ def set_config_from_dict(config_dict: dict[str, Any]) -> None:
 
     """
     for key in config_dict:
-        setattr(config, key, config_dict[key])
+        if key == "advanced":
+            for sub_key in config_dict[key]:
+                setattr(config.advanced, sub_key, config_dict[key][sub_key])
+        elif key == "mapping":
+            for sub_key in config_dict[key]:
+                setattr(config.mapping, sub_key, config_dict[key][sub_key])
+        else:
+            setattr(config, key, config_dict[key])
 
 
 def load_from_json(json_file: str) -> None:
@@ -105,5 +112,30 @@ def load_from_json(json_file: str) -> None:
     """
     with open(json_file) as r:
         json_obj = json.load(r)
-    for key in json_obj:
-        setattr(config, key, json_obj[key])
+    set_config_from_dict(json_obj)
+
+
+def config_to_dict(config_obj: Config) -> dict[str, Any] | list[dict[str, Any]]:
+    """Convert Config object to a dictionary.
+
+    Args:
+        config_obj (config): config to convert to dictionary like object.
+
+    Returns:
+        dict[str, Any] | list[dict[str, Any]]: JSON/YAML serializable object representing the input config
+
+    """
+
+    def dataclass_to_dict(obj) -> dict[str, Any] | list[dict[str, Any]]:
+        if hasattr(obj, "__dataclass_fields__"):
+            result = {}
+            for field_name in obj.__dataclass_fields__:
+                value = getattr(obj, field_name)
+                result[field_name] = dataclass_to_dict(value)
+            return result
+        elif isinstance(obj, list):
+            return [dataclass_to_dict(item) for item in obj]
+        else:
+            return obj
+
+    return dataclass_to_dict(config_obj)
