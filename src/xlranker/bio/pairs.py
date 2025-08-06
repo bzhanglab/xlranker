@@ -236,12 +236,8 @@ class ProteinPair(GroupedEntity):
         for abundance_key in self.a.abundances:
             a = self.a.abundances[abundance_key]
             b = self.b.abundances[abundance_key]
-            if safe_a_greater_or_equal_to_b(a, b):
-                ret_val[f"{abundance_key}_a"] = a
-                ret_val[f"{abundance_key}_b"] = b
-            else:  # make sure a is the larger value
-                ret_val[f"{abundance_key}_a"] = b
-                ret_val[f"{abundance_key}_b"] = a
+            ret_val[f"{abundance_key}_a"] = a
+            ret_val[f"{abundance_key}_b"] = b
         return ret_val
 
     def to_tsv(self) -> str:
