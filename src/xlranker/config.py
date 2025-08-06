@@ -12,6 +12,7 @@ DEFAULT_CONFIG = {
     "fasta_type": "UNIPROT",
     "only_human": True,
     "intra_in_training": False,
+    "primary_column": None,
     "advanced": {
         "intra_in_training": False,  # allow intra in training data
     },
@@ -64,6 +65,7 @@ class Config:
         output (str): Default to "xlranker_output/". Directory where output files are saved.
         additional_null_values (list[str]): Default to []. Additional null values to consider when reading data files.
         advanced (AdvancedConfig): Advanced configuration options
+        primary_column (str | None): Column name of which omic file should be the representative. If None, default to the first file alphabetically.
         mapping (MappingConfig): Configuration related to peptide sequence mapping.
 
     """
@@ -73,6 +75,9 @@ class Config:
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
     output: str = "xlranker_output/"  # output directory
+    primary_column: str | None = (
+        None  # Which omic file should be the representative omic set for ordering
+    )
     additional_null_values: list[str] = field(
         default_factory=list
     )  # additional null values to consider when reading data files

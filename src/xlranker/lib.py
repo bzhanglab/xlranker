@@ -10,6 +10,7 @@ from xlranker.util import get_abundance, get_pair_id
 from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta_type
 from xlranker.util.readers import read_data_folder, read_network_file
 
+from xlranker.config import config as xlr_config
 from .bio import Protein
 from .bio.pairs import PeptidePair, ProteinPair
 from .status import PrioritizationStatus
@@ -109,7 +110,9 @@ class XLDataSet:
                 abundances[omic_file] = get_abundance(
                     self.omic_data[omic_file], protein
                 )
-            self.proteins[protein] = Protein(protein, protein, abundances)
+            self.proteins[protein] = Protein(
+                protein, protein, abundances, xlr_config.primary_column
+            )
         remove_pairs = []
         for (
             peptide_pair_key

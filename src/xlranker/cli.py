@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 import random
 from typing import Annotated, Any
 
@@ -10,10 +11,12 @@ import cyclopts
 import questionary
 import yaml
 
+from xlranker import config
 from xlranker.config import DEFAULT_CONFIG
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
+from xlranker.util.readers import base_name
 from xlranker.util.mapping import FastaType, PeptideMapper
 
 app = cyclopts.App()
@@ -106,6 +109,14 @@ def init(
         only_directories=True,
         validate=is_folder,
     ).ask()
+    globs = [str(p) for p in list(Path(omic_data).glob("*"))]
+    primary_column = None
+    if len(globs) > 0:
+        selected_file = questionary.select(
+            "Which file is the primary abundance value?", choices=globs
+        ).ask()
+        primary_column = base_name(str(selected_file))
+
     mapping_table = questionary.select(
         "What mapping table will you use?",
         choices=[
@@ -143,6 +154,8 @@ def init(
         "is_fasta": is_fasta,
         "only_human": only_human,
     }
+    if primary_column is not None:
+        output_config["primary_column"] = primary_column
     if mapping_table_path is not None:
         output_config["mapping_table"] = mapping_table_path
         if is_fasta:
@@ -179,6 +192,9 @@ def start(
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
     fasta_type: Annotated[str | None, cyclopts.Parameter(name=["--fasta-type"])] = None,
+    primary_column: Annotated[
+        str | None, cyclopts.Parameter(name="--primary_column")
+    ] = None,
 ):  # noqa: DOC105
     """Run the full prioritization pipeline.
 
@@ -199,6 +215,7 @@ def start(
         gs_index (Annotated[int  |  None, cyclopts.Parameter], optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
         is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
         fasta_type (Annotated[ str  |  None, cyclopts.Parameter], optional): Type of FASTA file, either "GENCODE" or "UNIPROT". Required if is_fasta is True.
+        primary_column (Annotated[ str  |  None, cyclopts.Parameter], optional):  the name of the omic data file (without folder or file extensions) that should be used as the abundance value used to sort all columns
 
     Raises:
         ValueError: Raised if mapping parameters are not properly configurable.
@@ -227,7 +244,15 @@ def start(
     split = split or config_data.get("split", None)
     gs_index = gs_index if gs_index is not None else config_data.get("gs_index", None)
     is_fasta = is_fasta or config_data.get("is_fasta", False)
-    fasta_type = fasta_type or config_data.get("fasta_type", None)
+    fasta_type = (
+        fasta_type if fasta_type is not None else config_data.get("fasta_type", None)
+    )
+    primary_column = (
+        primary_column
+        if primary_column is not None
+        else config_data.get("primary_column", None)
+    )
+    config.config.primary_column = primary_column
     if mapping_table is None and is_fasta:
         raise ValueError("Mapping table must be provided if is_fasta is True.")
     if fasta_type is not None:
