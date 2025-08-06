@@ -11,6 +11,7 @@ import cyclopts
 import questionary
 import yaml
 
+from xlranker import config
 from xlranker.config import DEFAULT_CONFIG
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
@@ -191,6 +192,9 @@ def start(
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
     fasta_type: Annotated[str | None, cyclopts.Parameter(name=["--fasta-type"])] = None,
+    primary_column: Annotated[
+        str | None, cyclopts.Parameter(name="--primary_column")
+    ] = None,
 ):  # noqa: DOC105
     """Run the full prioritization pipeline.
 
@@ -211,6 +215,7 @@ def start(
         gs_index (Annotated[int  |  None, cyclopts.Parameter], optional): index in the FASTA file that contains the gene symbol. Index starts at 0.
         is_fasta (Annotated[bool, cyclopts.Parameter], optional): Enable if mapping table is a FASTA file.
         fasta_type (Annotated[ str  |  None, cyclopts.Parameter], optional): Type of FASTA file, either "GENCODE" or "UNIPROT". Required if is_fasta is True.
+        primary_column (Annotated[ str  |  None, cyclopts.Parameter], optional):  the name of the omic data file (without folder or file extensions) that should be used as the abundance value used to sort all columns
 
     Raises:
         ValueError: Raised if mapping parameters are not properly configurable.
@@ -239,7 +244,15 @@ def start(
     split = split or config_data.get("split", None)
     gs_index = gs_index if gs_index is not None else config_data.get("gs_index", None)
     is_fasta = is_fasta or config_data.get("is_fasta", False)
-    fasta_type = fasta_type or config_data.get("fasta_type", None)
+    fasta_type = (
+        fasta_type if fasta_type is not None else config_data.get("fasta_type", None)
+    )
+    primary_column = (
+        primary_column
+        if primary_column is not None
+        else config_data.get("primary_column", None)
+    )
+    config.config.primary_column = primary_column
     if mapping_table is None and is_fasta:
         raise ValueError("Mapping table must be provided if is_fasta is True.")
     if fasta_type is not None:
