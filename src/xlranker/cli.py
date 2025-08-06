@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 import random
 from typing import Annotated, Any
 
@@ -14,6 +15,7 @@ from xlranker.config import DEFAULT_CONFIG
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
+from xlranker.util.readers import base_name
 from xlranker.util.mapping import FastaType, PeptideMapper
 
 app = cyclopts.App()
@@ -106,6 +108,14 @@ def init(
         only_directories=True,
         validate=is_folder,
     ).ask()
+    globs = [str(p) for p in list(Path(omic_data).glob("*"))]
+    primary_column = None
+    if len(globs) > 0:
+        selected_file = questionary.select(
+            "Which file is the primary abundance value?", choices=globs
+        ).ask()
+        primary_column = base_name(str(selected_file))
+
     mapping_table = questionary.select(
         "What mapping table will you use?",
         choices=[
@@ -143,6 +153,8 @@ def init(
         "is_fasta": is_fasta,
         "only_human": only_human,
     }
+    if primary_column is not None:
+        output_config["primary_column"] = primary_column
     if mapping_table_path is not None:
         output_config["mapping_table"] = mapping_table_path
         if is_fasta:
