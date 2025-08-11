@@ -5,6 +5,7 @@ import random
 import numpy as np
 import polars as pl
 
+from xlranker.config import config
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein
 
@@ -44,8 +45,8 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
     else:
         name_b = b.sequence
     if name_a < name_b:
-        return f"{name_a}+{name_b}"
-    return f"{name_b}+{name_a}"
+        return f"{name_a}{config.advanced.pair_separator}{name_b}"
+    return f"{name_b}{config.advanced.pair_separator}{name_a}"
 
 
 def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
