@@ -3,16 +3,16 @@
 import xlranker as xlr
 
 SMALL_PROTEIN = xlr.bio.Protein(
-    name="Small", abundances={"hello": 1.0}, protein_name="Small"
+    name="Small", abundances={"hello": 1.0}, unique_identifier="Small"
 )
 BIG_PROTEIN = xlr.bio.Protein(
-    name="Big", abundances={"hello": 2.0}, protein_name="Small"
+    name="Big", abundances={"hello": 2.0}, unique_identifier="Small"
 )
 MISSING_A = xlr.bio.Protein(
-    name="Missing A", abundances={"hello": None}, protein_name="Small"
+    name="Missing A", abundances={"hello": None}, unique_identifier="Small"
 )
 MISSING_B = xlr.bio.Protein(
-    name="Missing B", abundances={"hello": None}, protein_name="Small"
+    name="Missing B", abundances={"hello": None}, unique_identifier="Small"
 )
 
 
@@ -55,7 +55,7 @@ def test_protein_order_no_nulls():
     )
     same_val_as_small = xlr.bio.Protein(
         name="Same as Small",
-        protein_name="Same as Small",
+        unique_identifier="Same as Small",
         abundances=SMALL_PROTEIN.abundances,
     )
     assert xlr.bio.protein.sort_proteins(same_val_as_small, SMALL_PROTEIN) == (
