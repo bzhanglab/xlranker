@@ -31,7 +31,7 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
         b (Protein | Peptide): entity b
 
     Returns:
-        str: pair representation with entities separated by '+'.
+        str: pair representation with entities separated by config.advanced.pair_separator (default '+').
 
     """
     name_a = ""

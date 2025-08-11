@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 
-class ProteinNameExtractor(ABC):
+class ProteinNameExtractor(ABC):  # TODO: Identify if this is useful.
     """Abstract class describing methods for a protein name extractor from isoform name."""
 
     @abstractmethod
