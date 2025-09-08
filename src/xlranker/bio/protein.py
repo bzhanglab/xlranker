@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 
-class ProteinNameExtractor(ABC):
+class ProteinNameExtractor(ABC):  # TODO: Identify if this is useful.
     """Abstract class describing methods for a protein name extractor from isoform name."""
 
     @abstractmethod
@@ -114,12 +114,12 @@ class Protein:
     name: str
     abundances: dict[str, float | None]
     main_column: str
-    protein_name: str
+    unique_identifier: str
 
     def __init__(
         self,
         name: str,
-        protein_name: str,
+        unique_identifier: str,
         abundances: dict[str, float | None] = {},
         main_column: str | None = None,
     ):
@@ -127,13 +127,13 @@ class Protein:
 
         Args:
             name (str): Name of the protein
-            protein_name (str): name of the protein specific to the isoform level.
+            unique_identifier (str): name of the protein specific to the isoform level.
             abundances (dict[str, float | None]): Abundance values of the protein where keys is the name of the data and the value is the abundance
             main_column (str | None): column/key in abundance dictionary that represents the main abundance for the protein. Used for sorting the proteins. If none, uses first key in abundances dict.
 
         """
         self.name = name
-        self.protein_name = protein_name
+        self.unique_identifier = unique_identifier
         self.abundances = abundances
         if main_column is None:
             self.main_column = next(iter(abundances))
@@ -151,7 +151,7 @@ class Protein:
 
         """
         if isinstance(value, Protein):
-            return value.protein_name == self.protein_name
+            return value.unique_identifier == self.unique_identifier
         return False
 
     def __hash__(self) -> int:
@@ -161,7 +161,7 @@ class Protein:
             int: hash using the protein name of this protein
 
         """
-        return hash(self.protein_name)
+        return hash(self.unique_identifier)
 
     def abundance(self) -> float | None:
         """Get the representative abundance value for this protein.

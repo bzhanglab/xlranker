@@ -5,30 +5,18 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-DEFAULT_CONFIG = {
-    "seed": None,
-    "mapping_table": None,
-    "is_fasta": True,
-    "fasta_type": "UNIPROT",
-    "only_human": True,
-    "intra_in_training": False,
-    "primary_column": None,
-    "advanced": {
-        "intra_in_training": False,  # allow intra in training data
-    },
-}
-
-
 @dataclass
 class AdvancedConfig:
     """Advanced config options for XLRanker.
 
     Attributes:
         intra_in_training (bool): Default to False. If True, intra pairs are included in the positive set for model training. # TODO: May remove this option in future versions
+        pair_separator (str): Default to "+". String separating pairs of peptides/proteins (i.e. ABC1+DEF2)
 
     """
 
     intra_in_training: bool = False  # allow intra in training data
+    pair_separator: str = "+"  # string separating pairs of peptides/proteins
 
 
 @dataclass
@@ -144,3 +132,6 @@ def config_to_dict(config_obj: Config) -> dict[str, Any] | list[dict[str, Any]]:
             return obj
 
     return dataclass_to_dict(config_obj)
+
+
+DEFAULT_CONFIG = config_to_dict(Config())

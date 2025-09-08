@@ -94,6 +94,20 @@ def extract_gene_symbol_gencode(fasta_description: str, **kwargs) -> str:
 
 
 @dataclass
+class SequenceMatch:
+    """FASTA entry that matched a peptide sequence.
+
+    Attributes:
+        unique_identifier (str): Isoform-specific identifier
+        protein_name (str): Protein-level name from fasta file. Typically in Gene Symbol.
+
+    """
+
+    unique_identifier: str
+    protein_name: str
+
+
+@dataclass
 class MappingResult:
     """Results from mapping peptide sequences to proteins.
 
