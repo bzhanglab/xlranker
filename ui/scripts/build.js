@@ -1,6 +1,6 @@
-import fs from "fs/promises";
-import { exec } from "child_process";
-import { promisify } from "util";
+import fs from "node:fs/promises";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 
 const execAsync = promisify(exec);
 
@@ -19,7 +19,7 @@ async function cleanAndBuild() {
     console.log(`Created directory ${dirPath}`);
 
     await fs.writeFile(`${dirPath}/__init__.py`, "");
-    console.log(`Created blank __init__.py`);
+    console.log("Created blank __init__.py");
   } catch (err) {
     console.error("Error creating directory or file:", err);
     process.exit(1);
