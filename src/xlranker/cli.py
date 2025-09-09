@@ -3,8 +3,8 @@
 import json
 import logging
 import os
-from pathlib import Path
 import random
+from pathlib import Path
 from typing import Annotated, Any
 
 import cyclopts
@@ -15,9 +15,10 @@ from xlranker import config
 from xlranker.config import DEFAULT_CONFIG
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
+from xlranker.server import start_server
 from xlranker.util import set_seed
-from xlranker.util.readers import base_name
 from xlranker.util.mapping import FastaType, PeptideMapper
+from xlranker.util.readers import base_name
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
@@ -73,11 +74,7 @@ def is_folder(path_to_validate: str) -> bool | str:
         bool | str: returns True if is_folder, else provide error message.
 
     """
-    return (
-        True
-        if not os.path.isfile(path_to_validate)
-        else "Input a directory, not an existing file."
-    )
+    return True if not os.path.isfile(path_to_validate) else "Input a directory, not an existing file."
 
 
 @app.command()
@@ -112,9 +109,7 @@ def init(
     globs = [str(p) for p in list(Path(omic_data).glob("*"))]
     primary_column = None
     if len(globs) > 0:
-        selected_file = questionary.select(
-            "Which file is the primary abundance value?", choices=globs
-        ).ask()
+        selected_file = questionary.select("Which file is the primary abundance value?", choices=globs).ask()
         primary_column = base_name(str(selected_file))
 
     mapping_table = questionary.select(
@@ -129,9 +124,7 @@ def init(
     match mapping_table:
         case "Custom FASTA database":
             is_fasta = True
-            fasta_type = questionary.select(
-                "Type of FASTA file:", choices=["GENCODE", "UNIPROT"]
-            ).ask()
+            fasta_type = questionary.select("Type of FASTA file:", choices=["GENCODE", "UNIPROT"]).ask()
             mapping_table_path = questionary.path(
                 "Path to fasta file:",
                 validate=lambda x: True
@@ -163,38 +156,31 @@ def init(
     output_path = questionary.path(
         "Output file for config (JSON or YAML format):",
         validate=lambda x: True
-        if x.lower().endswith(".json")
-        or x.lower().endswith(".yaml")
-        or x.lower().endswith(".yml")
+        if x.lower().endswith(".json") or x.lower().endswith(".yaml") or x.lower().endswith(".yml")
         else "File must end with .json, .yaml, or .yml",
     ).ask()
     save_config(output_path, output_config)
 
 
 @app.command()
+def serve(host: str = "127.0.0.1", port: str = "5000", debug: bool = False):
+    start_server(host, port, debug)
+
+
+@app.command()
 def start(
     network: Annotated[str | None, cyclopts.Parameter(name=["--network", "-n"])] = None,
-    data_folder: Annotated[
-        str | None, cyclopts.Parameter(name=["--data-folder", "-d"])
-    ] = None,
-    config_file: Annotated[
-        str | None, cyclopts.Parameter(name=["--config", "-c"])
-    ] = None,
+    data_folder: Annotated[str | None, cyclopts.Parameter(name=["--data-folder", "-d"])] = None,
+    config_file: Annotated[str | None, cyclopts.Parameter(name=["--config", "-c"])] = None,
     seed: Annotated[int | None, cyclopts.Parameter(name=["--seed", "-s"])] = None,
     verbose: Annotated[bool, cyclopts.Parameter(name=["--verbose", "-v"])] = False,
-    log_file: Annotated[
-        str | None, cyclopts.Parameter(name=["--log-file", "-l"])
-    ] = None,
-    mapping_table: Annotated[
-        str | None, cyclopts.Parameter(name=["--mapping-table", "-m"])
-    ] = None,
+    log_file: Annotated[str | None, cyclopts.Parameter(name=["--log-file", "-l"])] = None,
+    mapping_table: Annotated[str | None, cyclopts.Parameter(name=["--mapping-table", "-m"])] = None,
     split: Annotated[str | None, cyclopts.Parameter(name=["--split"])] = None,
     gs_index: Annotated[int | None, cyclopts.Parameter(name=["--gs-index"])] = None,
     is_fasta: Annotated[bool, cyclopts.Parameter(name=["--is-fasta"])] = False,
     fasta_type: Annotated[str | None, cyclopts.Parameter(name=["--fasta-type"])] = None,
-    primary_column: Annotated[
-        str | None, cyclopts.Parameter(name="--primary_column")
-    ] = None,
+    primary_column: Annotated[str | None, cyclopts.Parameter(name="--primary_column")] = None,
 ):  # noqa: DOC105
     """Run the full prioritization pipeline.
 
@@ -230,9 +216,7 @@ def start(
 
     # Use CLI arg if provided, otherwise fall back to config
     network = network if network is not None else config_data.get("network", None)
-    data_folder = (
-        data_folder if data_folder is not None else config_data.get("data_folder", None)
-    )
+    data_folder = data_folder if data_folder is not None else config_data.get("data_folder", None)
     if network is None:
         raise ValueError("network not provided in command or in config!")
     if data_folder is None:
@@ -244,23 +228,15 @@ def start(
     split = split or config_data.get("split", None)
     gs_index = gs_index if gs_index is not None else config_data.get("gs_index", None)
     is_fasta = is_fasta or config_data.get("is_fasta", False)
-    fasta_type = (
-        fasta_type if fasta_type is not None else config_data.get("fasta_type", None)
-    )
-    primary_column = (
-        primary_column
-        if primary_column is not None
-        else config_data.get("primary_column", None)
-    )
+    fasta_type = fasta_type if fasta_type is not None else config_data.get("fasta_type", None)
+    primary_column = primary_column if primary_column is not None else config_data.get("primary_column", None)
     config.config.primary_column = primary_column
     if mapping_table is None and is_fasta:
         raise ValueError("Mapping table must be provided if is_fasta is True.")
     if fasta_type is not None:
         fasta_type = fasta_type.strip().upper()  # Strip and upper to ensure consistency
     if is_fasta and fasta_type not in ["GENCODE", "UNIPROT"]:
-        raise ValueError(
-            "fasta_type must be either 'GENCODE' or 'UNIPROT' if is_fasta is True."
-        )
+        raise ValueError("fasta_type must be either 'GENCODE' or 'UNIPROT' if is_fasta is True.")
     fasta_enum = FastaType.UNIPROT if fasta_type == "UNIPROT" else FastaType.GENCODE
 
     setup_logging(verbose=verbose, log_file=log_file)
