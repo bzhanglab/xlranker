@@ -103,3 +103,26 @@ def get_abundance(
     if use_median:  # use median?
         return float(np.median(all_vals))
     return float(all_vals.mean())
+
+
+def map_col_sep(col_sep: str) -> str:
+    """Map user-friendly column separator names to actual characters.
+
+    Args:
+        col_sep (str): User-friendly name of the column separator. Options are "Tab", "Comma","Space".
+
+    Returns:
+        str: Actual character used as column separator.
+
+    Raises:
+        ValueError: If an unsupported column separator name is provided.
+
+    """
+    mapping = {
+        "tab": "\t",
+        "comma": ",",
+        "space": " ",
+    }
+    if col_sep.lower() not in mapping:
+        raise ValueError(f"Unsupported column separator: {col_sep}")
+    return mapping[col_sep.lower()]

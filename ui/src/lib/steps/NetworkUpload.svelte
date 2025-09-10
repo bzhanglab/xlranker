@@ -3,10 +3,69 @@
   import * as HoverCard from "$lib/components/ui/hover-card/index.js";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
   import FileUpload from "$lib/components/FileUpload.svelte";
-  import { Loader } from "@lucide/svelte";
+  import { AlertCircleIcon, LoaderCircle } from "@lucide/svelte";
   import * as Sheet from "$lib/components/ui/sheet/index.js";
-  let peptide_file: File[];
-  let net_sep = "Tab";
+  import * as Alert from "$lib/components/ui/alert/index.js";
+  let peptide_file: File[] = $state([]);
+  let net_sep = $state("Tab");
+  let pep_form: HTMLFormElement;
+  let is_loading = $state(false);
+  let duplicated = $state(0);
+  let err_msg = $state("");
+
+  $effect(() => {
+    if (!peptide_file || peptide_file.length === 0) {
+      return;
+    }
+    const file_name = peptide_file ? peptide_file[0].name : "No file selected";
+    if (
+      file_name.endsWith(".txt") ||
+      file_name.endsWith(".tsv") ||
+      file_name.endsWith(".csv")
+    ) {
+      // auto set net_sep based on file extension
+      if (file_name.endsWith(".tsv")) {
+        net_sep = "Tab";
+      } else if (file_name.endsWith(".csv")) {
+        net_sep = "Comma";
+      }
+    } else if (peptide_file && peptide_file.length > 0) {
+      // invalid file
+      peptide_file = [];
+      alert("Please upload a valid .txt, .tsv, or .csv file");
+    }
+  });
+
+  function upload_network() {
+    // post form to /api/upload_network
+    is_loading = true;
+    duplicated = 0;
+    err_msg = "";
+    const formData = new FormData(pep_form);
+    fetch("/api/upload_network", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        is_loading = false;
+        if (data.status === "ok") {
+          console.log("File uploaded successfully:", data);
+        } else if (data.status === "err") {
+          console.error("Error uploading file:", data.message);
+          err_msg = data.message;
+        } else if (data.status === "warn") {
+          duplicated = data.duplicates;
+        }
+        // handle success
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        is_loading = false;
+        err_msg = error;
+        // handle error
+      });
+  }
 </script>
 
 <div class="px-4">
@@ -77,27 +136,58 @@ EQLDNQLDAY	SLNLKHIK
   contain two peptides separated by a tab or comma character.
 
   <div class="grid gap-2">
-    <h3>Upload Network</h3>
-    <FileUpload
-      bind:files={peptide_file}
-      accepted_formats={[".txt", ".csv", ".tsv"]}
-    />
-    <h4>Column Separator</h4>
-    <Select.Root type="single" bind:value={net_sep}>
-      <Select.Trigger class="w-fit min-w-[8rem]">{net_sep}</Select.Trigger>
-      <Select.Content>
-        <Select.Item value="Tab">Tab</Select.Item>
-        <Select.Item value="Comma">Comma</Select.Item>
-        <Select.Item value="Space">Space</Select.Item>
-      </Select.Content>
-    </Select.Root>
+    <form
+      bind:this={pep_form}
+      onsubmit={(e) => {
+        e.preventDefault();
+        upload_network();
+      }}
+    >
+      <h3>Upload Network</h3>
+      <FileUpload
+        bind:files={peptide_file}
+        name="peptide_network"
+        accepted_formats={[".txt", ".csv", ".tsv"]}
+      />
+      <h4>Column Separator</h4>
+      <Select.Root name="col_sep" type="single" bind:value={net_sep}>
+        <Select.Trigger class="w-fit min-w-[8rem]">{net_sep}</Select.Trigger>
+        <Select.Content>
+          <Select.Item value="Tab">Tab</Select.Item>
+          <Select.Item value="Comma">Comma</Select.Item>
+          <Select.Item value="Space">Space</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      {#if duplicated > 0}
+        <Alert.Root class="mt-4 text-yellow-800 bg-yellow-50 border-yellow-200">
+          <AlertCircleIcon />
+          <Alert.Title>Duplicate Edges Found</Alert.Title>
+          <Alert.Description class="mt-2 text-gray-700">
+            {`Found and removed ${duplicated} duplicated edge${duplicated > 1 ? "s" : ""} in the network.`}
+          </Alert.Description>
+        </Alert.Root>
+      {/if}
+      {#if err_msg !== ""}
+        <Alert.Root class="mt-4 bg-red-50 text-red-800 border-red-200">
+          <AlertCircleIcon />
+          <Alert.Title>Error Uploading File</Alert.Title>
+          <Alert.Description class="mt-2 text-gray-700">
+            {err_msg}
+          </Alert.Description>
+        </Alert.Root>
+      {/if}
+      <div class="flex justify-center">
+        <Button type="submit" class="mt-4">
+          {#if is_loading}
+            <LoaderCircle class="animate-spin" />
+            Uploading...
+          {:else}
+            Submit
+          {/if}
+        </Button>
+      </div>
+    </form>
   </div>
 
   <!-- centered button for submit -->
-  <div class="flex justify-center">
-    <Button>
-      <Loader style="animation: spin 2s linear infinite;" />
-      Submit
-    </Button>
-  </div>
 </div>

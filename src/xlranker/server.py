@@ -9,6 +9,8 @@ from importlib.resources import files
 from flask import Flask, Response, jsonify, request
 
 import xlranker.static
+from xlranker.util import map_col_sep
+from xlranker.util.readers import read_network
 
 app = Flask(__name__, static_folder=str(files("xlranker.static")))
 
@@ -38,6 +40,35 @@ def serve_static(filename):
     data = path.read_bytes()
     mimetype, _ = mimetypes.guess_type(filename)
     return Response(data, mimetype=mimetype or "application/octet-stream")
+
+
+@app.route("/api/upload_network", methods=["POST"])
+def upload_network():
+    try:
+        uploaded_file = request.files.get("peptide_network")
+        req = request.form.to_dict()
+        sep = map_col_sep(req["col_sep"])
+        if not uploaded_file:
+            return jsonify({"status": "err", "message": "No file uploaded"}), 400
+        res = read_network(uploaded_file.stream, col_sep=sep)
+        if res.duplicate_rows > 0:  # Send warning that duplicate edges were removed.
+            return jsonify(
+                {
+                    "status": "warn",
+                    "message": f"Found and removed {res.duplicate_rows} duplicated edge(s) in network.",
+                    "filename": uploaded_file.filename,
+                    "sep": sep,
+                    "duplicates": res.duplicate_rows,
+                }
+            )
+        return jsonify(
+            {
+                "status": "ok",
+                "message": f"File processed successfully with {len(res.network)} edges.",
+            }
+        )
+    except Exception as e:
+        return jsonify({"status": "err", "message": str(e)}), 500
 
 
 @app.route("/start_task", methods=["POST"])

@@ -17,32 +17,13 @@
     { id: 3, label: "Analysis" },
     { id: 4, label: "Results" },
   ];
-
-  async function check_network() {
-    const name = peptide_file.name;
-    document.getElementById("status").textContent = "Starting task...";
-    document.getElementById("result").textContent = "";
-
-    const response = await fetch("/start_task", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-
-    const data = await response.json();
-    currentTask = data.task_id;
-
-    document.getElementById("status").textContent =
-      "Task started. Checking progress...";
-    pollTask();
-  }
 </script>
 
 <Navbar />
 
 <logo><img src={logo} alt="Logo" class="mx-auto mb-4 w-32" /></logo>
 
-<div class="container mx-auto p-4 prose prose-lg max-w-3/4">
+<div class="container mx-auto p-4 prose prose-lg max-w-3/4 mb-10">
   <h1 class="text-center">XLRanker</h1>
   <div class="grid grid-cols-[200px_1fr] gap-6">
     <!-- Sidebar -->

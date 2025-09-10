@@ -5,6 +5,7 @@
     files = $bindable(),
     multiple_upload = false,
     accepted_formats = [],
+    name = "file",
   } = $props();
 
   let file_text = $state("Click or drag file to this area to upload");
@@ -61,6 +62,7 @@
         id="file-upload"
         type="file"
         class="hidden"
+        {name}
         accept={accepted_formats.join(",")}
         onchange={handleFileChange}
         multiple={multiple_upload}

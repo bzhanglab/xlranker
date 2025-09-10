@@ -2,7 +2,8 @@
 
 import logging
 from pathlib import Path
-
+from dataclasses import dataclass
+from typing import IO
 import polars as pl
 
 from xlranker.bio import Peptide
@@ -86,11 +87,69 @@ def read_data_folder(
     return ret_dict
 
 
-def read_network_file(network_path: str) -> dict[str, PeptidePair]:
+@dataclass
+class NetworkResult:
+    network: dict[str, PeptidePair]
+    duplicate_rows: int
+
+
+def read_network(network_stream: IO, col_sep: str = "\t") -> NetworkResult:
+    """Reads a network from a stream.
+
+    Args:
+        network_stream: The stream to read the network from.
+        col_sep (str): The column separator to use.
+
+    Returns:
+        NetworkResult: The result of the network reading.
+    """
+    try:
+        text = network_stream.read()
+        if isinstance(text, bytes):
+            text = text.decode("utf-8")
+        text = text.split("\n")
+        new_rows = set()  # Track unique rows
+        valid_rows = 0  # Keeps track of number of edges in original file
+        for row in text:
+            if col_sep in row:
+                valid_rows += 1
+                vals = row.split(col_sep)
+                val_a = vals[0]
+                val_b = vals[1]
+                if val_a > val_b:  # Make sure edges are all sorted the same.
+                    temp = val_a
+                    val_a = val_b
+                    val_b = temp
+                new_rows.add(f"{val_a}{col_sep}{val_b}")
+        duplicate_rows = valid_rows - len(new_rows)  # Count number of duplicated rows
+        if duplicate_rows > 0:  # Send warning that duplicate edges were removed.
+            logger.warning(
+                f"Found and removed {duplicate_rows} duplicated edge(s) in network."
+            )
+        network: dict[str, PeptidePair] = {}
+        for row in new_rows:
+            vals = row.split(col_sep)
+            a = Peptide(vals[0])
+            b = Peptide(vals[1])
+            group = PeptidePair(a, b)
+            network[get_pair_id(a, b)] = group
+        if len(new_rows) == 0:
+            logger.error("No valid edges found in network. Check format.")
+            raise ValueError("No valid edges found in network. Check format.")
+        return NetworkResult(network=network, duplicate_rows=duplicate_rows)
+    except IndexError:
+        logger.error("Index out of bound. Make sure network is in the correct format.")
+        raise IndexError(
+            "Index out of bound. Make sure network is in the correct format."
+        )
+
+
+def read_network_file(network_path: str, col_sep="\t") -> dict[str, PeptidePair]:
     """Reads TSV network file to a list of PeptideGroup.
 
     Args:
         network_path (str): path to the TSV file
+        col_sep (str): column separator used in the file
 
     Returns:
         list[PeptideGroup]: list of PeptideGroup representing the network
@@ -98,39 +157,15 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
     """
     try:
         with open(network_path) as r:
-            text = r.read().split("\n")
-        new_rows = set()  # Track unique rows
-        valid_rows = 0  # Keeps track of number of edges in original file
-        for row in text:
-            if "\t" in row:
-                valid_rows += 1
-                vals = row.split("\t")
-                val_a = vals[0]
-                val_b = vals[1]
-                if val_a > val_b:  # Make sure edges are all sorted the same.
-                    temp = val_a
-                    val_a = val_b
-                    val_b = temp
-                new_rows.add(f"{val_a}\t{val_b}")
-    except IndexError:
-        logger.error("Index out of bound. Make sure network is in the correct format.")
-        raise IndexError()
+            res = read_network(r, col_sep=col_sep)
+        if res.duplicate_rows > 0:  # Send warning that duplicate edges were removed.
+            logger.warning(
+                f"Found and removed {res.duplicate_rows} duplicated edge(s) in network."
+            )
+        return res.network
     except FileNotFoundError:
         logger.error(f"File not found: {network_path}")
-        raise FileNotFoundError
-    duplicate_rows = valid_rows - len(new_rows)  # Count number of duplicated rows
-    if duplicate_rows > 0:  # Send warning that duplicate edges were removed.
-        logger.warning(
-            f"Found and removed {duplicate_rows} duplicated edge(s) in network."
-        )
-    network: dict[str, PeptidePair] = {}
-    for row in new_rows:
-        vals = row.split("\t")
-        a = Peptide(vals[0])
-        b = Peptide(vals[1])
-        group = PeptidePair(a, b)
-        network[get_pair_id(a, b)] = group
-    return network
+        raise FileNotFoundError(f"File not found: {network_path}")
 
 
 def read_mapping_table_file(file_path: str) -> dict[str, list[str]]:
