@@ -136,7 +136,10 @@ class Protein:
         self.unique_identifier = unique_identifier
         self.abundances = abundances
         if main_column is None:
-            self.main_column = next(iter(abundances))
+            if len(abundances) == 0:
+                self.main_column = ""
+            else:
+                self.main_column = next(iter(abundances))
         else:
             self.main_column = main_column
 
@@ -172,6 +175,8 @@ class Protein:
             float | None: Abundance value if available. If main_column is invalid, returns None.
 
         """
+        if self.main_column == "":
+            return None
         return self.abundances.get(self.main_column, None)
 
 

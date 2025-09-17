@@ -77,7 +77,7 @@ def read_data_folder(
     file_glob = Path(folder_path).glob("*.tsv")
     file_list: list[Path] = list(file_glob)
     if len(file_list) == 0:
-        raise FileNotFoundError(f"No TSV files were found in directory: {folder_path}")
+        logger.warning(f"No TSV files were found in directory: {folder_path}")
     ret_dict = {}
     for file in file_list:
         ret_dict[base_name(file)] = read_data_matrix(

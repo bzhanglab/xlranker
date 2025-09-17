@@ -22,7 +22,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from xlranker.bio.pairs import ProteinPair
 from xlranker.config import config
-from xlranker.data import load_default_ppi, load_gmts
+from xlranker.data import load_default_ppi, load_gmts, load_localization_data
 from xlranker.lib import XLDataSet
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.status import PrioritizationStatus
@@ -124,6 +124,8 @@ class PrioritizationModel:
     gmts: list[list[set[str]]]
     ppi_db: pl.DataFrame
     default_ppi: bool
+    default_localization: bool
+    localization_data: dict[str, dict[str, set[str]]]
     xgboost_model: xgboost.XGBClassifier
     pair_selector: PairSelector
 
@@ -133,6 +135,7 @@ class PrioritizationModel:
         model_config: ModelConfig | None = None,
         gmt_list: list[list[set[str]]] | None = None,
         ppi_db: pl.DataFrame | None = None,
+        localization_data: dict[str, dict[str, set[str]]] | None = None,
         pair_selector: PairSelector = BestSelector(with_secondary=False),
     ):
         """Initialize PrioritizationModel.
@@ -155,10 +158,7 @@ class PrioritizationModel:
                         self.positives.append(protein_pair)
                 case PrioritizationStatus.PARSIMONY_AMBIGUOUS:
                     self.to_predict.append(protein_pair)
-        self.existing_pairs = set(
-            tuple(sorted([p.a.name, p.b.name]))
-            for p in self.dataset.protein_pairs.values()
-        )
+        self.existing_pairs = set(tuple(sorted([p.a.name, p.b.name])) for p in self.dataset.protein_pairs.values())
         self.n_features = len(self.to_predict[0].abundance_dict()) - 1
         if model_config is None:
             model_config = ModelConfig()
@@ -166,10 +166,14 @@ class PrioritizationModel:
         if gmt_list is None:
             gmt_list = load_gmts()
         self.gmts = gmt_list
-        if ppi_db is None:
-            self.default_ppi = True
+        self.default_ppi = ppi_db is None
+        if self.default_ppi:
             ppi_db = load_default_ppi()
         self.ppi_db = ppi_db
+        self.default_localization = localization_data is None
+        if self.default_localization:
+            localization_data = load_localization_data()
+        self.localization_data = localization_data
         self.pair_selector = pair_selector
 
     def is_intra(self, a: str, b: str) -> float:
@@ -189,6 +193,29 @@ class PrioritizationModel:
         if a == b:
             return 1.0
         return 0.0
+
+    def get_loc_data(self, a: str, b: str) -> list[tuple[str, float]]:
+        """For every localization dataset, determine if a and b share any cellular locations.
+
+        Order of `a` and `b` does not matter.
+
+        Args:
+            a (str): First protein
+            b (str): Second protein
+
+        Returns:
+            list[tuple[str, float]]: List of tuples where the first value is the dataset name and the second is a float with 1.0 meaning there is at least one shared compartment in the dataset
+
+        """
+        ret_val = []
+        for dataset in self.localization_data:
+            cur_val = 0.0
+            set_a = self.localization_data[dataset].get(a, set())
+            set_b = self.localization_data[dataset].get(b, set())
+            if len(set_a.intersection(set_b)) > 0:
+                cur_val = 1.0
+            ret_val.append((dataset, cur_val))
+        return ret_val
 
     def is_ppi(self, a: str, b: str) -> float:
         """Determine if protein a and protein b has a known ppi in  ppi_db.
@@ -210,9 +237,7 @@ class PrioritizationModel:
             c = a
             a = b
             b = c
-        row_exists = self.ppi_db.filter(
-            (self.ppi_db["P1"] == a) & (self.ppi_db["P2"] == b)
-        )
+        row_exists = self.ppi_db.filter((self.ppi_db["P1"] == a) & (self.ppi_db["P2"] == b))
         return 1.0 if row_exists.height > 0 else 0.0
 
     def get_negatives(self, n: int) -> list[ProteinPair]:
@@ -235,9 +260,7 @@ class PrioritizationModel:
             msg = f"n value for get_negatives ({n}) is too large. Setting to maximum value: {(n_prot * (n_prot - 1)) // 2 - len(self.positives)}"
             if config.fragile:
                 logger.error(msg)
-                raise ValueError(
-                    "get_negatives(n: int) n value is too large and fragile is True"
-                )
+                raise ValueError("get_negatives(n: int) n value is too large and fragile is True")
             logger.warning(msg)
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         protein_ids = list(self.dataset.proteins.keys())
@@ -247,21 +270,13 @@ class PrioritizationModel:
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
             pair_key = tuple(sorted([a, b]))
-            if (
-                pair_key in self.existing_pairs
-                or pair_key in generated
-                or in_same_set(a, b, self.gmts)
-            ):
+            if pair_key in self.existing_pairs or pair_key in generated or in_same_set(a, b, self.gmts):
                 continue
-            negatives.append(
-                ProteinPair(self.dataset.proteins[a], self.dataset.proteins[b])
-            )
+            negatives.append(ProteinPair(self.dataset.proteins[a], self.dataset.proteins[b]))
             generated.add(pair_key)
         return negatives
 
-    def construct_df_from_pairs(
-        self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
-    ) -> pl.DataFrame:
+    def construct_df_from_pairs(self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0) -> pl.DataFrame:
         """Construct a DataFrame from the list of Protein Pairs.
 
         Args:
@@ -279,11 +294,11 @@ class PrioritizationModel:
         schema: dict[str, pl.DataType] = {"pair": pl.String()}
         for pair in pair_list:
             pair_dict = pair.abundance_dict()
-            if (
-                config.human_only or not self.default_ppi
-            ):  # Can only add if only human or if using custom PPI DB
+            if config.human_only or not self.default_localization:
+                for key, val in self.get_loc_data(pair.a.name, pair.b.name):
+                    pair_dict[key] = val
+            if config.human_only or not self.default_ppi:  # Can only add if only human or if using custom PPI DB
                 pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
-                # pair_dict["is_intra"] = self.is_intra(pair.a.name, pair.b.name)
             if has_label:
                 pair_dict["label"] = label_value
             df_array.append(pair_dict)
@@ -314,12 +329,8 @@ class PrioritizationModel:
             pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
 
         """
-        positive_df = self.construct_df_from_pairs(
-            self.positives, has_label=True, label_value=1.0
-        )
-        negative_df = self.construct_df_from_pairs(
-            negative_pairs, has_label=True, label_value=0.0
-        )
+        positive_df = self.construct_df_from_pairs(self.positives, has_label=True, label_value=1.0)
+        negative_df = self.construct_df_from_pairs(negative_pairs, has_label=True, label_value=0.0)
         return pl.concat([positive_df, negative_df])
 
     def run_model(self):
@@ -341,9 +352,7 @@ class PrioritizationModel:
         for run in range(self.model_config.runs):
             logger.info(f"Model on run {run + 1}/{self.model_config.runs}")
             np.random.seed(int(random_seed + run))
-            train_df = self.construct_training_df(
-                self.get_negatives(len(self.positives))
-            )
+            train_df = self.construct_training_df(self.get_negatives(len(self.positives)))
 
             X = train_df.drop(["pair", "label"]).to_numpy()
             y = train_df.get_column("label").to_numpy()
@@ -377,10 +386,9 @@ class PrioritizationModel:
 
             # Train a model on the entire dataset for predictions
             random_seed = random.random() * 100000
-            model = xgboost.XGBClassifier(
-                **self.model_config.xgb_params, random_state=int(random_seed)
-            )
+            model = xgboost.XGBClassifier(**self.model_config.xgb_params, random_state=int(random_seed))
             model.fit(X, y)
+            self.xgboost_model = model
 
             # Get predictions for the prediction dataset
             cur_predictions = model.predict_proba(predict_X)[:, 1]
@@ -398,19 +406,13 @@ class PrioritizationModel:
         for i, protein_pair in enumerate(self.to_predict):
             protein_pair.set_score(mean_predictions[i])
 
-        os.makedirs(
-            config.output, exist_ok=True
-        )  # TODO: Have this done automatically or ask if its okay if exists.
+        os.makedirs(config.output, exist_ok=True)  # TODO: Have this done automatically or ask if its okay if exists.
 
         predict_df = predict_df.with_columns(pl.Series("prediction", mean_predictions))
-        predict_df.write_csv(
-            str(Path(config.output).joinpath("model_output.tsv")), separator="\t"
-        )
+        predict_df.write_csv(str(Path(config.output).joinpath("model_output.tsv")), separator="\t")
 
         # Print summary statistics
-        logger.info(
-            f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
-        )
+        logger.info(f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}")
         logger.info("Results saved to: .")
 
     def get_selected(self) -> list[ProteinPair]:
