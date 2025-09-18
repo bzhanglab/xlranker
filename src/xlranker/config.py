@@ -75,6 +75,7 @@ class Config:
         default_factory=AdvancedConfig
     )  # advanced config options
     mapping: MappingConfig = field(default_factory=MappingConfig)
+    species: str = "hsapiens"  # species name for mapping. Default to human.
 
 
 config = Config()

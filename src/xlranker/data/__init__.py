@@ -1,5 +1,7 @@
 """Retrieve datasets required for the pipeline."""
 
+# TODO: Need to add mouse data files and ignore species if not exist.
+
 import gzip
 import lzma
 import pickle
@@ -8,6 +10,7 @@ import tempfile
 from importlib.resources import files
 
 import polars as pl
+from xlranker.config import config
 
 
 def load_localization_data() -> dict[str, dict[str, set[str]]]:
@@ -17,7 +20,7 @@ def load_localization_data() -> dict[str, dict[str, set[str]]]:
          dict[str, dict[str, set[str]]]: Key is the data set (compartments or HumanProteinAtlas) and the values are dicts containing the annotated locations for a gene.
 
     """
-    coloc_path = files("xlranker.data") / "coloc.pkl.gz"
+    coloc_path = files(f"xlranker.data.species.{config.species}") / "coloc.pkl.gz"
     with gzip.open(str(coloc_path), "rb") as r:
         return pickle.load(r)
 
@@ -29,7 +32,7 @@ def load_default_ppi() -> pl.DataFrame:
         pl.DataFrame: Two column database with column names of P1 and P2 where P1 and P2 have a known PPI.
 
     """
-    ppi_path = files("xlranker.data") / "ppi.parquet"
+    ppi_path = files(f"xlranker.data.species.{config.species}") / "ppi.parquet"
     return pl.read_parquet(str(ppi_path))
 
 
@@ -42,7 +45,9 @@ def load_gmts() -> list[list[set[str]]]:
         list[list[set[str]]]: list of gmts, which are collections of sets.
 
     """
-    with gzip.open(str(files("xlranker.data") / "gmt.pkl.gz"), "rb") as r:
+    with gzip.open(
+        str(files(f"xlranker.data.species.{config.species}") / "gmt.pkl.gz"), "rb"
+    ) as r:
         return pickle.load(r)
 
 
@@ -56,7 +61,9 @@ def get_default_fasta() -> str:
         str: path to temporary file containing FASTA file.
 
     """
-    fasta_path = str(files("xlranker.data") / "uniprot_5_22.fa.tar.xz")
+    fasta_path = str(
+        files(f"xlranker.data.species.{config.species}") / "uniprot_5_22.fa.tar.xz"
+    )
     with lzma.open(fasta_path) as r:
         with tarfile.open(fileobj=r) as tar:
             fa_file = next(

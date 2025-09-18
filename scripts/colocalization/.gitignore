@@ -1,3 +1,2 @@
-data/human_compartment_integrated_full.tsv
-data/subcellular_location.tsv
+data/
 coloc.pkl.gz

@@ -126,7 +126,7 @@ class PrioritizationModel:
     default_ppi: bool
     default_localization: bool
     localization_data: dict[str, dict[str, set[str]]]
-    xgboost_model: xgboost.XGBClassifier
+    xgboost_models: list[xgboost.XGBClassifier]
     pair_selector: PairSelector
 
     def __init__(
@@ -179,6 +179,7 @@ class PrioritizationModel:
             localization_data = load_localization_data()
         self.localization_data = localization_data
         self.pair_selector = pair_selector
+        self.xgboost_models = []
 
     def is_intra(self, a: str, b: str) -> float:
         """Determine if a and b are intra pairs and represent as float.
@@ -191,7 +192,7 @@ class PrioritizationModel:
             float: 1.0 if a and b have same name, else returns 0.0
 
         """
-        if config.human_only:  # Capitalize to ensure consistent case
+        if config.species == "hsapiens":  # Capitalize to ensure consistent case
             a = a.upper()
             b = b.upper()
         if a == b:
@@ -216,9 +217,7 @@ class PrioritizationModel:
             cur_val = 0.0
             set_a = self.localization_data[dataset].get(a, set())
             set_b = self.localization_data[dataset].get(b, set())
-            if len(set_a.intersection(set_b)) > 0:
-                cur_val = 1.0
-            ret_val.append((dataset, cur_val))
+            ret_val.append((dataset, len(set_a.intersection(set_b))))
         return ret_val
 
     def is_ppi(self, a: str, b: str) -> float:
@@ -234,7 +233,7 @@ class PrioritizationModel:
             float: Return float with 1.0 meaning there is a known ppi in the db
 
         """
-        if config.human_only:  # Capitalize to ensure consistent case
+        if config.species == "hsapiens":  # Capitalize to ensure consistent case
             a = a.upper()
             b = b.upper()
         if a > b:
@@ -350,8 +349,16 @@ class PrioritizationModel:
         positive_df = self.construct_df_from_pairs(
             self.positives, has_label=True, label_value=1.0
         )
+        positive_df.write_csv(
+            str(Path(config.output).joinpath("training_positives.tsv")),
+            separator="\t",
+        )
         negative_df = self.construct_df_from_pairs(
             negative_pairs, has_label=True, label_value=0.0
+        )
+        negative_df.write_csv(
+            str(Path(config.output).joinpath("training_negatives.tsv")),
+            separator="\t",
         )
         return pl.concat([positive_df, negative_df])
 
@@ -414,7 +421,7 @@ class PrioritizationModel:
                 **self.model_config.xgb_params, random_state=int(random_seed)
             )
             model.fit(X, y)
-            self.xgboost_model = model
+            self.xgboost_models.append(model)
 
             # Get predictions for the prediction dataset
             cur_predictions = model.predict_proba(predict_X)[:, 1]
@@ -478,4 +485,5 @@ class PrioritizationModel:
             file_path (str): path to save model to.
 
         """
-        self.xgboost_model.save_model(file_path)
+        for i, model in enumerate(self.xgboost_models):
+            model.save_model(f"{file_path}_run_{i}.json")

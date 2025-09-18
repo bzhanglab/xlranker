@@ -71,7 +71,7 @@ def process_hpa(
             for val in secondary_compartments.split(";"):
                 gene_to_comp[gs].add(val.upper())
             for val in gos.split(";"):
-                # format of go is  Cell Junctions (GO:0030054);Cytosol (GO:0005829);Nucleoli fibrillar center (GO:0001650)
+                # format of val is Cell Junctions (GO:0030054);Cytosol (GO:0005829);Nucleoli fibrillar center (GO:0001650)
                 if "GO:" in val:
                     go_id = val.split("GO:")[-1].strip(" )")
                     go_id = f"GO:{go_id}"
@@ -79,8 +79,27 @@ def process_hpa(
     return (go_terms, gene_to_comp)
 
 
-with gzip.open("coloc.pkl.gz", "wb") as w:
+dirs_to_create = ["output", "output/hsapiens", "output/mmusculus"]
+for d in dirs_to_create:
+    import os
+
+    if not os.path.exists(d):
+        os.mkdir(d)
+
+valid_go_terms: set[str] = set()
+with gzip.open("output/hsapiens/coloc.pkl.gz", "wb") as w:
     (go_terms, hpa) = process_hpa()
+    valid_go_terms = go_terms
     pickle.dump(
         {"compartments": process_compartments(go_terms), "HumanProteinAtlas": hpa}, w
     )
+
+with gzip.open("output/mmusculus/coloc.pkl.gz", "wb") as w:
+    pickle.dump(
+        {
+            "compartments": process_compartments(
+                valid_go_terms, "data/mouse_compartment_integrated_full.tsv"
+            )
+        },
+        w,
+    )  # No HPA for mouse
