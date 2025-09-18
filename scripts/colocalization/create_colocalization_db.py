@@ -1,4 +1,5 @@
-import glob
+"""Script that builds a pickled gzipped file that contains cell location information from COMPARTMENTS and Human Protein Atlas."""
+
 import gzip
 import pickle
 
@@ -7,6 +8,16 @@ def process_compartments(
     go_terms: set[str],
     comp_path: str = "data/human_compartment_integrated_full.tsv",
 ) -> dict[str, set[str]]:
+    """Process the COMPARTMENTS database.
+
+    Args:
+        go_terms (set[str]): list of allowable go terms to filter for. Typically from GO Terms seen in HPA.
+        comp_path (str): path to the compartments database file in TSV format
+
+    Return:
+       dict[str, set[str]]: dictionary where keys are gene symbols and the values is a set of GO terms that gene is annotated to.
+
+    """
     gene_to_comp: dict[str, set[str]] = {}
     has_header = False
     with open(comp_path) as r:
@@ -29,6 +40,15 @@ def process_compartments(
 def process_hpa(
     hpa_path: str = "data/subcellular_location.tsv",
 ) -> tuple[set[str], dict[str, set[str]]]:
+    """Process the Human Protein Atlas (HPA) database.
+
+    Args:
+        hpa_path (str): path to the compartments database file in TSV format
+
+    Return:
+       dict[str, set[str]]: dictionary where keys are gene symbols and the values is a set of GO terms that gene is annotated to.
+
+    """
     gene_to_comp: dict[str, set[str]] = {}
     has_header = True
     go_terms: set[str] = set()

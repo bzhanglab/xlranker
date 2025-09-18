@@ -59,9 +59,13 @@ def get_default_fasta() -> str:
     fasta_path = str(files("xlranker.data") / "uniprot_5_22.fa.tar.xz")
     with lzma.open(fasta_path) as r:
         with tarfile.open(fileobj=r) as tar:
-            fa_file = next((m for m in tar.getmembers() if m.name.endswith(".fa")), None)
+            fa_file = next(
+                (m for m in tar.getmembers() if m.name.endswith(".fa")), None
+            )
             if not fa_file:
-                raise FileNotFoundError("No .fa file found in the tar archive. Please report issue.")
+                raise FileNotFoundError(
+                    "No .fa file found in the tar archive. Please report issue."
+                )
             temp_dir = tempfile.mkdtemp()
             tar.extract(fa_file, path=temp_dir)
             temp_fa_path = f"{temp_dir}/{fa_file.name}"

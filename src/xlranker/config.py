@@ -65,9 +65,15 @@ class Config:
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     human_only: bool = True  # Is all data human only?
     output: str = "xlranker_output/"  # output directory
-    primary_column: str | None = None  # Which omic file should be the representative omic set for ordering
-    additional_null_values: list[str] = field(default_factory=list)  # additional null values to consider when reading data files
-    advanced: AdvancedConfig = field(default_factory=AdvancedConfig)  # advanced config options
+    primary_column: str | None = (
+        None  # Which omic file should be the representative omic set for ordering
+    )
+    additional_null_values: list[str] = field(
+        default_factory=list
+    )  # additional null values to consider when reading data files
+    advanced: AdvancedConfig = field(
+        default_factory=AdvancedConfig
+    )  # advanced config options
     mapping: MappingConfig = field(default_factory=MappingConfig)
 
 
