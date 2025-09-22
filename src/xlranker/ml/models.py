@@ -214,7 +214,6 @@ class PrioritizationModel:
         """
         ret_val = []
         for dataset in self.localization_data:
-            cur_val = 0.0
             set_a = self.localization_data[dataset].get(a, set())
             set_b = self.localization_data[dataset].get(b, set())
             ret_val.append((dataset, len(set_a.intersection(set_b))))
