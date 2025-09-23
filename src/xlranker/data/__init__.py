@@ -51,6 +51,17 @@ def load_gmts() -> list[list[set[str]]]:
         return pickle.load(r)
 
 
+def load_homologs() -> dict[str, str]:
+    """Load homolog database for species.
+
+    Returns:
+        dict[str, str]: key is species gene symbol, value is homolog Human gene symbol
+    """
+    homolog_path = files(f"xlranker.data.species.{config.species}") / "homologs.pkl.gz"
+    with gzip.open(str(homolog_path), "rb") as r:
+        return pickle.load(r)
+
+
 def get_default_fasta() -> str:
     """Extract and write a default UNIPROT FASTA database from May 2022.
 

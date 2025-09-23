@@ -16,7 +16,6 @@ def process_ppi(input_file: str, output_file: str = "ppi.parquet"):
     Returns:
         pl.DataFrame: A Polars DataFrame with two columns, P1 and P2, where each row represents a known PPI.
     """
-
     df = pl.read_csv(
         input_file,
         separator="\t",
