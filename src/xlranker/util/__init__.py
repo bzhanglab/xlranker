@@ -105,10 +105,10 @@ def get_abundance(
     return float(all_vals.mean())
 
 
-def validate_species() -> None:
+def validate_species(species: str = config.species) -> None:
     """Validate that the species is supported."""
-    supported_species = ["hsapiens", "mmusculus"]
-    if config.species not in supported_species:
+    supported_species = ["hsapiens", "mmusculus", "other"]
+    if species not in supported_species:
         raise ValueError(
-            f"Species {config.species} is not supported. Supported species are: {', '.join(supported_species)}"
+            f"Species {species} is not supported. Supported species are: {', '.join(supported_species)}"
         )

@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 # TODO: Switch to pydantic to better handle importing and exporting
 
@@ -57,6 +57,8 @@ class Config:
         advanced (AdvancedConfig): Advanced configuration options
         primary_column (str | None): Column name of which omic file should be the representative. If None, default to the first file alphabetically.
         mapping (MappingConfig): Configuration related to peptide sequence mapping.
+        species (Literal["hsapiens", "mmusculus", "other"]): Species name for mapping. Default to human.
+        use_homologs (bool): If True, map to human homologs for non-human species.
 
     """
 
@@ -75,7 +77,10 @@ class Config:
         default_factory=AdvancedConfig
     )  # advanced config options
     mapping: MappingConfig = field(default_factory=MappingConfig)
-    species: str = "hsapiens"  # species name for mapping. Default to human.
+    species: Literal["hsapiens", "mmusculus", "other"] = (
+        "hsapiens"  # species name for mapping. Default to human.
+    )
+    use_homologs: bool = False  # If True, map to human homologs for non-human species
 
 
 config = Config()

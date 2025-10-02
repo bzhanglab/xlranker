@@ -6,6 +6,7 @@ from enum import Enum, auto
 
 from Bio import SeqIO
 
+from xlranker.bio.protein import Protein
 from xlranker.config import MappingConfig, config
 from xlranker.data import get_default_fasta
 from xlranker.util.readers import read_mapping_table_file
@@ -379,3 +380,12 @@ class PeptideMapper:
             is_fasta=mapping_config.is_fasta,
             fasta_type=fasta_type,
         )
+
+
+def map_proteins_to_homologs(
+    protein_list: list[Protein], homologs: dict[str, str] | None
+) -> None:
+    if homologs is None:
+        return
+    for protein in protein_list:
+        protein.name = homologs.get(protein.name, protein.name)
