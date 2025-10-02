@@ -380,12 +380,3 @@ class PeptideMapper:
             is_fasta=mapping_config.is_fasta,
             fasta_type=fasta_type,
         )
-
-
-def map_proteins_to_homologs(
-    protein_list: list[Protein], homologs: dict[str, str] | None
-) -> None:
-    if homologs is None:
-        return
-    for protein in protein_list:
-        protein.name = homologs.get(protein.name, protein.name)

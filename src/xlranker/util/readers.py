@@ -33,8 +33,22 @@ def read_data_matrix(
     """
     null_values = ["", "NA"]
     null_values.extend(additional_null_values)
+    with open(data_path) as f:
+        header = f.readline().strip().split("\t")
+
+    # Force all except first column to Float64
+    dtype_overrides: dict[str, pl.Float64 | pl.Utf8] = {
+        col: pl.Float64 for col in header[1:]
+    }
+    # Keep first column as string
+    dtype_overrides[header[0]] = pl.Utf8
+
     return pl.read_csv(
-        data_path, has_header=True, separator="\t", null_values=null_values
+        data_path,
+        has_header=True,
+        separator="\t",
+        null_values=null_values,
+        schema_overrides=dtype_overrides,
     )
 
 
