@@ -365,17 +365,19 @@ class PrioritizationModel:
         positive_df = self.construct_df_from_pairs(
             self.positives, has_label=True, label_value=1.0
         )
-        positive_df.write_csv(
-            str(Path(config.output).joinpath("training_positives.tsv")),
-            separator="\t",
-        )
+
         negative_df = self.construct_df_from_pairs(
             negative_pairs, has_label=True, label_value=0.0
         )
-        negative_df.write_csv(
-            str(Path(config.output).joinpath("training_negatives.tsv")),
-            separator="\t",
-        )
+        if config.advanced.save_model_files:
+            positive_df.write_csv(
+                str(Path(config.output).joinpath("training_positives.tsv")),
+                separator="\t",
+            )
+            negative_df.write_csv(
+                str(Path(config.output).joinpath("training_negatives.tsv")),
+                separator="\t",
+            )
         return pl.concat([positive_df, negative_df])
 
     def run_model(self):
