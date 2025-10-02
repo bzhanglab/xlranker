@@ -3,12 +3,14 @@
 import json
 from dataclasses import dataclass, field
 from typing import Any, Literal
+from pydantic import BaseModel, ConfigDict, ValidationError
+
 
 # TODO: Switch to pydantic to better handle importing and exporting
 
 
-@dataclass
-class AdvancedConfig:
+# @dataclass
+class AdvancedConfig(BaseModel):
     """Advanced config options for XLRanker.
 
     Attributes:
@@ -18,13 +20,14 @@ class AdvancedConfig:
 
     """
 
+    model_config = ConfigDict(validate_assignment=True)
     intra_in_training: bool = False  # allow intra in training data
     pair_separator: str = "+"  # string separating pairs of peptides/proteins
     save_model_files: bool = False  # save model files required for SHAP value evaluation and further model evaluation
 
 
-@dataclass
-class MappingConfig:
+# @dataclass
+class MappingConfig(BaseModel):
     """Mapping configuration object.
 
     Attributes:
@@ -37,6 +40,7 @@ class MappingConfig:
 
     """
 
+    model_config = ConfigDict(validate_assignment=True)
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     custom_table: str | None = None
     is_fasta: bool = True
@@ -45,8 +49,8 @@ class MappingConfig:
     fasta_type: str | None = "UNIPROT"
 
 
-@dataclass
-class Config:
+# @dataclass
+class Config(BaseModel):
     """Config for XLRanker.
 
     Attributes:
@@ -64,6 +68,7 @@ class Config:
 
     """
 
+    model_config = ConfigDict(validate_assignment=True)
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
@@ -88,22 +93,26 @@ class Config:
 config = Config()
 
 
+def update_model_in_place(model: BaseModel, updates: dict[str, Any]):
+    """Recursively update a Pydantic model in-place from a dict."""
+    for key, value in updates.items():
+        if hasattr(model, key):
+            current = getattr(model, key)
+            if isinstance(current, BaseModel) and isinstance(value, dict):
+                # recurse into nested BaseModel
+                update_model_in_place(current, value)
+            else:
+                setattr(model, key, value)
+
+
 def set_config_from_dict(config_dict: dict[str, Any]) -> None:
     """Set config from a dict object.
 
     Args:
         config_dict (dict[str, Any]): dictionary with config settings
-
     """
-    for key in config_dict:
-        if key == "advanced":
-            for sub_key in config_dict[key]:
-                setattr(config.advanced, sub_key, config_dict[key][sub_key])
-        elif key == "mapping":
-            for sub_key in config_dict[key]:
-                setattr(config.mapping, sub_key, config_dict[key][sub_key])
-        else:
-            setattr(config, key, config_dict[key])
+    update_model_in_place(config, config_dict)
+    config.model_validate(config)
 
 
 def load_from_json(json_file: str) -> None:
@@ -126,22 +135,8 @@ def config_to_dict(config_obj: Config) -> dict[str, Any] | list[dict[str, Any]]:
 
     Returns:
         dict[str, Any] | list[dict[str, Any]]: JSON/YAML serializable object representing the input config
-
     """
-
-    def dataclass_to_dict(obj) -> dict[str, Any] | list[dict[str, Any]]:
-        if hasattr(obj, "__dataclass_fields__"):
-            result = {}
-            for field_name in obj.__dataclass_fields__:
-                value = getattr(obj, field_name)
-                result[field_name] = dataclass_to_dict(value)
-            return result
-        elif isinstance(obj, list):
-            return [dataclass_to_dict(item) for item in obj]
-        else:
-            return obj
-
-    return dataclass_to_dict(config_obj)
+    return config_obj.model_dump()
 
 
 DEFAULT_CONFIG = config_to_dict(Config())
