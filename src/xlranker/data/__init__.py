@@ -11,6 +11,7 @@ from importlib.resources import files
 
 import polars as pl
 from xlranker.config import config
+from xlranker.util import validate_species
 
 
 def load_localization_data() -> dict[str, dict[str, set[str]]]:
@@ -20,6 +21,8 @@ def load_localization_data() -> dict[str, dict[str, set[str]]]:
          dict[str, dict[str, set[str]]]: Key is the data set (compartments or HumanProteinAtlas) and the values are dicts containing the annotated locations for a gene.
 
     """
+    validate_species()
+
     coloc_path = files(f"xlranker.data.species.{config.species}") / "coloc.pkl.gz"
     with gzip.open(str(coloc_path), "rb") as r:
         return pickle.load(r)
@@ -32,6 +35,8 @@ def load_default_ppi() -> pl.DataFrame:
         pl.DataFrame: Two column database with column names of P1 and P2 where P1 and P2 have a known PPI.
 
     """
+    validate_species()
+
     ppi_path = files(f"xlranker.data.species.{config.species}") / "ppi.parquet"
     return pl.read_parquet(str(ppi_path))
 
@@ -45,18 +50,24 @@ def load_gmts() -> list[list[set[str]]]:
         list[list[set[str]]]: list of gmts, which are collections of sets.
 
     """
+    validate_species()
+
     with gzip.open(
         str(files(f"xlranker.data.species.{config.species}") / "gmt.pkl.gz"), "rb"
     ) as r:
         return pickle.load(r)
 
 
-def load_homologs() -> dict[str, str]:
+def load_homologs() -> dict[str, str] | None:
     """Load homolog database for species.
 
     Returns:
         dict[str, str]: key is species gene symbol, value is homolog Human gene symbol
     """
+    validate_species()
+
+    if config.species == "hsapiens":
+        return None
     homolog_path = files(f"xlranker.data.species.{config.species}") / "homologs.pkl.gz"
     with gzip.open(str(homolog_path), "rb") as r:
         return pickle.load(r)
@@ -72,6 +83,8 @@ def get_default_fasta() -> str:
         str: path to temporary file containing FASTA file.
 
     """
+    validate_species()
+
     fasta_path = str(
         files(f"xlranker.data.species.{config.species}") / "uniprot_5_22.fa.tar.xz"
     )

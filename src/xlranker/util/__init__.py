@@ -103,3 +103,12 @@ def get_abundance(
     if use_median:  # use median?
         return float(np.median(all_vals))
     return float(all_vals.mean())
+
+
+def validate_species() -> None:
+    """Validate that the species is supported."""
+    supported_species = ["hsapiens", "mmusculus"]
+    if config.species not in supported_species:
+        raise ValueError(
+            f"Species {config.species} is not supported. Supported species are: {', '.join(supported_species)}"
+        )

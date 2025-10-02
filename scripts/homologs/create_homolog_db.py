@@ -15,8 +15,10 @@ def build_index(df: pl.LazyFrame) -> dict[int, str]:
         dict[int, str]: index mapping DB Class Key to human gene symbol
 
     """
-    df = df.filter(pl.col("Common Organism Name").eq(pl.lit("human"))).collect()
-    return dict(zip(df["DB Class Key"], df["Symbol"]))
+    full_df: pl.DataFrame = df.filter(
+        pl.col("Common Organism Name").eq(pl.lit("human"))
+    ).collect()
+    return dict(zip(full_df["DB Class Key"], full_df["Symbol"]))
 
 
 def create_homolog_db(
