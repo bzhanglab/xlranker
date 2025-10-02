@@ -2,7 +2,9 @@
 
 import json
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
+
+# TODO: Switch to pydantic to better handle importing and exporting
 
 
 @dataclass
@@ -12,11 +14,13 @@ class AdvancedConfig:
     Attributes:
         intra_in_training (bool): Default to False. If True, intra pairs are included in the positive set for model training. # TODO: May remove this option in future versions
         pair_separator (str): Default to "+". String separating pairs of peptides/proteins (i.e. ABC1+DEF2)
+        save_model_files (bool): Default to False. Save model files required for SHAP value evaluation and further model evaluation
 
     """
 
     intra_in_training: bool = False  # allow intra in training data
     pair_separator: str = "+"  # string separating pairs of peptides/proteins
+    save_model_files: bool = False  # save model files required for SHAP value evaluation and further model evaluation
 
 
 @dataclass
@@ -55,6 +59,8 @@ class Config:
         advanced (AdvancedConfig): Advanced configuration options
         primary_column (str | None): Column name of which omic file should be the representative. If None, default to the first file alphabetically.
         mapping (MappingConfig): Configuration related to peptide sequence mapping.
+        species (Literal["hsapiens", "mmusculus", "other"]): Species name for mapping. Default to human.
+        use_homologs (bool): If True, map to human homologs for non-human species.
 
     """
 
@@ -73,6 +79,10 @@ class Config:
         default_factory=AdvancedConfig
     )  # advanced config options
     mapping: MappingConfig = field(default_factory=MappingConfig)
+    species: Literal["hsapiens", "mmusculus", "other"] = (
+        "hsapiens"  # species name for mapping. Default to human.
+    )
+    use_homologs: bool = False  # If True, map to human homologs for non-human species
 
 
 config = Config()

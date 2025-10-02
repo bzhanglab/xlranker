@@ -7,7 +7,8 @@
 ```bash
 cd scripts/ppi # if not already in ppi folder
 python create_ppi_db.py
-mv ppi.parquet ../../src/xlranker/data # moves parquet file into package
+mv output/hsapiens/ppi.parquet ../../src/xlranker/data/species/hsapiens # moves parquet file into package
+mv output/mmusculus/ppi.parquet ../../src/xlranker/data/species/mmusculus # moves parquet file into package
 ```
 
 ### Using `uv`

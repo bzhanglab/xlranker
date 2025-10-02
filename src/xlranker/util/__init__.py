@@ -103,3 +103,20 @@ def get_abundance(
     if use_median:  # use median?
         return float(np.median(all_vals))
     return float(all_vals.mean())
+
+
+def validate_species(species: str = config.species) -> None:
+    """Validate that the species is supported.
+
+    Params:
+        species (str): Species to verify. Defaults to species set in config.
+
+    Raises:
+        ValueError: Raised if species is not supported by XLRanker
+
+    """
+    supported_species = ["hsapiens", "mmusculus", "other"]
+    if species not in supported_species:
+        raise ValueError(
+            f"Species {species} is not supported. Supported species are: {', '.join(supported_species)}"
+        )

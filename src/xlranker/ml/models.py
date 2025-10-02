@@ -22,7 +22,12 @@ from sklearn.model_selection import StratifiedKFold
 
 from xlranker.bio.pairs import ProteinPair
 from xlranker.config import config
-from xlranker.data import load_default_ppi, load_gmts
+from xlranker.data import (
+    load_default_ppi,
+    load_gmts,
+    load_homologs,
+    load_localization_data,
+)
 from xlranker.lib import XLDataSet
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.status import PrioritizationStatus
@@ -124,8 +129,11 @@ class PrioritizationModel:
     gmts: list[list[set[str]]]
     ppi_db: pl.DataFrame
     default_ppi: bool
-    xgboost_model: xgboost.XGBClassifier
+    default_localization: bool
+    localization_data: dict[str, dict[str, set[str]]]
+    xgboost_models: list[xgboost.XGBClassifier]
     pair_selector: PairSelector
+    homologs: dict[str, str] | None
 
     def __init__(
         self,
@@ -133,6 +141,7 @@ class PrioritizationModel:
         model_config: ModelConfig | None = None,
         gmt_list: list[list[set[str]]] | None = None,
         ppi_db: pl.DataFrame | None = None,
+        localization_data: dict[str, dict[str, set[str]]] | None = None,
         pair_selector: PairSelector = BestSelector(with_secondary=False),
     ):
         """Initialize PrioritizationModel.
@@ -142,6 +151,7 @@ class PrioritizationModel:
             model_config (ModelConfig | None, optional): Config for the model. If None use defaults. Defaults to None.
             gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
             ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
+            localization_data (dict[str, dict[str, set[str]]] | None): Cellular component information. See xlranker.data.load_localization_data for more information. If None, use default databases. Defaults to None.
             pair_selector (PairSelector,  optional): Pair selector
 
         """
@@ -166,11 +176,24 @@ class PrioritizationModel:
         if gmt_list is None:
             gmt_list = load_gmts()
         self.gmts = gmt_list
-        if ppi_db is None:
-            self.default_ppi = True
-            ppi_db = load_default_ppi()
-        self.ppi_db = ppi_db
+        self.default_ppi = ppi_db is None
+
+        self.default_localization = localization_data is None
+        if self.default_localization:
+            localization_data = load_localization_data()
+        self.localization_data = localization_data
         self.pair_selector = pair_selector
+        self.xgboost_models = []
+        ppi_species = config.species
+
+        if config.use_homologs and config.species != "hsapiens":
+            self.homologs = load_homologs()
+            ppi_species = "hsapiens"  # Homologs are always to human
+        else:
+            self.homologs = None
+        if self.default_ppi:
+            ppi_db = load_default_ppi(ppi_species)
+        self.ppi_db = ppi_db
 
     def is_intra(self, a: str, b: str) -> float:
         """Determine if a and b are intra pairs and represent as float.
@@ -183,12 +206,32 @@ class PrioritizationModel:
             float: 1.0 if a and b have same name, else returns 0.0
 
         """
-        if config.human_only:  # Capitalize to ensure consistent case
+        if config.species == "hsapiens":  # Capitalize to ensure consistent case
             a = a.upper()
             b = b.upper()
         if a == b:
             return 1.0
         return 0.0
+
+    def get_loc_data(self, a: str, b: str) -> list[tuple[str, float]]:
+        """For every localization dataset, determine if a and b share any cellular locations.
+
+        Order of `a` and `b` does not matter.
+
+        Args:
+            a (str): First protein
+            b (str): Second protein
+
+        Returns:
+            list[tuple[str, float]]: List of tuples where the first value is the dataset name and the second is a float with 1.0 meaning there is at least one shared compartment in the dataset
+
+        """
+        ret_val = []
+        for dataset in self.localization_data:
+            set_a = self.localization_data[dataset].get(a, set())
+            set_b = self.localization_data[dataset].get(b, set())
+            ret_val.append((dataset, len(set_a.intersection(set_b))))
+        return ret_val
 
     def is_ppi(self, a: str, b: str) -> float:
         """Determine if protein a and protein b has a known ppi in  ppi_db.
@@ -203,9 +246,12 @@ class PrioritizationModel:
             float: Return float with 1.0 meaning there is a known ppi in the db
 
         """
-        if config.human_only:  # Capitalize to ensure consistent case
+        if config.species == "hsapiens":  # Capitalize to ensure consistent case
             a = a.upper()
             b = b.upper()
+        if self.homologs is not None:
+            a = self.homologs.get(a, a)
+            b = self.homologs.get(b, b)
         if a > b:
             c = a
             a = b
@@ -279,11 +325,13 @@ class PrioritizationModel:
         schema: dict[str, pl.DataType] = {"pair": pl.String()}
         for pair in pair_list:
             pair_dict = pair.abundance_dict()
+            if config.human_only or not self.default_localization:
+                for key, val in self.get_loc_data(pair.a.name, pair.b.name):
+                    pair_dict[key] = val
             if (
                 config.human_only or not self.default_ppi
             ):  # Can only add if only human or if using custom PPI DB
                 pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
-                # pair_dict["is_intra"] = self.is_intra(pair.a.name, pair.b.name)
             if has_label:
                 pair_dict["label"] = label_value
             df_array.append(pair_dict)
@@ -317,9 +365,19 @@ class PrioritizationModel:
         positive_df = self.construct_df_from_pairs(
             self.positives, has_label=True, label_value=1.0
         )
+
         negative_df = self.construct_df_from_pairs(
             negative_pairs, has_label=True, label_value=0.0
         )
+        if config.advanced.save_model_files:
+            positive_df.write_csv(
+                str(Path(config.output).joinpath("training_positives.tsv")),
+                separator="\t",
+            )
+            negative_df.write_csv(
+                str(Path(config.output).joinpath("training_negatives.tsv")),
+                separator="\t",
+            )
         return pl.concat([positive_df, negative_df])
 
     def run_model(self):
@@ -381,6 +439,7 @@ class PrioritizationModel:
                 **self.model_config.xgb_params, random_state=int(random_seed)
             )
             model.fit(X, y)
+            self.xgboost_models.append(model)
 
             # Get predictions for the prediction dataset
             cur_predictions = model.predict_proba(predict_X)[:, 1]
@@ -444,4 +503,5 @@ class PrioritizationModel:
             file_path (str): path to save model to.
 
         """
-        self.xgboost_model.save_model(file_path)
+        for i, model in enumerate(self.xgboost_models):
+            model.save_model(f"{file_path}_run_{i}.json")

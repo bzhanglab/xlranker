@@ -6,6 +6,7 @@ from enum import Enum, auto
 
 from Bio import SeqIO
 
+from xlranker.bio.protein import Protein
 from xlranker.config import MappingConfig, config
 from xlranker.data import get_default_fasta
 from xlranker.util.readers import read_mapping_table_file
@@ -140,9 +141,9 @@ def extract_gene_symbol(fasta_description: str, fasta_type: FastaType, **kwargs)
     """
     match fasta_type:
         case FastaType.UNIPROT:
-            return extract_gene_symbol_uniprot(fasta_description).upper()
+            return extract_gene_symbol_uniprot(fasta_description)
         case FastaType.GENCODE:
-            return extract_gene_symbol_gencode(fasta_description, **kwargs).upper()
+            return extract_gene_symbol_gencode(fasta_description, **kwargs)
 
 
 def convert_str_to_fasta_type(possible_type: str) -> FastaType:

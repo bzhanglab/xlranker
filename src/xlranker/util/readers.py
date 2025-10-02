@@ -33,8 +33,22 @@ def read_data_matrix(
     """
     null_values = ["", "NA"]
     null_values.extend(additional_null_values)
+    with open(data_path) as f:
+        header = f.readline().strip().split("\t")
+
+    # Force all except first column to Float64
+    dtype_overrides: dict[str, pl.Float64 | pl.Utf8] = {
+        col: pl.Float64 for col in header[1:]
+    }
+    # Keep first column as string
+    dtype_overrides[header[0]] = pl.Utf8
+
     return pl.read_csv(
-        data_path, has_header=True, separator="\t", null_values=null_values
+        data_path,
+        has_header=True,
+        separator="\t",
+        null_values=null_values,
+        schema_overrides=dtype_overrides,
     )
 
 
@@ -77,7 +91,7 @@ def read_data_folder(
     file_glob = Path(folder_path).glob("*.tsv")
     file_list: list[Path] = list(file_glob)
     if len(file_list) == 0:
-        raise FileNotFoundError(f"No TSV files were found in directory: {folder_path}")
+        logger.warning(f"No TSV files were found in directory: {folder_path}")
     ret_dict = {}
     for file in file_list:
         ret_dict[base_name(file)] = read_data_matrix(
