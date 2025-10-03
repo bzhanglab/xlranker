@@ -35,8 +35,6 @@ def test_json_loading(tmp_path):
     """Test if json file loading sets correct config options."""
     temp_file = tmp_path / "xlranker_example.json"
     temp_file.write_text(EXAMPLE_JSON)
-    global xlr_config
-    xlr_config = xlranker.config.Config()
     assert not xlr_config.detailed
     assert not xlr_config.advanced.save_model_files
     assert xlr_config.mapping.fasta_type != "GENCODE"
