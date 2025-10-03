@@ -238,7 +238,7 @@ class ParsimonySelector:
     def prioritize(self) -> None:
         """Start the parsimonious prioritization of each group."""
         if not self.can_prioritize:
-            logger.warning(
+            logger.debug(
                 "Parsimony group creation not performed before prioritization. Running now."
             )
             self.create_groups()
