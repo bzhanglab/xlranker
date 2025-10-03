@@ -84,7 +84,6 @@ class ParsimonySelector:
         self.protein_groups = {}
         self.peptide_groups = {}
         self.can_prioritize = False
-        self.network = None
 
     def assign_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
         """Assign a group id to a protein pair and propagate the group to connected components.
@@ -203,9 +202,9 @@ class ParsimonySelector:
             if len(intra_pairs) > 0:
                 intra_pairs.sort(
                     key=lambda pair: (
-                        -pair.a.abundance()  # type: ignore
-                        if pair.a.abundance() is not None
-                        else float("-inf"),
+                        float("-inf")  # type: ignore
+                        if pair.a.abundance() is None
+                        else -pair.a.abundance(),
                         pair.a.name,
                     )
                 )
