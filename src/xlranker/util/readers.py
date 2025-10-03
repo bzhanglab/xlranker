@@ -134,7 +134,7 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
         raise FileNotFoundError
     duplicate_rows = valid_rows - len(new_rows)  # Count number of duplicated rows
     if duplicate_rows > 0:  # Send warning that duplicate edges were removed.
-        logger.warning(
+        logger.info(
             f"Found and removed {duplicate_rows} duplicated edge(s) in network."
         )
     network: dict[str, PeptidePair] = {}

@@ -6,10 +6,6 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 
-# TODO: Switch to pydantic to better handle importing and exporting
-
-
-# @dataclass
 class AdvancedConfig(BaseModel):
     """Advanced config options for XLRanker.
 
@@ -26,7 +22,6 @@ class AdvancedConfig(BaseModel):
     save_model_files: bool = False  # save model files required for SHAP value evaluation and further model evaluation
 
 
-# @dataclass
 class MappingConfig(BaseModel):
     """Mapping configuration object.
 
@@ -49,7 +44,6 @@ class MappingConfig(BaseModel):
     fasta_type: str | None = "UNIPROT"
 
 
-# @dataclass
 class Config(BaseModel):
     """Config for XLRanker.
 
@@ -110,6 +104,7 @@ def set_config_from_dict(config_dict: dict[str, Any]) -> None:
 
     Args:
         config_dict (dict[str, Any]): dictionary with config settings
+
     """
     update_model_in_place(config, config_dict)
     config.model_validate(config)
@@ -135,6 +130,7 @@ def config_to_dict(config_obj: Config) -> dict[str, Any] | list[dict[str, Any]]:
 
     Returns:
         dict[str, Any] | list[dict[str, Any]]: JSON/YAML serializable object representing the input config
+
     """
     return config_obj.model_dump()
 
