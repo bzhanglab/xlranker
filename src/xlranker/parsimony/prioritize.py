@@ -202,9 +202,9 @@ class ParsimonySelector:
             if len(intra_pairs) > 0:
                 intra_pairs.sort(
                     key=lambda pair: (
-                        float("-inf")  # type: ignore
+                        float("-inf")
                         if pair.a.abundance() is None
-                        else -pair.a.abundance(),
+                        else -pair.a.abundance(),  # type: ignore
                         pair.a.name,
                     )
                 )

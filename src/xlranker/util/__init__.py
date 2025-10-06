@@ -71,7 +71,7 @@ def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
 
 
 def get_abundance(
-    omic_df: pl.DataFrame, analyte: str, use_median=False
+    omic_df: pl.DataFrame, analyte: str, use_median: bool = False
 ) -> float | None:
     """Get the mean or median abundance of an analyte from an omics dataset.
 

@@ -230,7 +230,13 @@ class PrioritizationModel:
         for dataset in self.localization_data:
             set_a = self.localization_data[dataset].get(a, set())
             set_b = self.localization_data[dataset].get(b, set())
-            ret_val.append((dataset, len(set_a.intersection(set_b))))
+            if config.advanced.binary_compartments:
+                if len(set_a.intersection(set_b)) > 0:
+                    ret_val.append((dataset, 1.0))
+                else:
+                    ret_val.append((dataset, 0.0))
+            else:
+                ret_val.append((dataset, len(set_a.intersection(set_b))))
         return ret_val
 
     def is_ppi(self, a: str, b: str) -> float:
