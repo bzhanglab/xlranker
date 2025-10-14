@@ -12,7 +12,7 @@ import logging
 import os
 import random
 from pathlib import Path
-from typing import Any, Container
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -21,7 +21,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
 from xlranker.bio.pairs import ProteinPair
-from xlranker.config import config
+from xlranker.config import config, Config
 from xlranker.data import (
     load_default_ppi,
     load_gmts,
@@ -47,7 +47,7 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 }
 
 
-def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
+def in_same_set(a: str, b: str, sets: list[list[set[str]]] | None) -> bool:
     """Check if a and b are located in the same set in any of the exclusive sets provided.
 
     Args:
@@ -59,11 +59,157 @@ def in_same_set(a: str, b: str, sets: list[list[set[str]]]) -> bool:
         bool: True if a and b both located in at least one set
 
     """
+    if sets is None:
+        return False
     for gmt in sets:
         for gene_set in gmt:
             if a in gene_set and b in gene_set:
                 return True
     return False
+
+
+class FeatureBuilder:
+    """Responsible for building DataFrames of pair features."""
+
+    def __init__(
+        self,
+        config: Config,
+        localization_data: dict[str, dict[str, set[str]]],
+        ppi_db: pl.DataFrame,
+        homologs: dict[str, str] | None = None,
+    ):
+        """Initialize the FeatureBuilder.
+
+        Args:
+            config (Config): xlranker config
+            localization_data (dict[str, dict[str, set[str]]]): localization data per dataset
+            ppi_db (pl.DataFrame): known PPI database
+            homologs (dict[str, str] | None, optional): Homologs to human or don't use homologs if set to None. Defaults to None.
+
+        """
+        self.config = config
+        self.localization_data = localization_data
+        self.ppi_db = ppi_db
+        self.homologs = homologs
+        self._ppi_pairs = {
+            (row["P1"], row["P2"]) for row in self.ppi_db.iter_rows(named=True)
+        }
+
+    def _is_intra(self, a: str, b: str) -> float:
+        """Return 1.0 if proteins are identical, else 0.0."""
+        if self.config.species == "hsapiens":
+            a, b = a.upper(), b.upper()
+        return float(a == b)
+
+    def _get_loc_data(self, a: str, b: str) -> dict[str, float]:
+        """Return a dict of localization overlaps per dataset."""
+        results = {}
+        for ds_name, data in self.localization_data.items():
+            set_a = data.get(a, set())
+            set_b = data.get(b, set())
+            intersect = len(set_a & set_b)
+            if self.config.advanced.binary_compartments:
+                results[ds_name] = float(intersect > 0)
+            else:
+                results[ds_name] = float(intersect)
+        return results
+
+    def _is_ppi(self, a: str, b: str) -> float:
+        """Return 1.0 if proteins are known to interact."""
+        if self.config.species == "hsapiens":
+            a, b = a.upper(), b.upper()
+        if self.homologs:
+            a = self.homologs.get(a, a)
+            b = self.homologs.get(b, b)
+        pair = tuple(sorted([a, b]))
+        return 1.0 if pair in self._ppi_pairs else 0.0
+
+    def build(
+        self, pairs: list[ProteinPair], label: float | None = None
+    ) -> pl.DataFrame:
+        """Build a feature DataFrame for a list of protein pairs."""
+        rows: list[dict[str, str | float | None]] = []
+        for pair in pairs:
+            row = pair.abundance_dict()
+            # Localization and PPI features
+            row.update(self._get_loc_data(pair.a.name, pair.b.name))
+            row["is_ppi"] = self._is_ppi(pair.a.name, pair.b.name)
+            if label is not None:
+                row["label"] = label
+            rows.append(row)
+
+        # Schema inference
+        schema: dict[str, type[pl.DataType]] = {
+            k: pl.Float64 for k in rows[0].keys() if k != "pair"
+        }
+        schema["pair"] = pl.String
+        return pl.DataFrame(rows, schema=pl.Schema(schema))
+
+
+class NegativeSampler:
+    """Generate random negative protein pairs."""
+
+    def __init__(
+        self,
+        dataset: XLDataSet,
+        n_positives: int,
+        gmts: list[list[set[str]]] | None,
+    ):
+        """Generate NegativeSampler.
+
+        Args:
+            dataset (XLDataSet): The XL Dataset
+            n_positives (int): Number of known positives
+            gmts (list[list[set[str]]]): the list of gmt files
+        """
+        self.dataset = dataset
+        self.n_positives = n_positives
+        self.existing_pairs: set[str] = set(
+            [p.pair_id for p in dataset.protein_pairs.values()]
+        )
+        self.gmts = gmts
+
+    def sample(self, n: int) -> list[ProteinPair]:
+        """Generate n random negative protein pairs.
+
+        Args:
+            n (int): number of random negative pairs to generate
+
+        Raises:
+            ValueError: raised if n is larger than the maximum possible number of negatives and config.fragile is True
+
+        Returns:
+            list[ProteinPair]: list of negative protein pairs
+
+        """
+        proteins = list(self.dataset.proteins.keys())
+        max_possible = (len(proteins) * (len(proteins) - 1)) // 2 - self.n_positives
+        if n > max_possible:
+            msg = f"Requested {n} negatives, max possible is {max_possible}"
+            if config.fragile:
+                raise ValueError(msg)
+            logger.warning(msg)
+            n = max_possible
+
+        negatives, generated = [], set()
+        attempts = 0
+        while len(negatives) < n and attempts < n * 20:
+            a, b = random.sample(proteins, 2)
+            key = tuple(sorted([a, b]))
+            if (
+                key in self.existing_pairs
+                or key in generated
+                or in_same_set(a, b, self.gmts)
+            ):
+                attempts += 1
+                continue
+            negatives.append(
+                ProteinPair(self.dataset.proteins[a], self.dataset.proteins[b])
+            )
+            generated.add(key)
+        if len(negatives) < n:
+            logger.warning(f"Generated only {len(negatives)} of {n} negatives.")
+        return negatives
 
 
 class ModelConfig:  # TODO: Determine if this should go into the config module.
@@ -123,7 +269,7 @@ class PrioritizationModel:
     positives: list[ProteinPair]
     to_predict: list[ProteinPair]
     dataset: XLDataSet
-    existing_pairs: set[Container[str]]
+    existing_pairs: set[str]
     model_config: ModelConfig
     n_features: int
     gmts: list[list[set[str]]]
@@ -174,7 +320,8 @@ class PrioritizationModel:
             model_config = ModelConfig()
         self.model_config = model_config
         if gmt_list is None:
-            gmt_list = load_gmts()
+            species = "hsapiens" if config.use_homologs else config.species
+            gmt_list = load_gmts(species)
         self.gmts = gmt_list
         self.default_ppi = ppi_db is None
 
@@ -294,7 +441,7 @@ class PrioritizationModel:
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         protein_ids = list(self.dataset.proteins.keys())
 
-        generated: set[Container[str]] = set()
+        generated: set[str] = set()
 
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
