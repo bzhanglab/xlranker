@@ -1,6 +1,6 @@
 [project]
 name = "xlranker"
-version = "0.2.1"
+version = "0.3.0-alpha1"
 license = "MIT"
 description = "PPI-XL Ranking Tool"
 readme = "README.md"
