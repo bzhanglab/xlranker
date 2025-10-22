@@ -146,6 +146,21 @@ class XLDataSet:
         for key in remove_pairs:
             self.peptide_pairs.pop(key)
 
+    def to_tsv(self, output_path: str) -> None:
+        """Output detailed TSV of all protein pairs in data set.
+
+        Args:
+            output_path (str): path for the output of the TSV file
+
+        """
+        data = ["Pair\tStatus\tGroupID\tScore"]
+        for pair in self.protein_pairs.values():
+            data.append(
+                f"{pair.pair_id}\t{pair.prioritization_status}\t{pair.get_group_string()}\t{pair.score}"
+            )
+        with open(output_path, "w") as w:
+            w.write("\n".join(data) + "\n")
+
     @classmethod
     def load_from_network(
         cls,

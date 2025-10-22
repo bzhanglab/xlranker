@@ -23,8 +23,10 @@ def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[Protein
             pair.prioritization_status == PrioritizationStatus.PARSIMONY_NOT_SELECTED
             and pair.score == -1.0
         )
-        and pair.prioritization_status
-        != PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+        and (
+            pair.prioritization_status
+            != PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
+        )
     ]
 
 

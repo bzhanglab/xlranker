@@ -52,7 +52,7 @@ def load_default_ppi(species: str = config.species) -> pl.DataFrame:
         ) from e
 
 
-def load_gmts() -> list[list[set[str]]]:
+def load_gmts(species=config.species) -> list[list[set[str]]]:
     """Load gmt collection. Used to determine negative sets for ML step.
 
     Contains Gene Ontology Biological Process and Reactome.
@@ -64,7 +64,7 @@ def load_gmts() -> list[list[set[str]]]:
     validate_species()
 
     with gzip.open(
-        str(files(f"xlranker.data.species.{config.species}") / "gmt.pkl.gz"), "rb"
+        str(files(f"xlranker.data.species.{species}") / "gmt.pkl.gz"), "rb"
     ) as r:
         return pickle.load(r)
 
