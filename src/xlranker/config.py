@@ -61,6 +61,7 @@ class Config(BaseModel):
         mapping (MappingConfig): Configuration related to peptide sequence mapping.
         species (Literal["hsapiens", "mmusculus", "other"]): Species name for mapping. Default to human.
         use_homologs (bool): If True, map to human homologs for non-human species.
+        seed (int | None): Random state to initialize code. If None, seed is randomly generated. Defaults to None.
 
     """
 
@@ -84,6 +85,9 @@ class Config(BaseModel):
         "hsapiens"  # species name for mapping. Default to human.
     )
     use_homologs: bool = False  # If True, map to human homologs for non-human species
+    seed: int | None = (
+        None  # If None, set_seed will create random seed from 0 to 1000000
+    )
 
 
 config = Config()

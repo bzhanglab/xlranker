@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from xlranker.bio.pairs import PeptidePair, ProteinPair
 from xlranker.lib import XLDataSet
 from xlranker.status import PrioritizationStatus, ReportStatus
-from xlranker.util import get_pair_id
+from xlranker.util import get_pair_id, set_seed
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +24,14 @@ def select_random(
 
     """
     ambiguity: dict[str, list[ProteinPair]] = {}
-    for pair in data_set.protein_pairs.values():
+    for pair in sorted(data_set.protein_pairs.values(), key=lambda x: x.pair_id):
         if pair.prioritization_status != PrioritizationStatus.PARSIMONY_AMBIGUOUS:
             continue  # No ambiguity
         conn_id = pair.connectivity_id()
         if conn_id not in ambiguity:
             ambiguity[conn_id] = []
         ambiguity[conn_id].append(pair)
-    for conn_id in ambiguity:
+    for conn_id in sorted(ambiguity.keys()):
         selected_location = random.randrange(len(ambiguity[conn_id]))
         for i in range(len(ambiguity[conn_id])):
             if selected_location == i:
@@ -106,7 +106,7 @@ class ParsimonySelector:
         if group_id not in self.protein_groups:
             self.protein_groups[group_id] = []
         self.protein_groups[group_id].append(protein_pair)
-        for peptide_pair_id in protein_pair.connections:
+        for peptide_pair_id in sorted(protein_pair.connections):
             self.assign_peptide_pair(
                 self.data_set.peptide_pairs[peptide_pair_id], group_id
             )
@@ -132,7 +132,7 @@ class ParsimonySelector:
         if group_id not in self.peptide_groups:
             self.peptide_groups[group_id] = []
         self.peptide_groups[group_id].append(peptide_pair)
-        for protein_pair_id in peptide_pair.connections:
+        for protein_pair_id in sorted(peptide_pair.connections):
             self.assign_protein_pair(
                 self.data_set.protein_pairs[protein_pair_id], group_id
             )
@@ -140,7 +140,9 @@ class ParsimonySelector:
     def create_groups(self) -> None:
         """Assign group IDs to all pairs in the dataset."""
         next_group_id = 1
-        for pair in self.data_set.peptide_pairs.values():
+        for pair in sorted(
+            self.data_set.peptide_pairs.values(), key=lambda x: x.pair_id
+        ):
             if pair.in_group or len(pair.connections) == 0:
                 continue
             self.assign_peptide_pair(pair, next_group_id)
@@ -157,7 +159,8 @@ class ParsimonySelector:
         peptide_names = set(
             [get_pair_id(pep.a, pep.b) for pep in self.peptide_groups[group_id]]
         )
-        proteins = set(self.protein_groups[group_id])
+
+        proteins = sorted(set(self.protein_groups[group_id]), key=lambda x: x.pair_id)
         protein_pair_groups: dict[str, list[ProteinPair]] = {}
         for protein_pair in proteins:
             conn_id = protein_pair.connectivity_id()
@@ -169,7 +172,7 @@ class ParsimonySelector:
             best_pairs: set[str] = (
                 set()
             )  # set so there is no bias towards larger groups
-            for conn_id in protein_pair_groups:
+            for conn_id in sorted(protein_pair_groups.keys()):
                 n_conn = protein_pair_groups[conn_id][0].overlap(peptide_names)
                 if max_connections < n_conn:
                     max_connections = n_conn
@@ -177,10 +180,12 @@ class ParsimonySelector:
                     best_pairs.add(conn_id)
                 elif max_connections == n_conn:
                     best_pairs.add(conn_id)
+            best_pairs: list[str] = list(best_pairs)
+            best_pairs.sort()
             selected_index = random.randint(
                 0, len(best_pairs) - 1
             )  # select one random index to move forward
-            best_pair_group = protein_pair_groups[list(best_pairs)[selected_index]]
+            best_pair_group = protein_pair_groups[best_pairs[selected_index]]
             peptide_names.difference_update(best_pair_group[0].connections)
             intra_pairs: list[ProteinPair] = []
             # for pair in best_pair_group
@@ -241,7 +246,7 @@ class ParsimonySelector:
                 "Parsimony group creation not performed before prioritization. Running now."
             )
             self.create_groups()
-        for group in self.protein_groups:
+        for group in sorted(self.protein_groups.keys()):
             self.prioritize_group(group)
 
     def run(self) -> None:

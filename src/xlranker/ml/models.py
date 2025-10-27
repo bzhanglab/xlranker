@@ -31,6 +31,7 @@ from xlranker.data import (
 from xlranker.lib import XLDataSet
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.status import PrioritizationStatus
+from xlranker.util import set_seed
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,8 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "min_child_weight": 1,
-    "tree_method": "hist",
+    "tree_method": "exact",
+    "nthread": 1,
 }
 
 
@@ -104,7 +106,7 @@ class FeatureBuilder:
     def _get_loc_data(self, a: str, b: str) -> dict[str, float]:
         """Return a dict of localization overlaps per dataset."""
         results = {}
-        for ds_name, data in self.localization_data.items():
+        for ds_name, data in sorted(self.localization_data.items()):
             set_a = data.get(a, set())
             set_b = data.get(b, set())
             intersect = len(set_a & set_b)
@@ -182,7 +184,7 @@ class NegativeSampler:
             list[ProteinPair]: list of negative protein pairs
 
         """
-        proteins = list(self.dataset.proteins.keys())
+        proteins = sorted(list(self.dataset.proteins.keys()))
         max_possible = (len(proteins) * (len(proteins) - 1)) // 2 - self.n_positives
         if n > max_possible:
             msg = f"Requested {n} negatives, max possible is {max_possible}"
@@ -304,7 +306,9 @@ class PrioritizationModel:
         self.dataset = dataset
         self.positives = []
         self.to_predict = []
-        for protein_pair in self.dataset.protein_pairs.values():
+        for protein_pair in sorted(
+            self.dataset.protein_pairs.values(), key=lambda p: p.pair_id
+        ):
             match protein_pair.prioritization_status:
                 case PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED:
                     if protein_pair.a.name != protein_pair.b.name:
@@ -374,7 +378,7 @@ class PrioritizationModel:
 
         """
         ret_val = []
-        for dataset in self.localization_data:
+        for dataset in sorted(self.localization_data.keys()):
             set_a = self.localization_data[dataset].get(a, set())
             set_b = self.localization_data[dataset].get(b, set())
             if config.advanced.binary_compartments:
@@ -439,7 +443,7 @@ class PrioritizationModel:
                 )
             logger.warning(msg)
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
-        protein_ids = list(self.dataset.proteins.keys())
+        protein_ids = sorted(list(self.dataset.proteins.keys()))
 
         generated: set[str] = set()
 
