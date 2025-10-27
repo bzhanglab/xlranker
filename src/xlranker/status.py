@@ -20,7 +20,7 @@ class ReportStatus(Enum):
     ALL = 3
     """All pairs, regardless of status"""
 
-    NONE = -1
+    NONE = 999
     """No assigned status"""
 
     def __lt__(self, other: object) -> bool:
@@ -36,6 +36,14 @@ class ReportStatus(Enum):
         if isinstance(other, ReportStatus):
             return self.value < other.value
         return NotImplemented
+
+    def __str__(self) -> str:
+        """Convert this enum to a str.
+
+        Returns:
+            str: str representation of this enum.
+        """
+        return self.name
 
 
 class PrioritizationStatus(Enum):
@@ -63,3 +71,11 @@ class PrioritizationStatus(Enum):
     "Highest ML score in group or primary selection"
     ML_SECONDARY_SELECTED = auto()
     "High confidence ML score in group or secondary selection"
+
+    def __str__(self) -> str:
+        """Convert this enum to a str.
+
+        Returns:
+            str: str representation of this enum.
+        """
+        return self.name
