@@ -256,7 +256,8 @@ def write_pair_to_network(pairs: list[ProteinPair], output_file: str) -> None:
 
     """
     network_strings = []
-    for pair in pairs:
-        network_strings.append(f"{pair.a.name}\t{pair.b.name}")
+    for pair in sorted(pairs, key=lambda x: x.pair_id):
+        splits = pair.pair_id.split(xlr_config.advanced.pair_separator)
+        network_strings.append(f"{splits[0]}\t{splits[1]}")
     with open(output_file, "w") as w:
         w.write("\n".join(network_strings) + "\n")

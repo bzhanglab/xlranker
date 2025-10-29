@@ -236,6 +236,8 @@ class ThresholdSelector(PairSelector):
                     )
                     pair.set_report_status(ReportStatus.MINIMAL)
                     best_pair[conn_id] = pair
+                else:
+                    assign_not_selected_status(pair)
             else:
                 assign_not_selected_status(pair)
         for pair in protein_pairs:
