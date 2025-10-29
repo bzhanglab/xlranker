@@ -104,7 +104,7 @@ class XLDataSet:
         for p_peptide_pairs in self.peptide_pairs.values():
             all_proteins = all_proteins.union(set(p_peptide_pairs.a.mapped_proteins))
             all_proteins = all_proteins.union(set(p_peptide_pairs.b.mapped_proteins))
-        for protein in all_proteins:
+        for protein in sorted(list(all_proteins)):
             abundances = {}
             for omic_file in self.omic_data:
                 abundances[omic_file] = get_abundance(
@@ -114,9 +114,9 @@ class XLDataSet:
                 protein, protein, abundances, xlr_config.primary_column
             )
         remove_pairs = []
-        for (
-            peptide_pair_key
-        ) in self.peptide_pairs.keys():  # TODO: Make this loop cleaner to read
+        for peptide_pair_key in sorted(
+            self.peptide_pairs.keys()
+        ):  # TODO: Make this loop cleaner to read
             peptide_pair = self.peptide_pairs[peptide_pair_key]
             peptide_pair_id = get_pair_id(peptide_pair.a, peptide_pair.b)
             had_intra = False
@@ -209,8 +209,10 @@ class XLDataSet:
             )
         else:
             mapper = custom_mapper
-        mapping_results = mapper.map_sequences(list(peptide_sequences))
-        for group in network.values():
+        mapping_results = mapper.map_sequences(sorted(list(peptide_sequences)))
+        for group in sorted(
+            network.values(), key=lambda p: p.a.sequence + p.b.sequence
+        ):
             group.a.mapped_proteins = mapping_results.peptide_to_protein[
                 group.a.sequence
             ]

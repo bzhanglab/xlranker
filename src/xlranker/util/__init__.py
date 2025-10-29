@@ -1,5 +1,6 @@
 """Pipeline utility functions and classes."""
 
+import os
 import random
 
 import numpy as np
@@ -10,15 +11,37 @@ from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein
 
 
-def set_seed(seed: int) -> None:
+def set_seed(seed: int | None = None) -> None:
     """Set seed to provide consistent results between runs.
 
     Args:
         seed (int): number to initialize random number generators with
 
     """
-    random.seed(seed)
-    np.random.seed(int(random.random() * 1000000))
+    if config.seed is None:
+        config.seed = random.randint(0, 1000000)
+    if seed is not None:
+        config.seed = seed
+    random.seed(config.seed)
+    np.random.seed(config.seed)
+
+
+def get_pair_id_from_str(name_a: str, name_b: str) -> str:
+    """Get a string representation of the pair. Input order independent.
+
+    Order is determine alphabetically.
+
+    Args:
+        name_a (str): name of entity a
+        name_b (str): name of entity b
+
+    Returns:
+        str: pair representation with entities separated by config.advanced.pair_separator (default '+').
+
+    """
+    if name_a < name_b:
+        return f"{name_a}{config.advanced.pair_separator}{name_b}"
+    return f"{name_b}{config.advanced.pair_separator}{name_a}"
 
 
 def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
@@ -44,9 +67,7 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
         name_b = b.name
     else:
         name_b = b.sequence
-    if name_a < name_b:
-        return f"{name_a}{config.advanced.pair_separator}{name_b}"
-    return f"{name_b}{config.advanced.pair_separator}{name_a}"
+    return get_pair_id_from_str(name_a, name_b)
 
 
 def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:

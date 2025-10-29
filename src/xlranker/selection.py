@@ -43,6 +43,7 @@ def assign_not_selected_status(protein_pair: ProteinPair) -> None:
         )
     else:
         protein_pair.set_prioritization_status(PrioritizationStatus.ML_NOT_SELECTED)
+    protein_pair.set_report_status(ReportStatus.ALL)  # Not Selected are reported as ALL
 
 
 def assign_secondary_selected_status(protein_pair: ProteinPair) -> None:
