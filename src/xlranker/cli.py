@@ -9,10 +9,11 @@ from typing import Annotated, Any
 
 import cyclopts
 import questionary
+from questionary import Choice
 import yaml
 
 from xlranker import config
-from xlranker.config import DEFAULT_CONFIG
+from xlranker.config import DEFAULT_CONFIG, Config, config_to_dict
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
@@ -138,28 +139,44 @@ def init(
                 if x.lower().endswith(".fa") or x.lower().endswith(".fasta")
                 else "Please input a FASTA file (.fasta or .fa)",
             ).ask()
+            if fasta_type == "GENCODE":
+                print(
+                    "\nGENCODE additional configuration to read the FASTA file.\nSee https://bzhanglab.github.io/xlranker/latest/usage/input_data/fasta/ for more information.\n"
+                )
         case "TSV Table":
             is_fasta = False
             mapping_table_path = questionary.path("Path to TSV file:").ask()
         case _:
             is_fasta = True
             mapping_table_path = None
-    if mapping_table_path is not None:
-        only_human = questionary.confirm("Is your data only human data?").ask()
+
+    species = questionary.select(
+        "What species is your data from?",
+        choices=[
+            Choice("Human (hsapiens)", "hsapiens"),
+            Choice("Mouse (mmusculus)", "mmusculus"),
+        ],
+    ).ask()
+    if species != "hsapiens":
+        use_homologs = questionary.confirm(
+            "Do you want to use human homologs? (Default is Yes)", True
+        ).ask()
     else:
-        only_human = True
-    output_config = {
-        "network": network,
-        "data_folder": omic_data,
-        "is_fasta": is_fasta,
-        "only_human": only_human,
-    }
-    if primary_column is not None:
-        output_config["primary_column"] = primary_column
-    if mapping_table_path is not None:
-        output_config["mapping_table"] = mapping_table_path
-        if is_fasta:
-            output_config["fasta_type"] = fasta_type
+        use_homologs = False
+    new_config = Config()
+
+    # Set variables
+
+    new_config.network_path = network
+    new_config.omic_data_folder = omic_data
+    new_config.species = species
+    new_config.use_homologs = use_homologs
+    new_config.primary_column = primary_column
+
+    new_config.mapping.fasta_type = fasta_type
+    new_config.mapping.custom_table = mapping_table_path
+    new_config.mapping.is_fasta = is_fasta
+
     output_path = questionary.path(
         "Output file for config (JSON or YAML format):",
         validate=lambda x: True
@@ -168,7 +185,8 @@ def init(
         or x.lower().endswith(".yml")
         else "File must end with .json, .yaml, or .yml",
     ).ask()
-    save_config(output_path, output_config)
+
+    save_config(output_path, config_to_dict(new_config))
 
 
 @app.command()

@@ -482,11 +482,12 @@ class PrioritizationModel:
         schema: dict[str, pl.DataType] = {"pair": pl.String()}
         for pair in pair_list:
             pair_dict = pair.abundance_dict()
-            if config.human_only or not self.default_localization:
+            if config.species == "hsapiens" or not self.default_localization:
                 for key, val in self.get_loc_data(pair.a.name, pair.b.name):
                     pair_dict[key] = val
             if (
-                config.human_only or not self.default_ppi
+                config.species == "hsapiens"
+                or not self.default_ppi  # TODO: Evaluate this because this check may be unintended effects
             ):  # Can only add if only human or if using custom PPI DB
                 pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
             if has_label:

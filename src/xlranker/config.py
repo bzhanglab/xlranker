@@ -50,10 +50,11 @@ class Config(BaseModel):
     """Config for XLRanker.
 
     Attributes:
+        network_path (str): Default to network.tsv. Path to the peptide network TSV file
+        omic_data_folder (str): Default to omic_data/. Path to the folder containing the omics data in TSV format for the ML step
         fragile (bool): Default to False. If True, throw error on any warning
         detailed (bool): Default to False. If True, perform more analysis about dataset
         reduce_fasta (bool): Default to True. If True, when a gene has multiple sequences, only accept longest sequence as the canonical sequence.
-        human_only (bool): True if all data is human only.
         output (str): Default to "xlranker_output/". Directory where output files are saved.
         additional_null_values (list[str]): Default to []. Additional null values to consider when reading data files.
         advanced (AdvancedConfig): Advanced configuration options
@@ -65,11 +66,12 @@ class Config(BaseModel):
 
     """
 
+    network_path: str = "network.tsv"
+    omic_data_folder: str = "omic_data/"
     model_config = ConfigDict(validate_assignment=True)
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
     reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
-    human_only: bool = True  # Is all data human only?
     output: str = "xlranker_output/"  # output directory
     primary_column: str | None = (
         None  # Which omic file should be the representative omic set for ordering
