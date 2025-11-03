@@ -177,16 +177,24 @@ def init(
     new_config.mapping.custom_table = mapping_table_path
     new_config.mapping.is_fasta = is_fasta
 
-    output_path = questionary.path(
-        "Output file for config (JSON or YAML format):",
-        validate=lambda x: True
-        if x.lower().endswith(".json")
-        or x.lower().endswith(".yaml")
-        or x.lower().endswith(".yml")
-        else "File must end with .json, .yaml, or .yml",
-    ).ask()
+    good_output = output is not None and any(
+        output.endswith(s) for s in [".json", ".yml", ".yaml"]
+    )
+    if not good_output and output is not None:
+        print("Output path did not end in .yaml, .yml, or .json. Asking for output")
+    if good_output:
+        output_path = output
+    else:
+        output_path = questionary.path(
+            "Output file for config (JSON or YAML format):",
+            validate=lambda x: True
+            if x.lower().endswith(".json")
+            or x.lower().endswith(".yaml")
+            or x.lower().endswith(".yml")
+            else "File must end with .json, .yaml, or .yml",
+        ).ask()
 
-    save_config(output_path, config_to_dict(new_config))
+    save_config(output_path, config_to_dict(new_config))  # type: ignore
 
 
 @app.command()
@@ -213,7 +221,7 @@ def start(
     primary_column: Annotated[
         str | None, cyclopts.Parameter(name="--primary_column")
     ] = None,
-):  # noqa: DOC105
+):
     """Run the full prioritization pipeline.
 
     Requires input file to be in the format specified in the project documentation.
