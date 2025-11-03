@@ -63,6 +63,7 @@ class Config(BaseModel):
         species (Literal["hsapiens", "mmusculus", "other"]): Species name for mapping. Default to human.
         use_homologs (bool): If True, map to human homologs for non-human species.
         seed (int | None): Random state to initialize code. If None, seed is randomly generated. Defaults to None.
+        threshold (float): Default to 0.5. Score threshold to accept pairs during ML selection.
 
     """
 
@@ -90,6 +91,7 @@ class Config(BaseModel):
     seed: int | None = (
         None  # If None, set_seed will create random seed from 0 to 1000000
     )
+    threshold: float = 0.5
 
 
 config = Config()
