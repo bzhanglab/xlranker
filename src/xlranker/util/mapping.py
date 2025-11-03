@@ -156,14 +156,16 @@ def convert_str_to_fasta_type(possible_type: str) -> FastaType:
         FastaType: FastaType.GENCODE if possible_type is GENCODE. FastaType.UNIPROT for all other cases.
 
     """
-    possible_type = possible_type.upper()
-    match possible_type:
+    possible_type_upper = possible_type.upper()
+    match possible_type_upper:
         case "UNIPROT":
             return FastaType.UNIPROT
         case "GENCODE":
             return FastaType.GENCODE
         case _:
-            return FastaType.UNIPROT  # TODO: Determine if new UNKNOWN type should be created. Maybe a possible error?
+            raise ValueError(
+                f"Could not translate fasta type from string {possible_type}.\n    Make sure your FASTA file type is either GENCODE or UNIPROT (case-insensitive)."
+            )  # TODO: Determine if new UNKNOWN type should be created. Maybe a possible error?
 
 
 class PeptideMapper:

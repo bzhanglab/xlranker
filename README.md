@@ -19,11 +19,25 @@ pip install xlranker
 
 ## Usage
 
+While optional, it is recommended to create a config file to customize all of your parameters. The `init` command will create interactive prompts to create your custom config file.
+
+```
+xlranker init
+```
+
 To analyze a TSV file containing a network of peptide sequences run:
 
 ```
 xlranker start peptide_network.tsv
 ```
+
+or if you have created a config, you can run
+
+```
+xlranker start -c config.yaml
+```
+
+
 
 Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) for detailed usage instructions and examples.
 

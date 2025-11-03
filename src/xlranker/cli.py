@@ -18,7 +18,7 @@ from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
 from xlranker.util.readers import base_name
-from xlranker.util.mapping import FastaType, PeptideMapper
+from xlranker.util.mapping import PeptideMapper, convert_str_to_fasta_type, FastaType
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
@@ -98,8 +98,9 @@ def init(
     """
     if default:
         if output is None:
-            raise ValueError("Output must be specified if using default!")
+            output = "xlranker_config.yaml"
         save_config(output, DEFAULT_CONFIG)
+        print(f"Saved config to {output}.")
         return
 
     network = questionary.path(
@@ -183,9 +184,9 @@ def init(
     if not good_output and output is not None:
         print("Output path did not end in .yaml, .yml, or .json. Asking for output")
     if good_output:
-        output_path = output
+        output_path = output  # type: ignore
     else:
-        output_path = questionary.path(
+        output_path: str = questionary.path(
             "Output file for config (JSON or YAML format):",
             validate=lambda x: True
             if x.lower().endswith(".json")
@@ -224,7 +225,7 @@ def start(
 ):
     """Run the full prioritization pipeline.
 
-    Requires input file to be in the format specified in the project documentation.
+    Requires input file to be in the format specified in the project documentation. It is strongly recommended to load from a config, which can be created by running xlranker init.
 
     Examples:
     `xlranker start network.tsv omic_data_folder/ -s 42`
@@ -283,16 +284,11 @@ def start(
         raise ValueError("Mapping table must be provided if is_fasta is True.")
     if fasta_type is not None:
         fasta_type = fasta_type.strip().upper()  # Strip and upper to ensure consistency
-    if is_fasta and fasta_type not in ["GENCODE", "UNIPROT"]:
-        raise ValueError(
-            "fasta_type must be either 'GENCODE' or 'UNIPROT' if is_fasta is True."
-        )
-    fasta_enum = FastaType.UNIPROT if fasta_type == "UNIPROT" else FastaType.GENCODE
+        fasta_enum = convert_str_to_fasta_type(fasta_type)
+    else:
+        fasta_enum = FastaType.UNIPROT
 
     setup_logging(verbose=verbose, log_file=log_file)
-    if seed is None:
-        seed = random.randint(0, 10000000)
-        logger.info(f"Randomly generated seed: {seed}")
 
     set_seed(seed)
 
