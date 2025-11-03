@@ -97,7 +97,7 @@ class XLDataSet:
         """Build protein pairs of the XLDataSet network.
 
         Args:
-            remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to True.
+            remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to False.
 
         """
         all_proteins: set[str] = set()
@@ -235,6 +235,9 @@ def get_final_network(
         list[ProteinPair]: list of selected protein pairs
 
     """
+    logger.warning(
+        "USING DEPRECIATED FUNCTION: xlranker.lib.get_final_network.\nUse xlranker.reports module."
+    )
     pair_selector.process(list(data_set.protein_pairs.values()))
     return [
         pair

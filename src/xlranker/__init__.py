@@ -10,6 +10,7 @@ import xlranker.parsimony
 import xlranker.pipeline
 import xlranker.util
 from xlranker.pipeline import run_full_pipeline
+from xlranker.lib import XLDataSet
 
 __all__ = [
     "xlranker",
@@ -21,4 +22,5 @@ __all__ = [
     "run_full_pipeline",
     "pipeline",
     "cli",
+    "XLDataSet",
 ]
