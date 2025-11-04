@@ -70,5 +70,3 @@ The key parameters that need to be set by the user include:
     threshold: 0.5
     use_homologs: false
     ```
-
-

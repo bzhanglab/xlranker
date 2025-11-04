@@ -280,22 +280,7 @@ def start(
         xlr_config.mapping.split_by if xlr_config.mapping.split_by is not None else "-1"
     )
 
-    custom_mapper = PeptideMapper(
-        mapping_table_path=xlr_config.mapping.custom_table,
-        fasta_type=fasta_enum,
-        is_fasta=xlr_config.mapping.is_fasta,
-        split_index=gs_index,
-        split_by=split_by,
-    )
-
-    data_set = XLDataSet.load_from_network(
-        xlr_config.network_path,
-        xlr_config.omic_data_folder,
-        custom_mapper=custom_mapper,
-        is_fasta=xlr_config.mapping.is_fasta,
-        split_by=split_by,
-        split_index=gs_index,
-    )
+    data_set = XLDataSet.load_from_config()
 
     _ = run_full_pipeline(data_set, threshold=xlr_config.threshold)
 

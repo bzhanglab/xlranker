@@ -162,6 +162,26 @@ class XLDataSet:
             w.write("\n".join(data) + "\n")
 
     @classmethod
+    def load_from_config(cls) -> "XLDataSet":
+        """Create a XLDataSet object from the global config.
+
+        Returns:
+            XLDataSet: XLDataSet with peptide pairs and omics data loaded
+
+        """
+        peptide_mapper = PeptideMapper.from_config(xlr_config.mapping)
+        return cls.load_from_network(
+            xlr_config.network_path,
+            xlr_config.omic_data_folder,
+            peptide_mapper,
+            None,
+            xlr_config.mapping.is_fasta,
+            None,
+            None,
+            str(xlr_config.mapping.fasta_type),
+        )
+
+    @classmethod
     def load_from_network(
         cls,
         network_path: str,
