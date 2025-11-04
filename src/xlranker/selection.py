@@ -1,4 +1,4 @@
-"""Methods and classes for the final selection of protein pairs after Parsimony and ML processing."""
+"""Methods and classes for the final selection of protein pairs after Parsimony and ML processing."""  # noqa: E501
 
 from abc import ABC, abstractmethod
 
@@ -6,7 +6,9 @@ from xlranker.bio.pairs import ProteinPair
 from xlranker.status import PrioritizationStatus, ReportStatus
 
 
-def filter_for_undecided_pairs(protein_pairs: list[ProteinPair]) -> list[ProteinPair]:
+def filter_for_undecided_pairs(
+    protein_pairs: list[ProteinPair],
+) -> list[ProteinPair]:
     """Only get pairs that don't have any selected status.
 
     Args:
@@ -76,7 +78,9 @@ def assign_primary_selected_status(protein_pair: ProteinPair) -> None:
     if protein_pair.score > 1.0:
         protein_pair.set_prioritization_status(
             PrioritizationStatus.PARSIMONY_PRIMARY_SELECTED
-        )  # No change to report status for parsimony primary selections, done in parsimony step
+        )
+        # No change to report status for parsimony primary selections,
+        # done in parsimony step
     else:
         protein_pair.set_prioritization_status(PrioritizationStatus.ML_PRIMARY_SELECTED)
         protein_pair.set_report_status(
@@ -128,10 +132,12 @@ class PairSelector(ABC):
 
 
 class BestSelector(PairSelector):
-    """PairSelector that only keeps the best score. Optionally can allow secondary selections for ties.
+    """PairSelector that only keeps the best score.
+
+    Optionally can allow secondary selections for ties.
 
     Attributes:
-        with_secondary (bool): if True, assign secondary selections to tied protein pairs.
+        with_secondary (bool): if True, assign secondary selection to tied protein pairs
 
     """
 
@@ -168,7 +174,8 @@ class BestSelector(PairSelector):
         for pair in protein_pairs:
             if (
                 pair.score == best_score[pair.connectivity_id()]
-            ):  # NOTE: Multiple pairs with best score only possible if all pairs are inter pairs
+            ):  # NOTE: Multiple pairs with best score only possible
+                # if all pairs are inter pairs
                 if pair.connectivity_id() not in best_pair:
                     assign_primary_selected_status(pair)
                     best_pair[pair.connectivity_id()] = pair
@@ -189,7 +196,7 @@ class ThresholdSelector(PairSelector):
 
     Attributes:
         threshold (float): minimum scoring threshold for pair to be selected.
-        top_n (int | None): if not None, only keep top_n pairs in a group above threshold.
+        top_n (int | None): if int, only keep top_n pairs in a group above threshold.
     """
 
     threshold: float
@@ -200,7 +207,8 @@ class ThresholdSelector(PairSelector):
 
         Args:
             threshold (float): minimum scoring threshold for pair to be selected.
-            top_n (int | None, optional): if not None, only keep top_n pairs in a group above threshold. Defaults to None.
+            top_n (int | None, optional): if not None, only keep top_n pairs in a group
+                above threshold. Defaults to None.
 
         """
         super().__init__()

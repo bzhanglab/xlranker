@@ -1,4 +1,4 @@
-"""Script that builds a pickled gzipped file that contains cell location information from COMPARTMENTS and Human Protein Atlas."""
+"""Script that builds a pickled gzipped file that contains cell location information from COMPARTMENTS and Human Protein Atlas."""  # noqa: E501
 
 import gzip
 import pickle
@@ -11,11 +11,13 @@ def process_compartments(
     """Process the COMPARTMENTS database.
 
     Args:
-        go_terms (set[str]): list of allowable go terms to filter for. Typically from GO Terms seen in HPA.
+        go_terms (set[str]): list of allowable go terms to filter for.
+            Typically from GO Terms seen in HPA.
         comp_path (str): path to the compartments database file in TSV format
 
-    Return:
-       dict[str, set[str]]: dictionary where keys are gene symbols and the values is a set of GO terms that gene is annotated to.
+    Returns:
+       dict[str, set[str]]: dictionary where keys are gene symbols and the
+           values are a set of GO terms that gene is annotated to.
 
     """
     gene_to_comp: dict[str, set[str]] = {}
@@ -46,7 +48,8 @@ def process_hpa(
         hpa_path (str): path to the compartments database file in TSV format
 
     Return:
-       dict[str, set[str]]: dictionary where keys are gene symbols and the values is a set of GO terms that gene is annotated to.
+       dict[str, set[str]]: dictionary where keys are gene symbols and the
+           values is a set of GO terms that gene is annotated to.
 
     """
     gene_to_comp: dict[str, set[str]] = {}
@@ -71,7 +74,7 @@ def process_hpa(
             for val in secondary_compartments.split(";"):
                 gene_to_comp[gs].add(val.upper())
             for val in gos.split(";"):
-                # format of val is Cell Junctions (GO:0030054);Cytosol (GO:0005829);Nucleoli fibrillar center (GO:0001650)
+                # format of val is Cell Junctions (GO:0030054);Cytosol (GO:0005829);Nucleoli fibrillar center (GO:0001650) # noqa: E501
                 if "GO:" in val:
                     go_id = val.split("GO:")[-1].strip(" )")
                     go_id = f"GO:{go_id}"
@@ -91,7 +94,11 @@ with gzip.open("output/hsapiens/coloc.pkl.gz", "wb") as w:
     (go_terms, hpa) = process_hpa()
     valid_go_terms = go_terms
     pickle.dump(
-        {"compartments": process_compartments(go_terms), "HumanProteinAtlas": hpa}, w
+        {
+            "compartments": process_compartments(go_terms),
+            "HumanProteinAtlas": hpa,
+        },
+        w,
     )
 
 with gzip.open("output/mmusculus/coloc.pkl.gz", "wb") as w:

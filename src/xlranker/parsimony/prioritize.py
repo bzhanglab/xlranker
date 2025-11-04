@@ -1,4 +1,4 @@
-"""Classes and methods for the main prioritization for the parsimonious selection step."""
+"""Classes and methods for the main prioritization for the parsimonious selection step."""  # noqa: E501
 
 import logging
 import random
@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from xlranker.bio.pairs import PeptidePair, ProteinPair
 from xlranker.lib import XLDataSet
 from xlranker.status import PrioritizationStatus, ReportStatus
-from xlranker.util import get_pair_id, set_seed
+from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,9 @@ def select_random(
 ) -> None:  # FIXME: This needs to be updated to handle the selection process
     """Resolve ambiguous groups by selected a random pair.
 
-    This is normally done by the machine learning model. However, if training data is not available, use this function to resolve the remaining ambiguity.
+    This is normally done by the machine learning model.
+    However, if training data is not available, use this function
+    to resolve the remaining ambiguity.
 
     Args:
         data_set (XLDataSet): data set to resolve ambiguity
@@ -49,8 +51,10 @@ class ParsimonyGroup:
     """Group of protein pairs and peptide pairs in the bipartite graph.
 
     Attributes:
-        protein_pairs (list[ProteinPair]): list of the protein pairs on the right side of the graph.
-        peptide_pairs (list[PeptidePair]): list of the peptide pairs on the left side of the graph.
+        protein_pairs (list[ProteinPair]): list of the protein pairs on the
+            right side of the graph.
+        peptide_pairs (list[PeptidePair]): list of the peptide pairs on the
+            left side of the graph.
 
     """
 
@@ -63,9 +67,12 @@ class ParsimonySelector:
 
     Attributes:
         data_set (XLDataSet): The cross-linking dataset requiring selection.
-        protein_groups (dict[int, list[ProteinPair]]): dictionary of the protein groups where the key is the group ID.
-        peptide_groups (dict[int, list[PeptidePair]]): dictionary of the peptide groups where the key is the group ID.
-        can_prioritize (bool): True if the dataset has groups assigned and is ready for prioritization.
+        protein_groups (dict[int, list[ProteinPair]]): dictionary of the protein groups
+            where the key is the group ID.
+        peptide_groups (dict[int, list[PeptidePair]]): dictionary of the peptide groups
+            where the key is the group ID.
+        can_prioritize (bool): True if the dataset has groups assigned and is ready for
+            prioritization.
 
     """
 
@@ -86,20 +93,22 @@ class ParsimonySelector:
         self.can_prioritize = False
 
     def assign_protein_pair(self, protein_pair: ProteinPair, group_id: int) -> None:
-        """Assign a group id to a protein pair and propagate the group to connected components.
+        """Assign a group id to a protein pair and propagate the group.
 
         Args:
             protein_pair (ProteinPair): Protein pair requiring assignment.
-            group_id (int): group ID to assign to this pair and other pairs connected to it.
+            group_id (int): group ID to assign to this pair and other pairs connected
+                to it.
 
         Raises:
-            ValueError: Raised if a different group ID has been assigned to this protein pair.
+            ValueError: Raised if a different group ID has been assigned to this
+                protein pair.
 
         """
         if protein_pair.in_group:
             if protein_pair.group_id != group_id:  # TODO: May be removed
                 raise ValueError(
-                    f"Protein Pair {protein_pair} has incorrect group id. Expected {group_id}. Got {protein_pair.group_id}."
+                    f"Protein Pair {protein_pair} has incorrect group id. Expected {group_id}. Got {protein_pair.group_id}."  # noqa: E501
                 )
             return
         protein_pair.set_group(group_id)
@@ -112,20 +121,22 @@ class ParsimonySelector:
             )
 
     def assign_peptide_pair(self, peptide_pair: PeptidePair, group_id: int) -> None:
-        """Assign a group id to a peptide pair and propagate the group to connected components.
+        """Assign a group id to a peptide pair and propagate the group.
 
         Args:
             peptide_pair (PeptidePair): Peptide pair requiring assignment.
-            group_id (int): group ID to assign to this pair and other pairs connected to it.
+            group_id (int): group ID to assign to this pair and other pairs connected
+                to it.
 
         Raises:
-            ValueError: Raised if a different group ID has been assigned to this peptide pair.
+            ValueError: Raised if a different group ID has been assigned to
+                this peptide pair.
 
         """
         if peptide_pair.in_group:
             if peptide_pair.group_id != group_id:
                 raise ValueError(
-                    f"Protein Pair {peptide_pair} has incorrect group id. Expected {group_id}. Got {peptide_pair.group_id}."
+                    f"Protein Pair {peptide_pair} has incorrect group id. Expected {group_id}. Got {peptide_pair.group_id}."  # noqa: E501
                 )
             return
         peptide_pair.set_group(group_id)
@@ -222,8 +233,8 @@ class ParsimonySelector:
                 )  # Selected intra pairs are reported at least as MINIMAL
                 for i in range(1, len(intra_pairs)):
                     intra_pairs[i].set_prioritization_status(
-                        PrioritizationStatus.PARSIMONY_NOT_SELECTED  # Not selected by default
-                    )
+                        PrioritizationStatus.PARSIMONY_NOT_SELECTED
+                    )  # Not selected by default
                     intra_pairs[i].set_report_status(
                         ReportStatus.EXPANDED
                     )  # Secondary intra pairs are reported as EXPANDED
@@ -243,7 +254,7 @@ class ParsimonySelector:
         """Start the parsimonious prioritization of each group."""
         if not self.can_prioritize:
             logger.debug(
-                "Parsimony group creation not performed before prioritization. Running now."
+                "Parsimony group creation not performed before prioritization. Running now."  # noqa: E501
             )
             self.create_groups()
         for group in sorted(self.protein_groups.keys()):

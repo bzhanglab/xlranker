@@ -1,4 +1,4 @@
-"""Script that builds a list of list of sets representing all of the GMTs located in the gmts folder."""
+"""Script that builds a list of list of sets representing all of the GMTs located in the gmts folder."""  # noqa: E501
 
 import glob
 import gzip

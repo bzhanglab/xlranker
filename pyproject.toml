@@ -45,7 +45,14 @@ dev = [
 external = [
     "DOC", # pydoclint
 ]
-select = ["D"]
+select = ["E", "F", "W", "I", "D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff]
+line-length = 88
+fix = true
+
+[tool.ruff.format]
+line-ending = "auto"

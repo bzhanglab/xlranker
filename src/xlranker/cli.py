@@ -4,22 +4,24 @@ import json
 import logging
 import os
 from pathlib import Path
-import random
 from typing import Annotated, Any
 
 import cyclopts
 import questionary
-from questionary import Choice
 import yaml
+from questionary import Choice
 
-from xlranker import config
-from xlranker.config import DEFAULT_CONFIG, Config, config_to_dict, set_config_from_dict
+from xlranker.config import (
+    DEFAULT_CONFIG,
+    Config,
+    config_to_dict,
+    set_config_from_dict,
+)
 from xlranker.config import config as xlr_config
 from xlranker.lib import XLDataSet, setup_logging
 from xlranker.pipeline import run_full_pipeline
 from xlranker.util import set_seed
 from xlranker.util.readers import base_name
-from xlranker.util.mapping import PeptideMapper, convert_str_to_fasta_type, FastaType
 
 app = cyclopts.App()
 logger = logging.getLogger(__name__)
@@ -86,11 +88,14 @@ def init(
     default: bool = False,
     output: Annotated[str | None, cyclopts.Parameter(name=["--output", "-o"])] = None,
 ) -> None:  # noqa: DOC105
-    """Initialize a config file. If no default flag provided, config is created through a interactive form.
+    """Initialize a config file, with an optional interactive form.
+
+    If no default flag provided, config is created through a interactive form.
 
     Args:
         default (bool, optional): Create a simple default config. Defaults to False.
-        output (Annotated[str | None, cyclopts.Parameter], optional): Output config file. Can either be JSON or YAML format. Defaults to None.
+        output (Annotated[str | None, cyclopts.Parameter], optional): Output config file
+            Can either be JSON or YAML format. Defaults to None.
 
     Raises:
         ValueError: raises ValueError if output is not set when default is passed
@@ -142,7 +147,7 @@ def init(
             ).ask()
             if fasta_type == "GENCODE":
                 print(
-                    "\nGENCODE additional configuration to read the FASTA file.\nSee https://bzhanglab.github.io/xlranker/latest/usage/input_data/fasta/ for more information.\n"
+                    "\nGENCODE additional configuration to read the FASTA file.\nSee https://bzhanglab.github.io/xlranker/latest/usage/input_data/fasta/ for more information.\n"  # noqa: E501
                 )
         case "TSV Table":
             is_fasta = False
@@ -226,9 +231,12 @@ def start(
     `xlranker start --network net.tsv --data-folder data/ --seed 42`
 
     Args:
-        config_file (str | None): path to the config file. If none provided, use the default configuration.
-        network (str | None): path to the network file, and override path set in config if not None.
-        data_folder (str | None): path the omic data folder and override path set in config if not None.
+        config_file (str | None): path to the config file.
+            If none provided, use the default configuration.
+        network (str | None): path to the network file,
+            and override path set in config if not None.
+        data_folder (str | None): path the omic data folder
+            and override path set in config if not None.
         seed (int | None): seed for random generators. If none, use random seed.
         verbose: if set, log includes more messages.
 
@@ -257,7 +265,7 @@ def start(
         )
     if not xlr_config.mapping.is_fasta and xlr_config.mapping.custom_table is None:
         raise ValueError(
-            "Mapping table must be provided in config (mapping.custom_table) if is_fasta is False."
+            "Mapping table must be provided in config (mapping.custom_table) if is_fasta is False."  # noqa: E501
         )
     xlr_config.check_is_safe()
 
@@ -267,18 +275,6 @@ def start(
     )
 
     set_seed(xlr_config.seed)
-
-    fasta_enum = FastaType.UNIPROT  # Default
-    if xlr_config.mapping.fasta_type and xlr_config.mapping.is_fasta:
-        fasta_enum = convert_str_to_fasta_type(xlr_config.mapping.fasta_type)
-    gs_index = (
-        xlr_config.mapping.split_index
-        if xlr_config.mapping.split_index is not None
-        else -1
-    )
-    split_by = (
-        xlr_config.mapping.split_by if xlr_config.mapping.split_by is not None else "-1"
-    )
 
     data_set = XLDataSet.load_from_config()
 

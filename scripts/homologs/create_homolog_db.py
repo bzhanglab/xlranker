@@ -1,8 +1,9 @@
-"""Creates a homolog database mapping gene symbols from different species to its human homolog."""
+"""Creates a homolog database mapping gene symbols from different species to its human homolog."""  # noqa: E501
+
+import gzip
+import pickle
 
 import polars as pl
-import pickle
-import gzip
 
 
 def build_index(df: pl.LazyFrame) -> dict[int, str]:
@@ -24,7 +25,9 @@ def build_index(df: pl.LazyFrame) -> dict[int, str]:
 def create_homolog_db(
     df: pl.LazyFrame, species: str, index: dict[int, str], output_file: str
 ) -> None:
-    """Outputs a pkl.gz file mapping gene symbols from a given species to its human homolog.
+    """Output mapping table of gene symbols from a species to its human homolog.
+
+    File format is pkl.gz.
 
     Args:
         df (pl.LazyFrame): Dataframe containing homolog data
@@ -33,7 +36,7 @@ def create_homolog_db(
         output_file (str): Output file path
 
     """
-    df = (
+    full_df = (
         df.filter(pl.col("Common Organism Name").eq(pl.lit(species)))
         .with_columns(
             pl.col("DB Class Key")
@@ -46,8 +49,8 @@ def create_homolog_db(
         pickle.dump(
             dict(
                 zip(
-                    df["Symbol"],
-                    df["Homolog"],
+                    full_df["Symbol"],
+                    full_df["Homolog"],
                 )
             ),
             f,

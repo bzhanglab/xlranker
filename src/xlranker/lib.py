@@ -5,12 +5,16 @@ import sys
 
 import polars as pl
 
+from xlranker.config import config as xlr_config
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.util import get_abundance, get_pair_id
-from xlranker.util.mapping import FastaType, PeptideMapper, convert_str_to_fasta_type
+from xlranker.util.mapping import (
+    FastaType,
+    PeptideMapper,
+    convert_str_to_fasta_type,
+)
 from xlranker.util.readers import read_data_folder, read_network_file
 
-from xlranker.config import config as xlr_config
 from .bio import Protein
 from .bio.pairs import PeptidePair, ProteinPair
 from .status import PrioritizationStatus
@@ -24,8 +28,10 @@ def setup_logging(
     """Set up logging for XLRanker.
 
     Args:
-        verbose (bool, optional): Use more verbose logging. Sets logging level to DEBUG. Defaults to False.
-        log_file (str | None, optional): Path to log file. If none, no log file is kept. Defaults to None.
+        verbose (bool, optional): Use more verbose logging. Sets logging level to DEBUG.
+            Defaults to False.
+        log_file (str | None, optional): Path to log file. If none, no log file is kept.
+            Defaults to None.
         silent_all (bool, optional): Disable all logging. Defaults to False.
 
     """
@@ -62,14 +68,20 @@ class XLDataSet:
     """XLRanker cross-linking dataset object.
 
     Args:
-        peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
-        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
+        peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the
+            key is a unique identifier for the pair.
+        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is
+            the file name and the value is a Polars DataFrame containing the data.
 
     Attributes:
-        peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
-        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
-        proteins (dict[str, Protein]): Dictionary of proteins, where the key is a unique identifier for the protein.
-        protein_pairs (dict[str, ProteinPair]): Dictionary of protein pairs, where the key is a unique identifier for the pair.
+        peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the
+            key is a unique identifier for the pair.
+        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is
+            the file name and the value is a Polars DataFrame containing the data.
+        proteins (dict[str, Protein]): Dictionary of proteins, where the key is a unique
+            identifier for the protein.
+        protein_pairs (dict[str, ProteinPair]): Dictionary of protein pairs, where the
+            key is a unique identifier for the pair.
 
     """
 
@@ -79,13 +91,17 @@ class XLDataSet:
     protein_pairs: dict[str, ProteinPair]
 
     def __init__(
-        self, peptide_pairs: dict[str, PeptidePair], omic_data: dict[str, pl.DataFrame]
+        self,
+        peptide_pairs: dict[str, PeptidePair],
+        omic_data: dict[str, pl.DataFrame],
     ) -> None:
         """XLRanker cross-linking dataset object.
 
         Args:
-            peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where the key is a unique identifier for the pair.
-            omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key is the file name and the value is a Polars DataFrame containing the data.
+            peptide_pairs (dict[str, PeptidePair]): Dictionary of peptide pairs, where
+               the key is a unique identifier for the pair.
+            omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key
+                is the file name and the value is a Polars DataFrame containing the data
 
         """
         self.peptide_pairs = peptide_pairs
@@ -97,7 +113,8 @@ class XLDataSet:
         """Build protein pairs of the XLDataSet network.
 
         Args:
-            remove_intra (bool, optional): if true, only creates protein pairs between different proteins. Defaults to False.
+            remove_intra (bool, optional): if true, only creates protein pairs between
+                different proteins. Defaults to False.
 
         """
         all_proteins: set[str] = set()
@@ -198,12 +215,19 @@ class XLDataSet:
         Args:
             network_path (str): path to the peptide pairs
             omics_data_folder (str): folder containing the omic data
-            custom_mapper (PeptideMapper | None, optional): PeptideMapper object that should be used for mapping. If None, create peptide mapper using other parameters. Defaults to None.
-            custom_mapping_path (str | None, optional): If not using custom_mapper, path to mapping table. Defaults to None.
-            is_fasta (bool, optional): True if custom_mapping_path points to FASTA file. Defaults to True.
-            split_by (str | None, optional): character to split FASTA description by. Defaults to "|".
-            split_index (int | None, optional): 0-based index to extract gene symbol from. Defaults to 3.
-            fasta_type (str | FastaType, optional): FASTA file type. str can be "UNIPROT" or "GENCODE". Defaults to "UNIPROT".
+            custom_mapper (PeptideMapper | None, optional): PeptideMapper object that
+                should be used for mapping. If None, create peptide mapper using other
+                    parameters. Defaults to None.
+            custom_mapping_path (str | None, optional): If not using custom_mapper, path
+                to mapping table. Defaults to None.
+            is_fasta (bool, optional): True if custom_mapping_path points to FASTA file.
+                Defaults to True.
+            split_by (str | None, optional): character to split FASTA description by.
+                Defaults to "|".
+            split_index (int | None, optional): 0-based index to extract gene symbol.
+                Defaults to 3.
+            fasta_type (str | FastaType, optional): FASTA file type. str can be
+                "UNIPROT" or "GENCODE". Defaults to "UNIPROT".
 
         Returns:
             XLDataSet: XLDataSet with peptide pairs and omics data loaded
@@ -245,18 +269,19 @@ class XLDataSet:
 def get_final_network(
     data_set: XLDataSet, pair_selector: PairSelector = BestSelector()
 ) -> list[ProteinPair]:
-    """DEPRECIATED: USE REPORTS MODULE. Get the final network of all selected protein pairs.
+    """DEPRECIATED. Get the final network of all selected protein pairs.
 
     Args:
         data_set (XLDataSet): XL data set after prioritization
-        pair_selector (PairSelector, optional): What kind of pair selector to use for selecting final pairs. Defaults to BestSelector().
+        pair_selector (PairSelector, optional): What kind of pair selector to use for
+            selecting final pairs. Defaults to BestSelector().
 
     Returns:
         list[ProteinPair]: list of selected protein pairs
 
     """
     logger.warning(
-        "USING DEPRECIATED FUNCTION: xlranker.lib.get_final_network.\nUse xlranker.reports module."
+        "USING DEPRECIATED FUNCTION: xlranker.lib.get_final_network.\nUse xlranker.reports module."  # noqa: E501
     )
     pair_selector.process(list(data_set.protein_pairs.values()))
     return [

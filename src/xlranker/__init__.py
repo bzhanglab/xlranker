@@ -9,8 +9,8 @@ import xlranker.ml
 import xlranker.parsimony
 import xlranker.pipeline
 import xlranker.util
-from xlranker.pipeline import run_full_pipeline
 from xlranker.lib import XLDataSet
+from xlranker.pipeline import run_full_pipeline
 
 __all__ = [
     "xlranker",

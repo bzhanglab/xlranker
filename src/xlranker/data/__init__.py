@@ -10,6 +10,7 @@ import tempfile
 from importlib.resources import files
 
 import polars as pl
+
 from xlranker.config import config
 from xlranker.util import validate_species
 
@@ -20,7 +21,9 @@ def load_localization_data(
     """Load protein localization data from COMPARTMENTS and Human Protein Atlas.
 
     Returns:
-         dict[str, dict[str, set[str]]]: Key is the data set (compartments or HumanProteinAtlas) and the values are dicts containing the annotated locations for a gene.
+         dict[str, dict[str, set[str]]]: Key is the data set
+            (compartments or HumanProteinAtlas) and the values are dicts containing
+            the annotated locations for a gene.
 
     """
     validate_species()
@@ -30,15 +33,16 @@ def load_localization_data(
             return pickle.load(r)
     except FileNotFoundError as e:
         raise FileNotFoundError(
-            f"No localization data found for species '{species}'. Please report issue or provide your own localization data."
+            f"No localization data found for species '{species}'. Please report issue or provide your own localization data."  # noqa: E501
         ) from e
 
 
 def load_default_ppi(species: str = config.species) -> pl.DataFrame:
-    """Load default pre-generated table of known PPIs from parquet file into polars DataFrame. Human only.
+    """Load default pre-generated table of known PPIs from parquet file into DataFrame.
 
     Returns:
-        pl.DataFrame: Two column database with column names of P1 and P2 where P1 and P2 have a known PPI.
+        pl.DataFrame: Two column database with column names of P1 and P2
+            where P1 and P2 have a known PPI.
 
     """
     validate_species()
@@ -48,7 +52,7 @@ def load_default_ppi(species: str = config.species) -> pl.DataFrame:
         return pl.read_parquet(str(ppi_path))
     except FileNotFoundError as e:
         raise FileNotFoundError(
-            f"No PPI database found for species '{species}'. Please report issue or provide your own PPI database."
+            f"No PPI database found for species '{species}'. Please report issue or provide your own PPI database."  # noqa: E501
         ) from e
 
 

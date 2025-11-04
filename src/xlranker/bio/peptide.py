@@ -25,7 +25,8 @@ class Peptide:
 
         Args:
             sequence (str): amino acid sequence
-            mapped_proteins (list[str], optional): list of protein names this sequence maps to. Defaults to [].
+            mapped_proteins (list[str], optional): list of protein names this sequence
+                maps to. Defaults to [].
 
         """
         self.sequence = sequence

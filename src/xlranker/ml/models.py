@@ -21,7 +21,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
 from xlranker.bio.pairs import ProteinPair
-from xlranker.config import config, Config
+from xlranker.config import Config, config
 from xlranker.data import (
     load_default_ppi,
     load_gmts,
@@ -31,7 +31,6 @@ from xlranker.data import (
 from xlranker.lib import XLDataSet
 from xlranker.selection import BestSelector, PairSelector
 from xlranker.status import PrioritizationStatus
-from xlranker.util import set_seed
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ DEFAULT_XGB_PARAMS: dict[str, Any] = {
 
 
 def in_same_set(a: str, b: str, sets: list[list[set[str]]] | None) -> bool:
-    """Check if a and b are located in the same set in any of the exclusive sets provided.
+    """Check if a and b are located in the same set in any of the exclusive sets.
 
     Args:
         a (str): entity a
@@ -84,9 +83,11 @@ class FeatureBuilder:
 
         Args:
             config (Config): xlranker config
-            localization_data (dict[str, dict[str, set[str]]]): localization data per dataset
+            localization_data (dict[str, dict[str, set[str]]]): localization data per
+                dataset
             ppi_db (pl.DataFrame): known PPI database
-            homologs (dict[str, str] | None, optional): Homologs to human or don't use homologs if set to None. Defaults to None.
+            homologs (dict[str, str] | None, optional): Homologs to human or don't use
+                homologs if set to None. Defaults to None.
 
         """
         self.config = config
@@ -178,7 +179,8 @@ class NegativeSampler:
             n (int): number of random negative pairs to generate
 
         Raises:
-            ValueError: raised if n is larger than the maximum possible number of negatives and config.fragile is True
+            ValueError: raised if n is larger than the maximum possible number of
+                negatives and config.fragile is True
 
         Returns:
             list[ProteinPair]: list of negative protein pairs
@@ -232,7 +234,8 @@ class ModelConfig:  # TODO: Determine if this should go into the config module.
         Args:
             runs (int, optional): the number of model runs. Defaults to 10.
             folds (int, optional): number of folds per run. Defaults to 5.
-            xgb_params (dict[str, Any], optional): dictionary of parameters for the XGBoost model. Defaults to DEFAULT_XGB_PARAMS.
+            xgb_params (dict[str, Any], optional): dictionary of parameters for the
+                XGBoost model. Defaults to DEFAULT_XGB_PARAMS.
 
         """
         self.runs = runs
@@ -243,7 +246,8 @@ class ModelConfig:  # TODO: Determine if this should go into the config module.
         """Validate the parameters of the config.
 
         Returns:
-            bool: True if all parameters are the correct type and meet the minimum value requirements.
+            bool: True if all parameters are the correct type and meet the minimum value
+                requirements.
 
         """
         attrs = {
@@ -261,7 +265,7 @@ class ModelConfig:  # TODO: Determine if this should go into the config module.
 
 
 class PrioritizationModel:
-    """Prioritization model using XGBoost to predict which pair should be selected as the representative.
+    """Prioritization model to predict if a pair should be selected as a representative.
 
     Raises:
         ValueError: Raised if there aren't enough negatives and config.fragile is True.
@@ -295,11 +299,19 @@ class PrioritizationModel:
         """Initialize PrioritizationModel.
 
         Args:
-            dataset (XLDataSet): XL data set that needs prioritization. Requires Parsimony Analysis to have been performed.
-            model_config (ModelConfig | None, optional): Config for the model. If None use defaults. Defaults to None.
-            gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets. Negative pairs can't be in the same set. Defaults to None.
-            ppi_db (pl.DataFrame | None, optional): PPI database. Should have two columns P1 and P2, where P1 is first alphabetically. Defaults to None.
-            localization_data (dict[str, dict[str, set[str]]] | None): Cellular component information. See xlranker.data.load_localization_data for more information. If None, use default databases. Defaults to None.
+            dataset (XLDataSet): XL data set that needs prioritization.
+                Requires Parsimony Analysis to have been performed.
+            model_config (ModelConfig | None, optional): Config for the model.
+                If None use defaults. Defaults to None.
+            gmt_list (list[list[set[str]]] | None, optional): list of exclusive sets.
+                Negative pairs can't be in the same set. Defaults to None.
+            ppi_db (pl.DataFrame | None, optional): PPI database.
+                Should have two columns P1 and P2, where P1 is first alphabetically.
+                Defaults to None.
+            localization_data (dict[str, dict[str, set[str]]] | None):
+                Cellular component information.
+                See xlranker.data.load_localization_data for more information.
+                If None, use default databases. Defaults to None.
             pair_selector (PairSelector,  optional): Pair selector
 
         """
@@ -365,7 +377,7 @@ class PrioritizationModel:
         return 0.0
 
     def get_loc_data(self, a: str, b: str) -> list[tuple[str, float]]:
-        """For every localization dataset, determine if a and b share any cellular locations.
+        """For every localization dataset, determine if a and b share any locations.
 
         Order of `a` and `b` does not matter.
 
@@ -374,7 +386,9 @@ class PrioritizationModel:
             b (str): Second protein
 
         Returns:
-            list[tuple[str, float]]: List of tuples where the first value is the dataset name and the second is a float with 1.0 meaning there is at least one shared compartment in the dataset
+            list[tuple[str, float]]: List of tuples where the first value is the dataset
+                name and the second is a float with 1.0 meaning there is at least one
+                shared compartment in the dataset
 
         """
         ret_val = []
@@ -435,7 +449,7 @@ class PrioritizationModel:
         negatives: list[ProteinPair] = []
         n_prot = len(self.dataset.proteins.values())
         if n > (n_prot * (n_prot - 1)) // 2 - len(self.positives):
-            msg = f"n value for get_negatives ({n}) is too large. Setting to maximum value: {(n_prot * (n_prot - 1)) // 2 - len(self.positives)}"
+            msg = f"n value for get_negatives ({n}) is too large. Setting to maximum value: {(n_prot * (n_prot - 1)) // 2 - len(self.positives)}"  # noqa: E501
             if config.fragile:
                 logger.error(msg)
                 raise ValueError(
@@ -445,7 +459,7 @@ class PrioritizationModel:
             n = (n_prot * (n_prot - 1)) // 2 - len(self.positives)
         protein_ids = sorted(list(self.dataset.proteins.keys()))
 
-        generated: set[str] = set()
+        generated: set[tuple[str, str]] = set()
 
         while len(negatives) < n:
             a, b = random.sample(protein_ids, 2)
@@ -463,17 +477,24 @@ class PrioritizationModel:
         return negatives
 
     def construct_df_from_pairs(
-        self, pair_list: list[ProteinPair], has_label: bool, label_value: float = 0.0
+        self,
+        pair_list: list[ProteinPair],
+        has_label: bool,
+        label_value: float = 0.0,
     ) -> pl.DataFrame:
         """Construct a DataFrame from the list of Protein Pairs.
 
         Args:
-            pair_list (list[ProteinPair]): list of protein pairs to get the dataframe from
+            pair_list (list[ProteinPair]): list of protein pairs
             has_label (bool): if True, adds label column to dataframe
-            label_value (float, optional): value assigned to the label column. Defaults to 0.0 (negative).
+            label_value (float, optional): value assigned to the label column.
+                Defaults to 0.0 (negative).
 
         Returns:
-            pl.DataFrame: DataFrame object with the first column being the pair ID, following columns with abundances for the proteins. If `has_label` is true, last column is label with a value of `label_value`.
+            pl.DataFrame: DataFrame object with the first column being the pair ID,
+                following columns with abundances for the proteins.
+                If `has_label` is true, last column is label with a value of
+                `label_value`.
 
         """
         df_array: list[dict[str, str | int | float | None]] = []
@@ -487,7 +508,7 @@ class PrioritizationModel:
                     pair_dict[key] = val
             if (
                 config.species == "hsapiens"
-                or not self.default_ppi  # TODO: Evaluate this because this check may be unintended effects
+                or not self.default_ppi  # TODO: Evaluate this check later
             ):  # Can only add if only human or if using custom PPI DB
                 pair_dict["is_ppi"] = self.is_ppi(pair.a.name, pair.b.name)
             if has_label:
@@ -511,13 +532,15 @@ class PrioritizationModel:
         return self.construct_df_from_pairs(self.to_predict, has_label=False)
 
     def construct_training_df(self, negative_pairs: list[ProteinPair]) -> pl.DataFrame:
-        """Generate a Polars DataFrame from the positive pairs and a list of negative ProteinPair.
+        """Generate the training DataFrame from the labeled pairs ProteinPair.
 
         Args:
-            negative_pairs (list[ProteinPair]): the list of negative pairs to add to DataFrame
+            negative_pairs (list[ProteinPair]): the list of negative pairs to add to
+                DataFrame
 
         Returns:
-            pl.DataFrame: DataFrame where the first column is 'pair', followed by abundances. Last column is 'label'
+            pl.DataFrame: DataFrame where the first column is 'pair',
+                followed by abundances. Last column is 'label'
 
         """
         positive_df = self.construct_df_from_pairs(
@@ -621,12 +644,13 @@ class PrioritizationModel:
 
         predict_df = predict_df.with_columns(pl.Series("prediction", mean_predictions))
         predict_df.write_csv(
-            str(Path(config.output).joinpath("model_output.tsv")), separator="\t"
+            str(Path(config.output).joinpath("model_output.tsv")),
+            separator="\t",
         )
 
         # Print summary statistics
         logger.info(
-            f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"
+            f"Average AUC across {self.model_config.runs} runs: {np.mean(aucs):.4f} ± {np.std(aucs):.4f}"  # noqa: E501
         )
         logger.info("Results saved to: .")
 
@@ -634,7 +658,7 @@ class PrioritizationModel:
         """Get all `ProteinPair`s that were accepted.
 
         Returns:
-            list[ProteinPair]: All machine-learning selected pairs predicted by this model
+            list[ProteinPair]: All machine-learning selected pairs
 
         """
         return [

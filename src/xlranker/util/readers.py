@@ -7,8 +7,8 @@ import polars as pl
 
 from xlranker.bio import Peptide
 from xlranker.bio.pairs import PeptidePair
-from xlranker.util import get_pair_id
 from xlranker.config import config
+from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def read_data_matrix(
     data_path: str, additional_null_values: list[str] = []
 ) -> pl.DataFrame:
-    """Reads data matrix into a Polars DataFrame with samples/measurements being columns.
+    """Read data matrix into a Polars DataFrame with samples/measurements being columns.
 
     Format:
      - Has header (any names allowed).
@@ -25,7 +25,8 @@ def read_data_matrix(
 
     Args:
         data_path (str): path to the data matrix
-        additional_null_values (list[str]): list of str of additional values that should considered as null
+        additional_null_values (list[str]): list of str of additional values that should
+            considered as null
 
     Returns:
         pl.DataFrame: Polars DataFrame of the input data
@@ -79,13 +80,15 @@ def read_data_folder(
 
     Args:
         folder_path (str): path of the folder that contains files ending in .tsv
-        additional_null_values (list[str]): list of str of additional values that should considered as null in the data files
+        additional_null_values (list[str]): list of str of additional values that should
+            considered as null in the data files
 
     Raises:
         FileNotFoundError: raised if no TSV files are found
 
     Returns:
-        list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read by the read_data_matrix function
+        list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read
+            by the read_data_matrix function
 
     """
     file_glob = Path(folder_path).glob("*.tsv")
@@ -148,7 +151,11 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
 
 
 def read_mapping_table_file(file_path: str) -> dict[str, list[str]]:
-    """Read mapping file where the first column is the peptide sequence and the following columns are proteins that map to that sequence.
+    """Read mapping file into dict.
+
+    Format:
+        The first column is the peptide sequence and the following columns are proteins
+        that map to that sequence.
 
     Args:
         file_path (str): path to the tab-separated mapping table
