@@ -93,6 +93,35 @@ class Config(BaseModel):
     )
     threshold: float = 0.5
 
+    def is_safe(self) -> tuple[bool, str]:
+        """Check if config is set in a valid way.
+
+        Returns:
+            (bool, str): True if all options set are compatible and error message.
+        """
+        is_safe = True
+        error_msg = ""
+        if self.network_path is None:  # input network must be provided
+            is_safe = False
+            error_msg += "Network path is none\n"
+        if (
+            not self.mapping.is_fasta and self.mapping.custom_table is None
+        ):  # If not FASTA, custom table must be provided
+            is_safe = False
+            error_msg += "If not using FASTA, custom table must be provided\n"
+        return (is_safe, error_msg)
+
+    def check_is_safe(self) -> None:
+        """Check if safe and raise error if error found."""
+        (was_safe, error_msg) = self.is_safe()
+        if not was_safe:
+            message_string = (
+                "Error Message" if error_msg.count("\n") == 1 else "Error Messages"
+            )
+            raise ValueError(
+                f"Config not correctly set.\n{message_string}:\n{error_msg}"
+            )
+
 
 config = Config()
 
