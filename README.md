@@ -1,7 +1,6 @@
 <div align="center">
 <img src="docs/images/logo.svg" alt="Logo" width="80" height="80">
 <h1 style="margin-top: -1pt; margin-bottom: 0pt">XLRanker</h1>
-<!-- Badges -->
 <a target="_blank" style="margin-top: 0pt" href="https://colab.research.google.com/github/bzhanglab/xlranker/blob/master/notebooks/xlranker_example.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
@@ -21,23 +20,21 @@ pip install xlranker
 
 While optional, it is recommended to create a config file to customize all of your parameters. The `init` command will create interactive prompts to create your custom config file.
 
-```
+```shell
 xlranker init
 ```
 
-To analyze a TSV file containing a network of peptide sequences run:
+To analyze a TSV file containing a network of peptide sequences with omics data,
 
-```
-xlranker start peptide_network.tsv
+```shell
+xlranker start -n peptide_network.tsv -d omic_data/
 ```
 
-or if you have created a config, you can run
+or if you have created a config (**strongly recommended**), you can run
 
-```
+```shell
 xlranker start -c config.yaml
 ```
-
-
 
 Please view the [documentation](https://bzhanglab.github.io/xlranker/latest/) for detailed usage instructions and examples.
 

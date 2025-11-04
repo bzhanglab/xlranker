@@ -8,13 +8,15 @@ Model Process:
 
 """
 
+import abc
 import logging
 import os
 import random
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 import xgboost
 from sklearn.metrics import roc_auc_score
@@ -90,11 +92,11 @@ class FeatureBuilder:
                 homologs if set to None. Defaults to None.
 
         """
-        self.config = config
-        self.localization_data = localization_data
-        self.ppi_db = ppi_db
-        self.homologs = homologs
-        self._ppi_pairs = {
+        self.config: Config = config
+        self.localization_data: dict[str, dict[str, set[str]]] = localization_data
+        self.ppi_db: pl.DataFrame = ppi_db
+        self.homologs: dict[str, str] | None = homologs
+        self._ppi_pairs: set[tuple[str, str]] = {
             (row["P1"], row["P2"]) for row in self.ppi_db.iter_rows(named=True)
         }
 
@@ -106,7 +108,7 @@ class FeatureBuilder:
 
     def _get_loc_data(self, a: str, b: str) -> dict[str, float]:
         """Return a dict of localization overlaps per dataset."""
-        results = {}
+        results: dict[str, float] = {}
         for ds_name, data in sorted(self.localization_data.items()):
             set_a = data.get(a, set())
             set_b = data.get(b, set())
@@ -262,6 +264,56 @@ class ModelConfig:  # TODO: Determine if this should go into the config module.
             if cond and not cond(value):
                 return False
         return True
+
+
+class PredictionModel(abc.ABC):
+    """Abstract class describing a model for predicting if a protein pair is real."""
+
+    def __init__(self, model_config: ModelConfig, random_state: int):
+        """Initialize the model.
+
+        Args:
+            model_config (ModelConfig): Model related configuration options
+            random_state (int): random seed to initialize the model with
+
+        """
+        self.model_config: ModelConfig = model_config
+
+    @abc.abstractmethod
+    def train(self, x: npt.NDArray[np.float64], y: npt.NDArray[np.float64]) -> None:
+        """Train the machine learning model."""
+        pass
+
+    @abc.abstractmethod
+    def predict(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        """Run the model and get prediction scores."""
+        pass
+
+
+class XGBoostModel(PredictionModel):
+    """Prediction model built from XGBoost."""
+
+    def __init__(self, model_config: ModelConfig, random_state: int) -> None:
+        """Initialize the XGBoost model.
+
+        Args:
+            model_config (ModelConfig): Config for the xgboost model
+            random_state (int): seed for the model
+
+        """
+        super().__init__(model_config, random_state)
+        self.model: xgboost.XGBClassifier = xgboost.XGBClassifier(
+            **model_config.xgb_params,
+            random_state=random_state,
+        )
+
+    @override
+    def train(self, x, y):
+        self.model.fit(x, y)
+
+    @override
+    def predict(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        return self.model.predict_proba(x)
 
 
 class PrioritizationModel:
@@ -577,6 +629,9 @@ class PrioritizationModel:
         run_ids = []
         aucs = []
 
+        def get_model(random_state: int) -> PredictionModel:
+            return XGBoostModel(self.model_config, random_state)
+
         for run in range(self.model_config.runs):
             logger.info(f"Model on run {run + 1}/{self.model_config.runs}")
             np.random.seed(int(random_seed + run))
@@ -602,28 +657,25 @@ class PrioritizationModel:
                 X_train, X_test = X[train_idx], X[test_idx]
                 y_train, y_test = y[train_idx], y[test_idx]
 
-                model = xgboost.XGBClassifier(
-                    **self.model_config.xgb_params,
+                model = get_model(
                     random_state=int(random_seed + run * fold),
                 )
 
-                _ = model.fit(X_train, y_train)
+                _ = model.train(X_train, y_train)
 
-                y_test_pred = model.predict_proba(X_test)[:, 1]
+                y_test_pred = model.predict(X_test)[:, 1]
 
                 y_test_run = np.append(y_test_run, y_test)
                 y_test_pred_run = np.append(y_test_pred_run, y_test_pred)
 
             # Train a model on the entire dataset for predictions
             random_seed = random.random() * 100000
-            model = xgboost.XGBClassifier(
-                **self.model_config.xgb_params, random_state=int(random_seed)
-            )
-            model.fit(X, y)
+            model = get_model(random_state=int(random_seed))
+            model.train(X, y)
             self.xgboost_models.append(model)
 
             # Get predictions for the prediction dataset
-            cur_predictions = model.predict_proba(predict_X)[:, 1]
+            cur_predictions = model.predict(predict_X)[:, 1]
             predictions[run] = cur_predictions
 
             auc_score = roc_auc_score(y_test_run, y_test_pred_run)

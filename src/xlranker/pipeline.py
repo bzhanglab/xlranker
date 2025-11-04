@@ -6,6 +6,7 @@ from xlranker.ml.models import PrioritizationModel
 from xlranker.parsimony.prioritize import ParsimonySelector, select_random
 from xlranker.report import make_all_reports
 from xlranker.selection import ThresholdSelector
+from xlranker.util import set_seed
 
 
 def run_full_pipeline(data_set: XLDataSet, threshold: float | None = None) -> XLDataSet:
@@ -21,6 +22,7 @@ def run_full_pipeline(data_set: XLDataSet, threshold: float | None = None) -> XL
     """
     if threshold is None:
         threshold = config.threshold
+    set_seed()
     data_set.build_proteins()  # TODO: Determine if this should be done when loaded
     parsimony = ParsimonySelector(data_set)
     parsimony.run()
