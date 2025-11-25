@@ -73,18 +73,11 @@ def base_name(file_path: Path | str) -> str:
     return Path(file_path).stem
 
 
-def read_data_folder(
-    folder_path: str, additional_null_values=[]
-) -> dict[str, pl.DataFrame]:
+def read_data_folder(folder_path: str) -> dict[str, pl.DataFrame]:
     """Reads all TSV files in a folder.
 
     Args:
         folder_path (str): path of the folder that contains files ending in .tsv
-        additional_null_values (list[str]): list of str of additional values that should
-            considered as null in the data files
-
-    Raises:
-        FileNotFoundError: raised if no TSV files are found
 
     Returns:
         list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read
@@ -112,6 +105,10 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
     Returns:
         list[PeptideGroup]: list of PeptideGroup representing the network
 
+    Raises:
+        IndexError: Raised if there are not 2 columns in the network.
+        FileNotFoundError: Raised if no file is found in network_path
+
     """
     try:
         with open(network_path) as r:
@@ -129,12 +126,12 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
                     val_a = val_b
                     val_b = temp
                 new_rows.add(f"{val_a}\t{val_b}")
-    except IndexError:
+    except IndexError as e:
         logger.error("Index out of bound. Make sure network is in the correct format.")
-        raise IndexError()
-    except FileNotFoundError:
+        raise IndexError() from e
+    except FileNotFoundError as e:
         logger.error(f"File not found: {network_path}")
-        raise FileNotFoundError
+        raise FileNotFoundError from e
     duplicate_rows = valid_rows - len(new_rows)  # Count number of duplicated rows
     if duplicate_rows > 0:  # Send warning that duplicate edges were removed.
         logger.info(
