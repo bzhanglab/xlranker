@@ -187,6 +187,7 @@ class PeptideMapper:
     split_index: int
     is_fasta: bool
     fasta_type: FastaType
+    reduce_fasta = False
 
     def __init__(
         self,
@@ -195,6 +196,7 @@ class PeptideMapper:
         split_index: int = 3,
         is_fasta: bool = True,
         fasta_type: FastaType = FastaType.UNIPROT,
+        reduce_fasta: bool = config.mapping.reduce_fasta,
     ) -> None:
         """Initialize PeptideMapper.
 
@@ -209,6 +211,8 @@ class PeptideMapper:
                 Defaults to 3.
             is_fasta (bool, optional): is input file fasta file. Defaults to True.
             fasta_type (FastaType): Type of FASTA header. Can be UNIPROT or GENCODE
+            reduce_fasta (bool): If True, only keep longest sequence for duplicated
+                protein entries. Defaults to option in config.mapping
 
         """
         if mapping_table_path is None:
@@ -226,6 +230,7 @@ class PeptideMapper:
         self.split_index = split_index
         self.is_fasta = is_fasta
         self.fasta_type = fasta_type
+        self.reduce_fasta = reduce_fasta
 
     def map_sequences(self, sequences: list[str]) -> MappingResult:
         """Map a list of sequences to genes.
@@ -268,7 +273,7 @@ class PeptideMapper:
             MappingResult: Result of the mapping.
 
         """
-        if config.reduce_fasta:
+        if self.reduce_fasta:
             return self.map_fasta_with_reduction(sequences)
         return self.map_fasta_no_reduction(sequences)
 
@@ -392,4 +397,5 @@ class PeptideMapper:
             split_index=split_index,
             is_fasta=mapping_config.is_fasta,
             fasta_type=fasta_type,
+            reduce_fasta=mapping_config.reduce_fasta,
         )

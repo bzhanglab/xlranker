@@ -91,7 +91,6 @@ class Config(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
-    reduce_fasta: bool = False  # Reduce FASTA file by only keeping the largest sequence
     output: str = "xlranker_output/"  # output directory
     primary_column: str | None = (
         None  # Which omic file should be the representative omic set for ordering
