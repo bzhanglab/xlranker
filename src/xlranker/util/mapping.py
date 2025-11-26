@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum, auto
 
+import ahocorasick
 from Bio import SeqIO
 
 from xlranker.config import MappingConfig, config
@@ -174,6 +175,14 @@ def convert_str_to_fasta_type(possible_type: str) -> FastaType:
             )
 
 
+def build_automaton(peptide_seqs: list[str]) -> ahocorasick.Automaton:
+    automaton = ahocorasick.Automaton()
+    for peptide in peptide_seqs:
+        automaton.add_word(peptide, peptide)
+    automaton.make_automaton()
+    return automaton
+
+
 class PeptideMapper:
     """Peptide mapper class.
 
@@ -273,11 +282,14 @@ class PeptideMapper:
             MappingResult: Result of the mapping.
 
         """
+        automaton = build_automaton(sequences)
         if self.reduce_fasta:
-            return self.map_fasta_with_reduction(sequences)
-        return self.map_fasta_no_reduction(sequences)
+            return self.map_fasta_with_reduction(sequences, automaton)
+        return self.map_fasta_no_reduction(sequences, automaton)
 
-    def map_fasta_no_reduction(self, sequences: list[str]) -> MappingResult:
+    def map_fasta_no_reduction(
+        self, sequences: list[str], automaton: ahocorasick.Automaton
+    ) -> MappingResult:
         """Maps the provided sequences to proteins using the original FASTA file.
 
         Args:
@@ -293,23 +305,24 @@ class PeptideMapper:
             matches[seq] = set()
         logger.info(f"Mapping {len(sequences)} peptide sequences")
         for record in SeqIO.parse(self.mapping_table_path, "fasta"):
-            for sequence in sequences:
-                if sequence in record.seq:
-                    matches[sequence].add(
-                        extract_gene_symbol(
-                            record.description,
-                            self.fasta_type,
-                            split_by=self.split_by,
-                            split_index=self.split_index,
-                        )
+            for _, sequence in automaton.iter(str(record.seq)):
+                matches[sequence].add(
+                    extract_gene_symbol(
+                        record.description,
+                        self.fasta_type,
+                        split_by=self.split_by,
+                        split_index=self.split_index,
                     )
+                )
 
         final_matches: dict[str, list[str]] = {}
         for key in matches:
             final_matches[key] = list(matches[key])
         return MappingResult(peptide_to_protein=final_matches, protein_sequences=None)
 
-    def map_fasta_with_reduction(self, sequences: list[str]) -> MappingResult:
+    def map_fasta_with_reduction(
+        self, sequences: list[str], automaton: ahocorasick.Automaton
+    ) -> MappingResult:
         """Maps the provided sequences to proteins with a reduced FASTA file.
 
         Keeps only the longest sequence is kept for duplicated proteins.
@@ -355,10 +368,9 @@ class PeptideMapper:
         # for that gene
         for gene_symbol, protein_seq in gene_to_longest_protein.items():
             mapped = False
-            for sequence in sequences:
-                if sequence in protein_seq:
-                    matches[sequence].add(gene_symbol)
-                    mapped = True
+            for _, sequence in automaton.iter(str(protein_seq)):
+                matches[sequence].add(gene_symbol)
+                mapped = True
             if mapped:
                 protein_sequences[gene_symbol] = protein_seq
 

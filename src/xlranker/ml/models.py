@@ -13,7 +13,7 @@ import logging
 import os
 import random
 from pathlib import Path
-from typing import Any, override
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -307,11 +307,9 @@ class XGBoostModel(PredictionModel):
             random_state=random_state,
         )
 
-    @override
     def train(self, x, y):
         self.model.fit(x, y)
 
-    @override
     def predict(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         return self.model.predict_proba(x)
 
