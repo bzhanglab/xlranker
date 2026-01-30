@@ -561,10 +561,16 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>xlranker
 </span></code></pre></div>
 <h2 id="usage">Usage</h2>
-<p>To analyze a TSV file containing a network of peptide sequences run:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>xlranker start peptide_network.tsv
+<p>While optional, it is recommended to create a config file to customize all of your parameters. The <code>init</code> command will create interactive prompts to create your custom config file.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>xlranker init
 </span></code></pre></div>
-<p>More details about the method and usage instructions can be found in <a href="usage/">Usage</a></p>
+<p>To analyze a TSV file containing a network of peptide sequences run:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>xlranker start peptide_network.tsv
+</span></code></pre></div>
+<p>or if you have created a config, you can run</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>xlranker start -c config.yaml
+</span></code></pre></div>
+<p>Please view the <a href="https://bzhanglab.github.io/xlranker/latest/">documentation</a> for detailed usage instructions and examples.</p>
 <h2 id="example-notebook">Example Notebook</h2>
 <p>For a quick start, you can check out the example notebook in the <code>notebooks</code> directory or <a href="https://colab.research.google.com/github/bzhanglab/xlranker/blob/master/notebooks/xlranker_example.ipynb">launch a google colab notebook</a> to see how to use the package interactively.</p>
 
