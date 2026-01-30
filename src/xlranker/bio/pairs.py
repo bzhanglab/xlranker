@@ -3,7 +3,7 @@
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
 from xlranker.status import PrioritizationStatus, ReportStatus
-from xlranker.util import get_pair_id, safe_a_greater_or_equal_to_b
+from xlranker.util import get_pair_id
 
 
 class GroupedEntity:
@@ -13,9 +13,10 @@ class GroupedEntity:
         group_id (int): ID of the large connected component entity is a part of
         subgroup_id (int): ID of the unique subgroup entity is a part of
         in_group (bool): True if entity has been assigned a group
-        prioritization_status (PrioritizationStatus): status of the entity during prioritization
-        connections (set[str]): List of other grouped entities this entity is connected to.
-                                Values are connection IDs.
+        prioritization_status (PrioritizationStatus): status of the entity
+            during prioritization
+        connections (set[str]): List of other grouped entities this entity is
+            connected to. Values are connection IDs.
 
     """
 
@@ -74,7 +75,8 @@ class GroupedEntity:
         """Set the prioritization status of this entity.
 
         Args:
-            status (PrioritizationStatus): prioritization status to assign to this entity.
+            status (PrioritizationStatus): prioritization status to assign to
+                this entity.
 
         """
         self.prioritization_status = status
@@ -119,7 +121,7 @@ class GroupedEntity:
         return len(self.connections.intersection(entities))
 
     def same_connectivity(self, grouped_entity: "GroupedEntity") -> bool:
-        """Determine if another GroupedEntity has the same connection as this entity.
+        """Determine if another GroupedEntity has the same connection.
 
         Args:
             grouped_entity (GroupedEntity): entity to compare to
@@ -226,10 +228,13 @@ class ProteinPair(GroupedEntity):
         return False
 
     def abundance_dict(self) -> dict[str, str | float | None]:
-        """Convert ProteinPair into dictionary of abundances, making abundances ending in a being the larger value.
+        """Convert ProteinPair into dictionary of abundances.
+
+        Abundance labeled 'a' is the larger of the two in the ProteinPair.
 
         Returns:
-            dict[str, str | float | None]: dictionary where keys are the abundance name and the values being the abundance value
+            dict[str, str | float | None]: dictionary where keys are the
+                abundance name and the values being the abundance value
 
         """
         ret_val: dict[str, str | float | None] = {"pair": self.pair_id}
@@ -247,7 +252,7 @@ class ProteinPair(GroupedEntity):
             str: TSV representation of the protein pair, including id and status
 
         """
-        return f"{self.pair_id}\t{self.report_status}\t{self.prioritization_status}\t{self.get_group_string()}"
+        return f"{self.pair_id}\t{self.report_status}\t{self.prioritization_status}\t{self.get_group_string()}"  # noqa: E501
 
     def __hash__(self) -> int:
         """Generate a hash representing this protein pair.

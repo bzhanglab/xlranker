@@ -4,28 +4,69 @@ Instead of setting multiple CLI options, you can create a config file.
 
 You can create a config using the `xlranker init` command. This will run an interactive prompt that will create a custom config. If you just want the default configs, run `xlranker init --default`.
 
+## CLI Configuration
+
+If you are using the CLI you can provide a config file (JSON or YAML format) by using the `-c` option.
+
+```
+xlranker start -c xlranker_config.yml
+```
+
+## Jupyter Notebook/Library
+
+If using a Jupyter notebook or in a Python script, you can import the config with
+
+```py
+from xlranker.config import config as xlr_config
+```
+
+You can then set various options with the `xlr_config` object.
+ **Configure the config before running any other XLRanker code**.
+
+```py
+xlr_config.network = "peptide_network.tsv" # Set network path
+
+xlr_config.advanced.save_model_files = True # Save more detailed ML related files
+```
+
 ## Config Options
 
-**network** (Required)
-: path to the network containing peptide sequences. Described in [input_data/peptide_pairs](input_data/peptide_pairs.md).
+There are many config options, with the full description detailed at [/API/config](../API/config.md).
 
-**data_folder** (Required)
-: path to a directory containing multi-omic data used by the machine learning model. Described in [input_data/omic_data](input_data/omic_data.md).
+The key parameters that need to be set by the user include:
 
-**seed** (Defaults to `None`)
-: integer to seed random number generators. If not set, random seed selected.
+- **network**: the path to the [peptide network](input_data/peptide_pairs.md).
+- **omic_data**: folder that contains the omic data needed to build the machine learning model. See [Omic Data](input_data/omic_data.md) for more information.
+- **mapping**: Multiple peptide sequence mapping options. See [usage/mapping](mapping.md) for more details.
 
-**custom_mapping_table** (Defaults to `None`, _strongly recommended_)
-: path to a custom mapping table (**recommended**). Can either be a FASTA file or a TSV file. Described in [input_data/fasta](input_data/fasta.md) and [input_data/custom_mapping_table](input_data/custom_mapping_table.md). If not set, uses UNIPROT human one sequence per gene acquired on May 29, 2025.
 
-**is_fasta** (Defaults to `True`)
-: `true` if the `custom_mapping_table` is a FASTA file.
+??? abstract "Default Config"
 
-**fasta_type**
-: Valid options `GENCODE` or `UNIPROT`. Type of FASTA file used. _Must be set if custom_mapping_table is set_.
+    Below is the default config created by running `xlranker init --default`
 
-**only_human** (Defaults to `true`)
-: `true` if the data in the pipeline only contains human data. If `true`, allows for better negative pair generation and PPI information.
-
-**output** (Defaults to `xlranker_output`)
-: Output directory for the pipeline. Contains the final network, info file, and plots.
+    ```yaml
+    additional_null_values: []
+    advanced:
+        binary_compartments: false
+        intra_in_training: false
+        pair_separator: +
+        save_model_files: false
+    detailed: false
+    fragile: false
+    mapping:
+        custom_table: null
+        fasta_type: UNIPROT
+        is_fasta: true
+        reduce_fasta: false
+        split_by: null
+        split_index: null
+    network_path: network.tsv
+    omic_data_folder: omic_data/
+    output: xlranker_output/
+    primary_column: null
+    reduce_fasta: false
+    seed: null
+    species: hsapiens
+    threshold: 0.5
+    use_homologs: false
+    ```

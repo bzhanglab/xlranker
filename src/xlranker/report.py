@@ -1,14 +1,15 @@
 """Report helper functions."""
 
+import csv
 from pathlib import Path
 
-from xlranker.util import get_pair_id_from_str
+from pydantic import BaseModel
+
 from xlranker.bio.pairs import ProteinPair
 from xlranker.config import config
-from xlranker.lib import write_pair_to_network, XLDataSet
+from xlranker.lib import XLDataSet, write_pair_to_network
 from xlranker.status import ReportStatus
-from pydantic import BaseModel
-import csv
+from xlranker.util import get_pair_id_from_str
 
 
 class DetailedRow(BaseModel):
@@ -25,7 +26,7 @@ class DetailedRow(BaseModel):
 def make_report(
     pairs: list[ProteinPair], status: ReportStatus, output_path: Path
 ) -> None:
-    """Write network of protein pairs that have the level of the inputted status or higher.
+    """Write network of protein pairs that have the level of the input status or higher.
 
     Status order (highest on top):
         1. Conservative
@@ -44,7 +45,7 @@ def make_report(
 
 
 def make_all_reports(pairs: list[ProteinPair]) -> None:
-    """Make reports for all status levels into the output_folder specified in the config.
+    """Write reports for all status levels to the output_folder specified in the config.
 
     Args:
         pairs (list[ProteinPair]): list of all protein pairs.
@@ -59,7 +60,9 @@ def make_all_reports(pairs: list[ProteinPair]) -> None:
 
 
 def make_mapping_tables(data_set: XLDataSet) -> None:
-    """Make all mapping tables including peptide pairs to protein pairs and peptide to protein.
+    """Make all mapping tables.
+
+    Includes peptide pairs to protein pairs and peptide to protein.
 
     Args:
         data_set (XLDataSet): XL data set to create mapping table from
@@ -71,11 +74,12 @@ def make_mapping_tables(data_set: XLDataSet) -> None:
 def mapping_peptide_pair_to_protein_pairs(
     data_set: XLDataSet, output_path: str | None = None
 ) -> None:
-    """Generate mapping table that shows peptide pairs and their corresponding mapped protein pairs.
+    """Write mapping table with peptide pairs and their corresponding protein pairs.
 
     Args:
         data_set (XLDataSet): XL data set to create mapping table from
-        output_path (str | None, optional): Output path, if None will use default path. Defaults to None.
+        output_path (str | None, optional): Output path, if None will use default path.
+            Defaults to None.
 
     """
     if output_path is None:
@@ -95,11 +99,12 @@ def mapping_peptide_pair_to_protein_pairs(
 def mapping_peptide_to_protein(
     data_set: XLDataSet, output_path: str | None = None
 ) -> None:
-    """Generate mapping table that shows a peptide and its corresponding mapped proteins.
+    """Write mapping table that shows a peptide and its corresponding mapped proteins.
 
     Args:
         data_set (XLDataSet): XL data set to create mapping table from
-        output_path (str | None, optional): Output path, if None will use default path. Defaults to None.
+        output_path (str | None, optional): Output path, if None will use default path.
+            Defaults to None.
 
     """
     if output_path is None:
@@ -109,7 +114,8 @@ def mapping_peptide_to_protein(
     data = []
     uniq_peptides = set()
     for peptide_pair in sorted(
-        data_set.peptide_pairs.values(), key=lambda p: p.a.sequence + p.b.sequence
+        data_set.peptide_pairs.values(),
+        key=lambda p: p.a.sequence + p.b.sequence,
     ):
         if peptide_pair.a.sequence not in uniq_peptides:
             uniq_peptides.add(peptide_pair.a.sequence)

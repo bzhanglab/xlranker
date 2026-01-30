@@ -18,3 +18,9 @@ The minimal report includes all the interactions in the minimal report as well a
 ## Expanded Report
 
 This report includes all interactions selected during the parsimonious and machine learning selection steps.
+
+## All-inclusive
+
+This reports all of the possible protein pairs with no filtering or processing.
+
+To view a detailed report about the specific status of every pair, set `detailed = true` in the config/CLI.

@@ -1,23 +1,25 @@
 {
-	"cSpell.words": [
-		"analyte",
-		"aucs",
-		"cyclopts",
-		"fasta",
-		"gencode",
-		"gmts",
-		"homologs",
-		"hsapiens",
-		"isoform",
-		"levelname",
-		"mkdocstrings",
-		"omic",
-		"omics",
-		"prioritizer",
-		"UNIPROT",
-		"xlranker"
-	],
-	"todo-tree.tree.showBadges": true,
-	"todo-tree.tree.disableCompactFolders": false,
-	"todo-tree.tree.showCountsInTree": false
+  "cSpell.words": [
+    "analyte",
+    "aucs",
+    "cyclopts",
+    "fasta",
+    "gencode",
+    "gmts",
+    "homologs",
+    "hsapiens",
+    "isoform",
+    "levelname",
+    "mkdocstrings",
+    "mmusculus",
+    "omic",
+    "omics",
+    "prioritizer",
+    "UNIPROT",
+    "xlranker",
+    "hpa"
+  ],
+  "todo-tree.tree.showBadges": true,
+  "todo-tree.tree.disableCompactFolders": false,
+  "todo-tree.tree.showCountsInTree": false
 }

@@ -1,4 +1,8 @@
-"""Creates a Polars dataframe with P1 and P2 columns where each row is a set of proteins with known PPI.
+"""Creates a Polars dataframe where each row is a set of proteins with a PPI.
+
+Format:
+    Two columns P1 and P2, with P1 being alphabetically before P2.
+    P1 and P2 have previously known PPI.
 
 Input file is a TSV file with two columns constituting a known PPI
 """
@@ -11,10 +15,12 @@ def process_ppi(input_file: str, output_file: str = "ppi.parquet"):
 
     Args:
         input_file (str): Path to the TSV file containing known PPIs.
-        output_file (str): Path to the output Parquet file to save the processed DataFrame.
+        output_file (str): Path to the output Parquet file to save the processed
+            DataFrame.
 
     Returns:
-        pl.DataFrame: A Polars DataFrame with two columns, P1 and P2, where each row represents a known PPI.
+        pl.DataFrame: A Polars DataFrame with two columns, P1 and P2,
+            where each row represents a known PPI.
     """
     df = pl.read_csv(
         input_file,

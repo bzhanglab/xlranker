@@ -4,7 +4,11 @@ from abc import ABC, abstractmethod
 
 
 class ProteinNameExtractor(ABC):  # TODO: Identify if this is useful.
-    """Abstract class describing methods for a protein name extractor from isoform name."""
+    """Abstract class describing methods for a protein name extractor.
+
+    Used when original ID is an Isoform identifier.
+
+    """
 
     @abstractmethod
     def __init__(self) -> None:
@@ -50,15 +54,19 @@ class NoExtractor(ProteinNameExtractor):
 
 
 class SplitExtractor(ProteinNameExtractor):
-    """Protein name extractor that extracts a section from a isoform name using a splitting char and index.
+    """Protein name extractor that extracts by splitting by a char.
+
+    Used to extract a section from a isoform name using a splitting char and index.
 
     Args:
         split_by (str): string or char to split the isoform name by
-        split_index (int): index to extract the protein name from after splitting the isoform name
+        split_index (int): index to extract the protein name from after
+            splitting the isoform name
 
     Attributes:
         split_by (str): string or char to split the isoform name by
-        split_index (int): index to extract the protein name from after splitting the isoform name
+        split_index (int): index to extract the protein name from after
+            splitting the isoform name
 
     """
 
@@ -70,7 +78,8 @@ class SplitExtractor(ProteinNameExtractor):
 
         Args:
             split_by (str): string or char to split the isoform name by
-            split_index (int): index to extract the protein name from after splitting the isoform name
+            split_index (int): index to extract the protein name from after splitting
+                the isoform name
 
         """
         super().__init__()
@@ -99,14 +108,20 @@ class Protein:
     Args:
         name (str): Name of the protein
         protein_name (str): name of the protein specific to the isoform level.
-        abundances (dict[str, float | None]): Abundance values of the protein where keys is the name of the data and the value is the abundance
-        main_column (str | None): column/key in abundance dictionary that represents the main abundance for the protein. Used for sorting the proteins. If none, uses first key in abundances dict.
+        abundances (dict[str, float | None]): Abundance values of the protein where keys
+            is the name of the data and the value is the abundance
+        main_column (str | None): column/key in abundance dictionary that represents the
+            main abundance for the protein.
+        Used for sorting the proteins. If none, uses first key in abundances dict.
 
 
     Attributes:
         name (str): Name of the protein
-        abundances (dict[str, float | None]): Abundance values of the protein where keys is the name of the data and the value is the abundance
-        main_column (str): column/key in abundance dictionary that represents the main abundance for the protein. Used for sorting the proteins.
+        abundances (dict[str, float | None]): Abundance values of the protein where keys
+            is the name of the data and the value is the abundance
+        main_column (str): column/key in abundance dictionary that represents the main
+            abundance for the protein. Used for sorting the
+        proteins.
         protein_name (str): name of the protein specific to the isoform level.
 
     """
@@ -128,8 +143,11 @@ class Protein:
         Args:
             name (str): Name of the protein
             unique_identifier (str): name of the protein specific to the isoform level.
-            abundances (dict[str, float | None]): Abundance values of the protein where keys is the name of the data and the value is the abundance
-            main_column (str | None): column/key in abundance dictionary that represents the main abundance for the protein. Used for sorting the proteins. If none, uses first key in abundances dict.
+            abundances (dict[str, float | None]): Abundance values of the protein where
+                keys is the name of the data and the value is the abundance
+            main_column (str | None): column/key in abundance dictionary that represents
+                the main abundance for the protein. Used for sorting the proteins.
+                If none, uses first key in abundances dict.
 
         """
         self.name = name
@@ -150,7 +168,8 @@ class Protein:
             value (object): object to compare to
 
         Returns:
-            bool: If input is not a Protein object, returns False. Returns true if protein_name is the same for both proteins.
+            bool: If input is not a Protein object, returns False.
+                Returns true if protein_name is the same for both proteins.
 
         """
         if isinstance(value, Protein):
@@ -172,7 +191,8 @@ class Protein:
         Uses the main_column attribute to get a value from the abundances dictionary.
 
         Returns:
-            float | None: Abundance value if available. If main_column is invalid, returns None.
+            float | None: Abundance value if available.
+                If main_column is invalid, returns None.
 
         """
         if self.main_column == "":
@@ -181,16 +201,20 @@ class Protein:
 
 
 def sort_proteins(a: Protein, b: Protein) -> tuple[Protein, Protein]:
-    """Takes into two Proteins and returns them so the first protein is higher abundant. Handles missing values.
+    """Takes into two Proteins and returns them so the first protein is higher abundant.
 
-    In the case of missing values for both proteins or equal values, the input order is maintained.
+    Handles missing values.
+
+    In the case of missing values for both proteins or equal values,
+    the input order is maintained.
 
     Args:
         a (Protein): first protein
         b (Protein): second protein
 
     Returns:
-        tuple[Protein, Protein]: protein tuple where the first protein is the higher abundant protein
+        tuple[Protein, Protein]: protein tuple where the first protein is the
+            higher abundant protein
 
     """
     a_abundance = a.abundance()

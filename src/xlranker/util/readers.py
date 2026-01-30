@@ -7,8 +7,8 @@ import polars as pl
 
 from xlranker.bio import Peptide
 from xlranker.bio.pairs import PeptidePair
-from xlranker.util import get_pair_id
 from xlranker.config import config
+from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def read_data_matrix(
     data_path: str, additional_null_values: list[str] = []
 ) -> pl.DataFrame:
-    """Reads data matrix into a Polars DataFrame with samples/measurements being columns.
+    """Read data matrix into a Polars DataFrame with samples/measurements being columns.
 
     Format:
      - Has header (any names allowed).
@@ -25,13 +25,14 @@ def read_data_matrix(
 
     Args:
         data_path (str): path to the data matrix
-        additional_null_values (list[str]): list of str of additional values that should considered as null
+        additional_null_values (list[str]): list of str of additional values that should
+            considered as null
 
     Returns:
         pl.DataFrame: Polars DataFrame of the input data
 
     """
-    null_values = ["", "NA"]
+    null_values = ["", "NA", "None"]
     null_values.extend(additional_null_values)
     with open(data_path) as f:
         header = f.readline().strip().split("\t")
@@ -73,23 +74,26 @@ def base_name(file_path: Path | str) -> str:
 
 
 def read_data_folder(
-    folder_path: str, additional_null_values=[]
+    folder_path: str, omic_data_files: list[str] | None
 ) -> dict[str, pl.DataFrame]:
     """Reads all TSV files in a folder.
 
     Args:
         folder_path (str): path of the folder that contains files ending in .tsv
-        additional_null_values (list[str]): list of str of additional values that should considered as null in the data files
-
-    Raises:
-        FileNotFoundError: raised if no TSV files are found
+        omic_data_files (list[str] | None): list of files to read from the folder
+            If none, use all files in the folder.
+            Otherwise, use only the files in the list.
 
     Returns:
-        list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read by the read_data_matrix function
+        list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read
+            by the read_data_matrix function
 
     """
-    file_glob = Path(folder_path).glob("*.tsv")
-    file_list: list[Path] = list(file_glob)
+    if omic_data_files is None:
+        file_glob = Path(folder_path).glob("*.tsv")
+        file_list: list[Path] = list(file_glob)
+    else:
+        file_list = [Path(file) for file in omic_data_files]
     if len(file_list) == 0:
         logger.warning(f"No TSV files were found in directory: {folder_path}")
     ret_dict = {}
@@ -109,6 +113,10 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
     Returns:
         list[PeptideGroup]: list of PeptideGroup representing the network
 
+    Raises:
+        IndexError: Raised if there are not 2 columns in the network.
+        FileNotFoundError: Raised if no file is found in network_path
+
     """
     try:
         with open(network_path) as r:
@@ -126,12 +134,12 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
                     val_a = val_b
                     val_b = temp
                 new_rows.add(f"{val_a}\t{val_b}")
-    except IndexError:
+    except IndexError as e:
         logger.error("Index out of bound. Make sure network is in the correct format.")
-        raise IndexError()
-    except FileNotFoundError:
+        raise IndexError() from e
+    except FileNotFoundError as e:
         logger.error(f"File not found: {network_path}")
-        raise FileNotFoundError
+        raise FileNotFoundError from e
     duplicate_rows = valid_rows - len(new_rows)  # Count number of duplicated rows
     if duplicate_rows > 0:  # Send warning that duplicate edges were removed.
         logger.info(
@@ -148,7 +156,11 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
 
 
 def read_mapping_table_file(file_path: str) -> dict[str, list[str]]:
-    """Read mapping file where the first column is the peptide sequence and the following columns are proteins that map to that sequence.
+    """Read mapping file into dict.
+
+    Format:
+        The first column is the peptide sequence and the following columns are proteins
+        that map to that sequence.
 
     Args:
         file_path (str): path to the tab-separated mapping table

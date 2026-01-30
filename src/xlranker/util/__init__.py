@@ -1,14 +1,13 @@
 """Pipeline utility functions and classes."""
 
-import os
 import random
 
 import numpy as np
 import polars as pl
 
-from xlranker.config import config
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein
+from xlranker.config import config
 
 
 def set_seed(seed: int | None = None) -> None:
@@ -36,7 +35,8 @@ def get_pair_id_from_str(name_a: str, name_b: str) -> str:
         name_b (str): name of entity b
 
     Returns:
-        str: pair representation with entities separated by config.advanced.pair_separator (default '+').
+        str: pair representation with entities separated by
+            config.advanced.pair_separator (default '+').
 
     """
     if name_a < name_b:
@@ -54,7 +54,8 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
         b (Protein | Peptide): entity b
 
     Returns:
-        str: pair representation with entities separated by config.advanced.pair_separator (default '+').
+        str: pair representation with entities separated by
+           config.advanced.pair_separator (default '+').
 
     """
     name_a = ""
@@ -73,14 +74,16 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
 def safe_a_greater_or_equal_to_b(a: float | None, b: float | None) -> bool:
     """Returns True if a is greater or equal to b, with checks for None.
 
-    None is treated as missing value. Any float is greater than None. If both are None, return True.
+    None is treated as missing value. Any float is greater than None.
+    If both are None, return True.
 
     Args:
         a (float | None): a value
         b (float | None): b value
 
     Returns:
-        bool: True if a is greater or equal to b. If both are None, return True. Any float is greater than None.
+        bool: True if a is greater or equal to b. If both are None, return True.
+            Any float is greater than None.
 
     """
     if a is None:
@@ -97,9 +100,11 @@ def get_abundance(
     """Get the mean or median abundance of an analyte from an omics dataset.
 
     Args:
-        omic_df (pl.DataFrame): Polars dataframe containing the omics data, with the first column being the index.
+        omic_df (pl.DataFrame): Polars dataframe containing the omics data, with the
+            first column being the index.
         analyte (str): analyte that should have an exact match in omic_df.
-        use_median (bool): Aggregate samples by median instead of mean. Defaults to False.
+        use_median (bool): Aggregate samples by median instead of mean.
+            Defaults to False.
 
     Returns:
         float | None: abundance value or None if not found.
@@ -139,5 +144,5 @@ def validate_species(species: str = config.species) -> None:
     supported_species = ["hsapiens", "mmusculus", "other"]
     if species not in supported_species:
         raise ValueError(
-            f"Species {species} is not supported. Supported species are: {', '.join(supported_species)}"
+            f"Species {species} is not supported. Supported species are: {', '.join(supported_species)}"  # noqa: E501
         )

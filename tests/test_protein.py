@@ -17,7 +17,7 @@ MISSING_B = xlr.bio.Protein(
 
 
 def test_protein_order_with_one_null():
-    """Test that proteins that have null abundances are sorted lower than non-missing."""
+    """Test that proteins that have null abundances are sorted lower than non-null."""
     # small protein should always come first
     assert xlr.bio.protein.sort_proteins(SMALL_PROTEIN, MISSING_A) == (
         SMALL_PROTEIN,
