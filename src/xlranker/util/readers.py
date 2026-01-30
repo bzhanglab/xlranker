@@ -73,7 +73,9 @@ def base_name(file_path: Path | str) -> str:
     return Path(file_path).stem
 
 
-def read_data_folder(folder_path: str) -> dict[str, pl.DataFrame]:
+def read_data_folder(
+    folder_path: str, omic_data_files: list[str] | None
+) -> dict[str, pl.DataFrame]:
     """Reads all TSV files in a folder.
 
     Args:
@@ -84,8 +86,11 @@ def read_data_folder(folder_path: str) -> dict[str, pl.DataFrame]:
             by the read_data_matrix function
 
     """
-    file_glob = Path(folder_path).glob("*.tsv")
-    file_list: list[Path] = list(file_glob)
+    if omic_data_files is None:
+        file_glob = Path(folder_path).glob("*.tsv")
+        file_list: list[Path] = list(file_glob)
+    else:
+        file_list = [Path(file) for file in omic_data_files]
     if len(file_list) == 0:
         logger.warning(f"No TSV files were found in directory: {folder_path}")
     ret_dict = {}

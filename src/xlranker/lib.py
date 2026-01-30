@@ -190,6 +190,7 @@ class XLDataSet:
         return cls.load_from_network(
             xlr_config.network_path,
             xlr_config.omic_data_folder,
+            xlr_config.omic_data_files,
             peptide_mapper,
             None,
             xlr_config.mapping.is_fasta,
@@ -203,6 +204,7 @@ class XLDataSet:
         cls,
         network_path: str,
         omics_data_folder: str,
+        omic_data_files: list[str] | None = None,
         custom_mapper: PeptideMapper | None = None,
         custom_mapping_path: str | None = None,
         is_fasta: bool = True,
@@ -236,7 +238,9 @@ class XLDataSet:
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
         network = read_network_file(network_path)
-        omic_data: dict[str, pl.DataFrame] = read_data_folder(omics_data_folder)
+        omic_data: dict[str, pl.DataFrame] = read_data_folder(
+            omics_data_folder, omic_data_files
+        )
         peptide_sequences = set()
         for group in network.values():
             peptide_sequences.add(group.a.sequence)

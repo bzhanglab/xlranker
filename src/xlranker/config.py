@@ -88,6 +88,7 @@ class Config(BaseModel):
 
     network_path: str = "network.tsv"
     omic_data_folder: str = "omic_data/"
+    omic_data_files: list[str] | None = None
     model_config = ConfigDict(validate_assignment=True)
     fragile: bool = False  # Break on any warning
     detailed: bool = False  # Show more detailed information about dataset and analysis
