@@ -176,6 +176,14 @@ def convert_str_to_fasta_type(possible_type: str) -> FastaType:
 
 
 def build_automaton(peptide_seqs: list[str]) -> ahocorasick.Automaton:
+    """Build an ahocorasick automaton from a list of peptide sequences.
+
+    Args:
+        peptide_seqs (list[str]): List of peptide sequences.
+
+    Returns:
+        ahocorasick.Automaton: An automaton built from the peptide sequences.
+    """
     automaton = ahocorasick.Automaton()
     for peptide in peptide_seqs:
         automaton.add_word(peptide, peptide)
@@ -294,6 +302,7 @@ class PeptideMapper:
 
         Args:
             sequences (list[str]): list of peptide sequences to map.
+            automaton (ahocorasick.Automaton): An automaton built from the peptides.
 
         Returns:
             MappingResult: Result of the mapping.
@@ -331,6 +340,7 @@ class PeptideMapper:
 
         Args:
             sequences (list[str]): list of peptide sequences to map.
+            automaton (ahocorasick.Automaton): An automaton built from the peptides.
 
         Returns:
             MappingResult: Result of the mapping.

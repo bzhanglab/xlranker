@@ -32,7 +32,7 @@ def read_data_matrix(
         pl.DataFrame: Polars DataFrame of the input data
 
     """
-    null_values = ["", "NA"]
+    null_values = ["", "NA", "None"]
     null_values.extend(additional_null_values)
     with open(data_path) as f:
         header = f.readline().strip().split("\t")
@@ -80,6 +80,9 @@ def read_data_folder(
 
     Args:
         folder_path (str): path of the folder that contains files ending in .tsv
+        omic_data_files (list[str] | None): list of files to read from the folder
+            If none, use all files in the folder.
+            Otherwise, use only the files in the list.
 
     Returns:
         list[pl.DataFrame]: list of all of the data files in a Polars DataFrame, as read

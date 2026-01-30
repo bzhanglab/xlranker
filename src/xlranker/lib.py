@@ -217,6 +217,8 @@ class XLDataSet:
         Args:
             network_path (str): path to the peptide pairs
             omics_data_folder (str): folder containing the omic data
+            omic_data_files (list[str] | None): list of omic data files to load.
+                    If None, load all TSV files in the folder.
             custom_mapper (PeptideMapper | None, optional): PeptideMapper object that
                 should be used for mapping. If None, create peptide mapper using other
                     parameters. Defaults to None.

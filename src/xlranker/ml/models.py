@@ -308,9 +308,11 @@ class XGBoostModel(PredictionModel):
         )
 
     def train(self, x, y):
+        """Train the XGBoost model."""
         self.model.fit(x, y)
 
     def predict(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        """Run the model and get prediction scores."""
         return self.model.predict_proba(x)
 
 
