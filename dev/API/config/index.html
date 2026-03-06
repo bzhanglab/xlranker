@@ -1650,7 +1650,7 @@ representative. If None, default to the first file alphabetically.</p>
           <tr class="doc-section-item">
             <td><code><span title="xlranker.config.Config.species">species</span></code></td>
             <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;hsapiens&#39;, &#39;mmusculus&#39;, &#39;other&#39;]</code>
+                  <code><span title="typing.Literal">Literal</span>[&#39;hsapiens&#39;, &#39;mmusculus&#39;, &#39;rnorvegicus&#39;, &#39;other&#39;]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1809,7 +1809,7 @@ ML selection.</p>
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">        primary_column (str | None): Column name of which omic file should be the</span>
 </span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">            representative. If None, default to the first file alphabetically.</span>
 </span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">        mapping (MappingConfig): Configuration related to peptide sequence mapping.</span>
-</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        species (Literal[&quot;hsapiens&quot;, &quot;mmusculus&quot;, &quot;other&quot;]): Species name for mapping.</span>
+</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        species (Literal[&quot;hsapiens&quot;, &quot;mmusculus&quot;, &quot;rnorvegicus&quot;, &quot;other&quot;]): Species name for mapping.</span>
 </span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">            Default to human.</span>
 </span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">        use_homologs (bool): If True, map to human homologs for non-human species.</span>
 </span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">        seed (int | None): Random state to initialize code. If None, seed is randomly</span>
@@ -1836,7 +1836,7 @@ ML selection.</p>
 </span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">AdvancedConfig</span>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>    <span class="p">)</span>  <span class="c1"># advanced config options</span>
 </span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a>    <span class="n">mapping</span><span class="p">:</span> <span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">MappingConfig</span><span class="p">)</span>
-</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="n">species</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;hsapiens&quot;</span><span class="p">,</span> <span class="s2">&quot;mmusculus&quot;</span><span class="p">,</span> <span class="s2">&quot;other&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="n">species</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;hsapiens&quot;</span><span class="p">,</span> <span class="s2">&quot;mmusculus&quot;</span><span class="p">,</span> <span class="s2">&quot;rnorvegicus&quot;</span><span class="p">,</span> <span class="s2">&quot;other&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
 </span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="s2">&quot;hsapiens&quot;</span>  <span class="c1"># species name for mapping. Default to human.</span>
 </span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="p">)</span>
 </span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="n">use_homologs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># If True, map to human homologs for non-human species</span>
