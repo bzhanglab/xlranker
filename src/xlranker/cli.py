@@ -161,6 +161,7 @@ def init(
         choices=[
             Choice("Human (hsapiens)", "hsapiens"),
             Choice("Mouse (mmusculus)", "mmusculus"),
+            Choice("Rat (rnorvegicus)", "rnorvegicus"),
         ],
     ).ask()
     if species != "hsapiens":

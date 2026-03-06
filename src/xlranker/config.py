@@ -76,7 +76,7 @@ class Config(BaseModel):
         primary_column (str | None): Column name of which omic file should be the
             representative. If None, default to the first file alphabetically.
         mapping (MappingConfig): Configuration related to peptide sequence mapping.
-        species (Literal["hsapiens", "mmusculus", "other"]): Species name for mapping.
+        species (Literal["hsapiens", "mmusculus", "rnorvegicus", "other"]): Species name for mapping.
             Default to human.
         use_homologs (bool): If True, map to human homologs for non-human species.
         seed (int | None): Random state to initialize code. If None, seed is randomly
@@ -103,7 +103,7 @@ class Config(BaseModel):
         default_factory=AdvancedConfig
     )  # advanced config options
     mapping: MappingConfig = field(default_factory=MappingConfig)
-    species: Literal["hsapiens", "mmusculus", "other"] = (
+    species: Literal["hsapiens", "mmusculus", "rnorvegicus", "other"] = (
         "hsapiens"  # species name for mapping. Default to human.
     )
     use_homologs: bool = False  # If True, map to human homologs for non-human species

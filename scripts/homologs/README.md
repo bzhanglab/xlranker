@@ -6,7 +6,8 @@ This code creates the pkl objects for mapping different species to its human hom
 
 ```bash
 cd scripts/homologs # if not already in homologs folder
-python create_homoglog_db.py
+python create_mouse_homoglog_db.py
+python rat_homologs.py
 ```
 
 ## Collection Dates
@@ -19,7 +20,11 @@ python create_homoglog_db.py
 
 - data/HOM_ALLOrganism.rpt
 
-This is the table containing all of the homologs. It should be available at https://www.informatics.jax.org/downloads/reports/HOM_AllOrganism.rpt.
+This is the table containing all of the mouse homologs. It should be available at https://www.informatics.jax.org/downloads/reports/HOM_AllOrganism.rpt.
+
+
+- data/RGD_ORTHOLOGS_NCBI.txt. This is a table containing all of the RGD orthologs. It should be available at https://download.rgd.mcw.edu/data_release/RGD_ORTHOLOGS_NCBI.txt.
+
 
 ## References
 

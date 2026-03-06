@@ -82,7 +82,7 @@ def process_hpa(
     return (go_terms, gene_to_comp)
 
 
-dirs_to_create = ["output", "output/hsapiens", "output/mmusculus"]
+dirs_to_create = ["output", "output/hsapiens", "output/mmusculus", "output/rnorvegicus"]
 for d in dirs_to_create:
     import os
 
@@ -110,3 +110,12 @@ with gzip.open("output/mmusculus/coloc.pkl.gz", "wb") as w:
         },
         w,
     )  # No HPA for mouse
+with gzip.open("output/rnorvegicus/coloc.pkl.gz", "wb") as w:
+    pickle.dump(
+        {
+            "compartments": process_compartments(
+                valid_go_terms, "data/rat_compartment_integrated_full.tsv"
+            )
+        },
+        w,
+    )  # No HPA for rat

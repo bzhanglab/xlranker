@@ -141,7 +141,7 @@ def validate_species(species: str = config.species) -> None:
         ValueError: Raised if species is not supported by XLRanker
 
     """
-    supported_species = ["hsapiens", "mmusculus", "other"]
+    supported_species = ["hsapiens", "mmusculus", "rnorvegicus", "other"]
     if species not in supported_species:
         raise ValueError(
             f"Species {species} is not supported. Supported species are: {', '.join(supported_species)}"  # noqa: E501

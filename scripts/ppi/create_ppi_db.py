@@ -56,3 +56,4 @@ for d in dirs_to_create:
 
 process_ppi("data/hsapiens/ppi.tsv", "output/hsapiens/ppi.parquet")
 process_ppi("data/mmusculus/ppi.tsv", "output/mmusculus/ppi.parquet")
+process_ppi("data/rnorvegicus/ppi.tsv", "output/rnorvegicus/ppi.parquet")
