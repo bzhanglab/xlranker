@@ -1550,7 +1550,7 @@
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">output_folder</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;reports&quot;</span><span class="p">)</span>
 </span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">output_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">make_report</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">ReportStatus</span><span class="o">.</span><span class="n">CONSERVATIVE</span><span class="p">,</span> <span class="n">output_folder</span> <span class="o">/</span> <span class="s2">&quot;conservative.tsv&quot;</span><span class="p">)</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">make_report</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">ReportStatus</span><span class="o">.</span><span class="n">UNIQUE</span><span class="p">,</span> <span class="n">output_folder</span> <span class="o">/</span> <span class="s2">&quot;unique.tsv&quot;</span><span class="p">)</span>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">make_report</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">ReportStatus</span><span class="o">.</span><span class="n">MINIMAL</span><span class="p">,</span> <span class="n">output_folder</span> <span class="o">/</span> <span class="s2">&quot;minimal.tsv&quot;</span><span class="p">)</span>
 </span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">make_report</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">ReportStatus</span><span class="o">.</span><span class="n">EXPANDED</span><span class="p">,</span> <span class="n">output_folder</span> <span class="o">/</span> <span class="s2">&quot;expanded.tsv&quot;</span><span class="p">)</span>
 </span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="n">make_report</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">ReportStatus</span><span class="o">.</span><span class="n">ALL</span><span class="p">,</span> <span class="n">output_folder</span> <span class="o">/</span> <span class="s2">&quot;all.tsv&quot;</span><span class="p">)</span>
@@ -1646,7 +1646,7 @@
 
         <p>Write network of protein pairs that have the level of the input status or higher.</p>
 <p>Status order (highest on top):
-    1. Conservative
+    1. Unique
     2. Minimal
     3. Expanded
     4. All</p>
@@ -1741,7 +1741,7 @@
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Write network of protein pairs that have the level of the input status or higher.</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">    Status order (highest on top):</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        1. Conservative</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        1. Unique</span>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        2. Minimal</span>
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        3. Expanded</span>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        4. All</span>

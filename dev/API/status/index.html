@@ -705,15 +705,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#xlranker.status.ReportStatus.CONSERVATIVE" class="md-nav__link">
-    <span class="md-ellipsis">
-      CONSERVATIVE
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#xlranker.status.ReportStatus.EXPANDED" class="md-nav__link">
     <span class="md-ellipsis">
       EXPANDED
@@ -735,6 +726,15 @@
   <a href="#xlranker.status.ReportStatus.NONE" class="md-nav__link">
     <span class="md-ellipsis">
       NONE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xlranker.status.ReportStatus.UNIQUE" class="md-nav__link">
+    <span class="md-ellipsis">
+      UNIQUE
     </span>
   </a>
   
@@ -1384,15 +1384,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#xlranker.status.ReportStatus.CONSERVATIVE" class="md-nav__link">
-    <span class="md-ellipsis">
-      CONSERVATIVE
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#xlranker.status.ReportStatus.EXPANDED" class="md-nav__link">
     <span class="md-ellipsis">
       EXPANDED
@@ -1414,6 +1405,15 @@
   <a href="#xlranker.status.ReportStatus.NONE" class="md-nav__link">
     <span class="md-ellipsis">
       NONE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xlranker.status.ReportStatus.UNIQUE" class="md-nav__link">
+    <span class="md-ellipsis">
+      UNIQUE
     </span>
   </a>
   
@@ -1922,7 +1922,7 @@
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="k">class</span><span class="w"> </span><span class="nc">ReportStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Pair reporting status.&quot;&quot;&quot;</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="n">CONSERVATIVE</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="n">UNIQUE</span> <span class="o">=</span> <span class="mi">0</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;High confidence pairs, parsimonious unambiguous&quot;&quot;&quot;</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a>    <span class="n">MINIMAL</span> <span class="o">=</span> <span class="mi">1</span>
@@ -2001,29 +2001,6 @@
 
 
 
-<h3 id="xlranker.status.ReportStatus.CONSERVATIVE" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">CONSERVATIVE</span> <span class="o">=</span> <span class="mi">0</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>High confidence pairs, parsimonious unambiguous</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h3 id="xlranker.status.ReportStatus.EXPANDED" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">EXPANDED</span> <span class="o">=</span> <span class="mi">2</span></code>
 
@@ -2084,6 +2061,29 @@
     <div class="doc doc-contents ">
 
         <p>No assigned status</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="xlranker.status.ReportStatus.UNIQUE" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">UNIQUE</span> <span class="o">=</span> <span class="mi">0</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>High confidence pairs, parsimonious unambiguous</p>
 
     </div>
 
