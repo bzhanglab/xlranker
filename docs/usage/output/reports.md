@@ -2,14 +2,14 @@
 
 XLRanker generates a variety of reports at different levels of confidence.
 
-1. Conservative
+1. Unique
 2. Minimal
 3. Expanded
 4. All-inclusive
 
-## Conservative Report
+## Unique Report
 
-The conservative report is the most stringent and includes only the highest confidence interactions. These interactions are protein pairs that are part of a single-membered protein group that was parsimoniously selected. _This level may result in not all peptide sequences being represented._
+The unique report is the most stringent and includes only the highest confidence interactions. These interactions are protein pairs that are part of a single-membered protein group that was parsimoniously selected. _This level may result in not all peptide sequences being represented._
 
 ## Minimal Report
 

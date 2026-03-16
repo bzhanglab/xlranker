@@ -8,7 +8,7 @@ from functools import total_ordering
 class ReportStatus(Enum):
     """Pair reporting status."""
 
-    CONSERVATIVE = 0
+    UNIQUE = 0
     """High confidence pairs, parsimonious unambiguous"""
 
     MINIMAL = 1

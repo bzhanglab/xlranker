@@ -29,7 +29,7 @@ def make_report(
     """Write network of protein pairs that have the level of the input status or higher.
 
     Status order (highest on top):
-        1. Conservative
+        1. Unique
         2. Minimal
         3. Expanded
         4. All
@@ -53,7 +53,7 @@ def make_all_reports(pairs: list[ProteinPair]) -> None:
     """
     output_folder = Path(config.output).joinpath("reports")
     output_folder.mkdir(exist_ok=True)
-    make_report(pairs, ReportStatus.CONSERVATIVE, output_folder / "conservative.tsv")
+    make_report(pairs, ReportStatus.UNIQUE, output_folder / "unique.tsv")
     make_report(pairs, ReportStatus.MINIMAL, output_folder / "minimal.tsv")
     make_report(pairs, ReportStatus.EXPANDED, output_folder / "expanded.tsv")
     make_report(pairs, ReportStatus.ALL, output_folder / "all.tsv")
