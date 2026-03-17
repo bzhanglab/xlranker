@@ -1,3 +1,4 @@
 data/HOM_AllOrganism.rpt
 data/RGD_ORTHOLOGS_NCBI.txt
+data/*.tsv
 output/**/*.pkl.gz

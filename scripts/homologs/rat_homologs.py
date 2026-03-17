@@ -44,13 +44,16 @@ def create_homolog_db(
         .collect()
     )
     with gzip.open(output_file, "wb") as f:
+        final = dict(
+            zip(
+                full_df["Symbol"],
+                full_df["Homolog"],
+            )
+        )
+        # print first 5 entries
+        print(list(final.items())[:5])
         pickle.dump(
-            dict(
-                zip(
-                    full_df["HUMAN_ORTHOLOG_SYMBOL"],
-                    full_df["Homolog"],
-                )
-            ),
+            final,
             f,
         )
 
