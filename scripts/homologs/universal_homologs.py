@@ -1,4 +1,8 @@
-"""This script is for generating the PPI DB for generic tables where one column is Symbol and the other is Homolog."""
+"""This script is for generating the PPI DB for generic tables.
+
+Format: one column is Symbol and the other is Homolog
+    where Symbol is the species and Homolog is the homologous gene.
+"""
 
 import argparse
 import gzip
@@ -9,6 +13,7 @@ import polars as pl
 
 
 def create_ppi_db(input_path, output_path):
+    """Create a PPI DB from a generic table with Symbol and Homolog columns."""
     df = pl.read_csv(input_path, separator="\t")
     with gzip.open(output_path, "wb") as f:
         final = dict(
@@ -27,7 +32,7 @@ def create_ppi_db(input_path, output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Generate PPI DB from a generic table with Symbol and Homolog columns."
+        description="Generate ppi-db from a TSV file with Symbol and Homolog columns."
     )
     parser.add_argument("input", help="Input TSV file path")
     parser.add_argument("output", help="Output PKL.GZ file path")
