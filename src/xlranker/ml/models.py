@@ -397,7 +397,7 @@ class PrioritizationModel:
         if config.advanced.use_compartments:
             self.default_localization = localization_data is None
             if self.default_localization:
-            localization_data = load_localization_data()
+                localization_data = load_localization_data()
         else:
             localization_data = {}
         self.localization_data = localization_data
