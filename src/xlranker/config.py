@@ -20,6 +20,8 @@ class AdvancedConfig(BaseModel):
             value evaluation and further model evaluation
         binary_compartments (bool): Default to False. Use binary compartments
             (1 if any localization, 0 if none) rather than counts of compartments
+        use_compartments (bool): Default to False. Use compartment information for
+            model training and prediction.
 
     """
 
@@ -28,6 +30,7 @@ class AdvancedConfig(BaseModel):
     pair_separator: str = "+"
     save_model_files: bool = False
     binary_compartments: bool = False
+    use_compartments: bool = False
 
 
 class MappingConfig(BaseModel):
