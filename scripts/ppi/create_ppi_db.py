@@ -47,7 +47,13 @@ def process_ppi(input_file: str, output_file: str = "ppi.parquet"):
     df.write_parquet(output_file)
 
 
-dirs_to_create = ["output", "output/hsapiens", "output/mmusculus"]
+dirs_to_create = [
+    "output",
+    "output/hsapiens",
+    "output/mmusculus",
+    "output/rnorvegicus",
+    "output/btaurus",
+]
 for d in dirs_to_create:
     import os
 
@@ -57,3 +63,4 @@ for d in dirs_to_create:
 process_ppi("data/hsapiens/ppi.tsv", "output/hsapiens/ppi.parquet")
 process_ppi("data/mmusculus/ppi.tsv", "output/mmusculus/ppi.parquet")
 process_ppi("data/rnorvegicus/ppi.tsv", "output/rnorvegicus/ppi.parquet")
+process_ppi("data/btaurus/ppi.tsv", "output/btaurus/ppi.parquet")
