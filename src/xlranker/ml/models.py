@@ -137,7 +137,8 @@ class FeatureBuilder:
         for pair in pairs:
             row = pair.abundance_dict()
             # Localization and PPI features
-            row.update(self._get_loc_data(pair.a.name, pair.b.name))
+            if self.config.advanced.use_compartments:
+                row.update(self._get_loc_data(pair.a.name, pair.b.name))
             row["is_ppi"] = self._is_ppi(pair.a.name, pair.b.name)
             if label is not None:
                 row["label"] = label
@@ -393,9 +394,12 @@ class PrioritizationModel:
         self.gmts = gmt_list
         self.default_ppi = ppi_db is None
 
-        self.default_localization = localization_data is None
-        if self.default_localization:
-            localization_data = load_localization_data()
+        if config.advanced.use_compartments:
+            self.default_localization = localization_data is None
+            if self.default_localization:
+                localization_data = load_localization_data()
+        else:
+            localization_data = {}
         self.localization_data = localization_data
         self.pair_selector = pair_selector
         self.xgboost_models = []
