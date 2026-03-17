@@ -162,6 +162,7 @@ def init(
             Choice("Human (hsapiens)", "hsapiens"),
             Choice("Mouse (mmusculus)", "mmusculus"),
             Choice("Rat (rnorvegicus)", "rnorvegicus"),
+            Choice("Cow (btaurus)", "btaurus"),
         ],
     ).ask()
     if species != "hsapiens":
