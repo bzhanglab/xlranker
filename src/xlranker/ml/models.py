@@ -400,6 +400,7 @@ class PrioritizationModel:
                 localization_data = load_localization_data()
         else:
             localization_data = {}
+            self.default_localization = True
         self.localization_data = localization_data
         self.pair_selector = pair_selector
         self.xgboost_models = []
@@ -559,7 +560,9 @@ class PrioritizationModel:
         schema: dict[str, pl.DataType] = {"pair": pl.String()}
         for pair in pair_list:
             pair_dict = pair.abundance_dict()
-            if config.species == "hsapiens" or not self.default_localization:
+            if config.advanced.use_compartments and (
+                config.species == "hsapiens" or not self.default_localization
+            ):
                 for key, val in self.get_loc_data(pair.a.name, pair.b.name):
                     pair_dict[key] = val
             if (
