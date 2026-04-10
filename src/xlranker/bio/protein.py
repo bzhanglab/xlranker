@@ -130,6 +130,7 @@ class Protein:
     abundances: dict[str, float | None]
     main_column: str
     unique_identifier: str
+    linkage: int | None
 
     def __init__(
         self,

@@ -239,14 +239,14 @@ class XLDataSet:
         """
         split_by = "|" if split_by is None else split_by
         split_index = 6 if split_index is None else split_index
-        network = read_network_file(network_path)
+        (network, has_linkages) = read_network_file(network_path)
         omic_data: dict[str, pl.DataFrame] = read_data_folder(
             omics_data_folder, omic_data_files
         )
         peptide_sequences = set()
-        for group in network.values():
-            peptide_sequences.add(group.a.sequence)
-            peptide_sequences.add(group.b.sequence)
+        for peptide_pair in network.values():
+            peptide_sequences.add(peptide_pair.a.sequence)
+            peptide_sequences.add(peptide_pair.b.sequence)
         if isinstance(fasta_type, str):
             fasta_type = convert_str_to_fasta_type(fasta_type)
         if custom_mapper is None:
@@ -260,14 +260,14 @@ class XLDataSet:
         else:
             mapper = custom_mapper
         mapping_results = mapper.map_sequences(sorted(list(peptide_sequences)))
-        for group in sorted(
+        for peptide_pair in sorted(
             network.values(), key=lambda p: p.a.sequence + p.b.sequence
         ):
-            group.a.mapped_proteins = mapping_results.peptide_to_protein[
-                group.a.sequence
+            peptide_pair.a.mapped_proteins = mapping_results.peptide_to_protein[
+                peptide_pair.a.sequence
             ]
-            group.b.mapped_proteins = mapping_results.peptide_to_protein[
-                group.b.sequence
+            peptide_pair.b.mapped_proteins = mapping_results.peptide_to_protein[
+                peptide_pair.b.sequence
             ]
         return cls(network, omic_data)
 

@@ -19,24 +19,34 @@ class Peptide:
 
     sequence: str
     mapped_proteins: list[str]
+    linkage: int | None
 
-    def __init__(self, sequence: str, mapped_proteins: list[str] = []):
+    def __init__(
+        self, sequence: str, linkage: int | None = None, mapped_proteins: list[str] = []
+    ):
         """Initialize the Peptide object with a sequence and mapped proteins.
 
         Args:
             sequence (str): amino acid sequence
+            linkage (int | None): Optional 1-based index of the linkage
+                on the amino acid sequence. Defaults to None.
             mapped_proteins (list[str], optional): list of protein names this sequence
                 maps to. Defaults to [].
 
         """
         self.sequence = sequence
+        self.linkage = linkage
         self.mapped_proteins = mapped_proteins
 
     def __str__(self) -> str:
         """Get the string representation of this peptide.
 
+        If linkage is present, it is added to string and separated by ':'.
+
         Returns:
             str: the amino acid sequence of this peptide.
 
         """
+        if self.linkage is not None:
+            return f"{self.sequence}:{self.linkage}"
         return self.sequence

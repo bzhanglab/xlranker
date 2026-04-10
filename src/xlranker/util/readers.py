@@ -1,6 +1,7 @@
 """Functions for reading data files, mapping files, and networks."""
 
 import logging
+import re
 from pathlib import Path
 
 import polars as pl
@@ -11,6 +12,21 @@ from xlranker.config import config
 from xlranker.util import get_pair_id
 
 logger = logging.getLogger(__name__)
+
+
+def parse_linkage(link: str) -> int | None:
+    """Parse a link from a linkage string by removing all non-numeric chars.
+
+    Args:
+        link (str): the original linkage string
+
+    Returns:
+        int | None: 1-based index of the link or None if unable to parse
+    """
+    cleaned_link = re.sub("[^0-9]", "", link)
+    if len(cleaned_link) > 0:
+        return int(cleaned_link)
+    return None
 
 
 def read_data_matrix(
@@ -104,14 +120,16 @@ def read_data_folder(
     return ret_dict
 
 
-def read_network_file(network_path: str) -> dict[str, PeptidePair]:
+def read_network_file(network_path: str) -> tuple[dict[str, PeptidePair], bool]:
     """Reads TSV network file to a list of PeptideGroup.
 
     Args:
         network_path (str): path to the TSV file
 
     Returns:
-        list[PeptideGroup]: list of PeptideGroup representing the network
+        tuple[list[PeptideGroup], bool]: tuple with first element
+            is list of PeptideGroup representing the network
+            the bool is True if linkage information is present
 
     Raises:
         IndexError: Raised if there are not 2 columns in the network.
@@ -123,17 +141,33 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
             text = r.read().split("\n")
         new_rows = set()  # Track unique rows
         valid_rows = 0  # Keeps track of number of edges in original file
+        has_linkages = False
         for row in text:
             if "\t" in row:
                 valid_rows += 1
                 vals = row.split("\t")
-                val_a = vals[0]
-                val_b = vals[1]
-                if val_a > val_b:  # Make sure edges are all sorted the same.
-                    temp = val_a
-                    val_a = val_b
-                    val_b = temp
-                new_rows.add(f"{val_a}\t{val_b}")
+                if len(vals) == 2:
+                    val_a = vals[0]
+                    val_b = vals[1]
+                    if val_a > val_b:  # Make sure edges are all sorted the same.
+                        val_a, val_b = val_b, val_a
+                    new_rows.add(f"{val_a}\t{val_b}")
+                elif len(vals) == 4:
+                    has_linkages = True
+                    val_a = vals[0]
+                    link_a = vals[1]
+                    val_b = vals[2]
+                    link_b = vals[3]
+                    if val_a > val_b:  # Make sure edges are all sorted the same.
+                        val_a, val_b = val_b, val_a
+                        link_a, link_b = link_b, link_a
+                    new_rows.add(f"{val_a}\t{val_b}\t{link_a}\t{link_b}")
+                else:
+                    raise ValueError(
+                        """Network must contain either 2 or 4 columns.
+                        See documentation for details."""
+                    )
+
     except IndexError as e:
         logger.error("Index out of bound. Make sure network is in the correct format.")
         raise IndexError() from e
@@ -148,11 +182,16 @@ def read_network_file(network_path: str) -> dict[str, PeptidePair]:
     network: dict[str, PeptidePair] = {}
     for row in new_rows:
         vals = row.split("\t")
-        a = Peptide(vals[0])
-        b = Peptide(vals[1])
+        link_a = None
+        link_b = None
+        if has_linkages:
+            link_a = parse_linkage(vals[2])
+            link_b = parse_linkage(vals[3])
+        a = Peptide(vals[0], linkage=link_a)
+        b = Peptide(vals[1], linkage=link_b)
         group = PeptidePair(a, b)
         network[get_pair_id(a, b)] = group
-    return network
+    return (network, has_linkages)
 
 
 def read_mapping_table_file(file_path: str) -> dict[str, list[str]]:
