@@ -35,7 +35,8 @@ class Peptide:
 
         """
         self.sequence = sequence
-        self.linkage = linkage
+        if linkage is not None and linkage <= len(self.sequence):
+            self.linkage = linkage
         self.mapped_proteins = mapped_proteins
 
     def __str__(self) -> str:

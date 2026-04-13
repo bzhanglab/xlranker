@@ -259,7 +259,8 @@ class XLDataSet:
             )
         else:
             mapper = custom_mapper
-        mapping_results = mapper.map_sequences(sorted(list(peptide_sequences)))
+        # mapping_results = mapper.map_sequences(sorted(list(peptide_sequences)))
+        mapping_results = mapper.map_fasta_with_loc(sorted(list(peptide_sequences)))
         for peptide_pair in sorted(
             network.values(), key=lambda p: p.a.sequence + p.b.sequence
         ):

@@ -109,7 +109,7 @@ class SequenceMatch:
 
     unique_identifier: str
     protein_name: str
-    match_location: int
+    match_location: str
 
 
 @dataclass
@@ -316,6 +316,19 @@ class PeptideMapper:
             return self.map_fasta_with_reduction(sequences, automaton)
         return self.map_fasta_no_reduction(sequences, automaton)
 
+    def map_fasta_with_loc(self, sequences: list[str]) -> MappingResultWithLoc:
+        """Map the provided sequences to proteins using a FASTA file.
+
+        Args:
+            sequences (list[str]): list of peptide sequences to map.
+
+        Returns:
+            MappingResult: Result of the mapping.
+
+        """
+        automaton = build_automaton(sequences)
+        return self.map_fasta_with_reduction_with_loc(sequences, automaton)
+
     def map_fasta_no_reduction(
         self, sequences: list[str], automaton: ahocorasick.Automaton
     ) -> MappingResult:
@@ -466,10 +479,11 @@ class PeptideMapper:
                 start_index = (
                     end_index - len(sequence) + 2
                 )  # TODO: Check if 2 is correct
+                match_location = f"{sequence[start_index - 1]}{start_index}"
                 seq_match = SequenceMatch(
                     unique_identifier=gene_symbol,
                     protein_name=gene_symbol,
-                    match_location=start_index,
+                    match_location=match_location,
                 )
                 matches[sequence].append(seq_match)
                 mapped = True

@@ -123,6 +123,7 @@ class Protein:
             abundance for the protein. Used for sorting the
         proteins.
         protein_name (str): name of the protein specific to the isoform level.
+        linkages (list[str]): linkages observed
 
     """
 
@@ -130,7 +131,7 @@ class Protein:
     abundances: dict[str, float | None]
     main_column: str
     unique_identifier: str
-    linkage: int | None
+    linkages: list[str]
 
     def __init__(
         self,
@@ -154,6 +155,7 @@ class Protein:
         self.name = name
         self.unique_identifier = unique_identifier
         self.abundances = abundances
+        self.linkages = []
         if main_column is None:
             if len(abundances) == 0:
                 self.main_column = ""
@@ -161,6 +163,27 @@ class Protein:
                 self.main_column = next(iter(abundances))
         else:
             self.main_column = main_column
+
+    def add_linkage(self, link: str) -> None:
+        """Add linkage to protein.
+
+        Args:
+            link (str): linkage location
+        """
+        self.linkages.append(link)
+
+    def __str__(self) -> str:
+        """Get the string representation of this protein.
+
+        If linkage is present, it is added to string and separated by ':'.
+
+        Returns:
+            str: the name of this protein.
+
+        """
+        if self.linkages is not None:
+            return f"{self.name}:{','.join(self.linkages)}"
+        return self.name
 
     def __eq__(self, value: object) -> bool:
         """Determine if object is equal to another.
