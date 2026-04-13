@@ -7,7 +7,11 @@ from pydantic import BaseModel
 
 from xlranker.bio.pairs import ProteinPair
 from xlranker.config import config
-from xlranker.lib import XLDataSet, write_pair_to_network
+from xlranker.lib import (
+    XLDataSet,
+    write_pair_to_network,
+    write_pair_to_network_with_linkages,
+)
 from xlranker.status import ReportStatus
 from xlranker.util import get_pair_id_from_str
 
@@ -44,6 +48,21 @@ def make_report(
     write_pair_to_network(valid_pairs, str(output_path))
 
 
+def make_report_with_linkages(
+    pairs: list[ProteinPair], status: ReportStatus, output_path: Path
+) -> None:
+    """Write network of protein pairs with linkages.
+
+    Args:
+        pairs (list[ProteinPair]): list of all protein pairs
+        status (ReportStatus): Minimum status to accept.
+        output_path (Path): output path to save pair to
+
+    """
+    valid_pairs = [pair for pair in pairs if pair.report_status <= status]
+    write_pair_to_network_with_linkages(valid_pairs, str(output_path))
+
+
 def make_all_reports(pairs: list[ProteinPair]) -> None:
     """Write reports for all status levels to the output_folder specified in the config.
 
@@ -58,6 +77,19 @@ def make_all_reports(pairs: list[ProteinPair]) -> None:
     make_report(pairs, ReportStatus.EXPANDED, output_folder / "expanded.tsv")
     make_report(pairs, ReportStatus.ALL, output_folder / "all.tsv")
 
+    make_report_with_linkages(
+        pairs, ReportStatus.UNIQUE, output_folder / "unique_with_linkages.tsv"
+    )
+    make_report_with_linkages(
+        pairs, ReportStatus.MINIMAL, output_folder / "minimal_with_linkages.tsv"
+    )
+    make_report_with_linkages(
+        pairs, ReportStatus.EXPANDED, output_folder / "expanded_with_linkages.tsv"
+    )
+    make_report_with_linkages(
+        pairs, ReportStatus.ALL, output_folder / "all_with_linkages.tsv"
+    )
+
 
 def make_mapping_tables(data_set: XLDataSet) -> None:
     """Make all mapping tables.
@@ -68,7 +100,10 @@ def make_mapping_tables(data_set: XLDataSet) -> None:
         data_set (XLDataSet): XL data set to create mapping table from
     """
     mapping_peptide_pair_to_protein_pairs(data_set)
+    mapping_peptide_pair_to_protein_pairs_with_linkages(data_set)
     mapping_peptide_to_protein(data_set)
+    mapping_peptide_to_protein_with_linkages(data_set)
+    mapping_peptide_pair_to_best_protein_pair(data_set)
 
 
 def mapping_peptide_pair_to_protein_pairs(
@@ -91,6 +126,33 @@ def mapping_peptide_pair_to_protein_pairs(
         row = [peptide_pair]
         for protein_pair in data_set.peptide_pairs[peptide_pair].connections:
             row.append(protein_pair)
+        data.append("\t".join(row))
+    with open(output_path, "w") as w:
+        w.write("\n".join(data))
+
+
+def mapping_peptide_pair_to_protein_pairs_with_linkages(
+    data_set: XLDataSet, output_path: str | None = None
+) -> None:
+    """Write mapping table with peptide pairs and their corresponding protein pairs.
+
+    Args:
+        data_set (XLDataSet): XL data set to create mapping table from
+        output_path (str | None, optional): Output path, if None will use default path.
+            Defaults to None.
+
+    """
+    if output_path is None:
+        output_folder = Path(config.output).joinpath("mapping")
+        output_folder.mkdir(exist_ok=True)
+        output_path = str(output_folder / "peptide_to_protein_pair_with_linkages.tsv")
+    data = []
+    for peptide_pair_id in sorted(data_set.peptide_pairs.keys()):
+        peptide_pair = data_set.peptide_pairs[peptide_pair_id]
+        row = [str(peptide_pair)]
+        for prot_pair_id in sorted(peptide_pair.connections):
+            prot_pair = data_set.protein_pairs[prot_pair_id]
+            row.append(str(prot_pair))
         data.append("\t".join(row))
     with open(output_path, "w") as w:
         w.write("\n".join(data))
@@ -129,6 +191,81 @@ def mapping_peptide_to_protein(
             for prot in peptide_pair.b.mapped_proteins:
                 row.append(prot)
             data.append("\t".join(row))
+    with open(output_path, "w") as w:
+        w.write("\n".join(data))
+
+
+def mapping_peptide_to_protein_with_linkages(
+    data_set: XLDataSet, output_path: str | None = None
+) -> None:
+    """Write mapping table that shows a peptide and its corresponding mapped proteins.
+
+    Args:
+        data_set (XLDataSet): XL data set to create mapping table from
+        output_path (str | None, optional): Output path, if None will use default path.
+            Defaults to None.
+
+    """
+    if output_path is None:
+        output_folder = Path(config.output).joinpath("mapping")
+        output_folder.mkdir(exist_ok=True)
+        output_path = str(output_folder / "peptide_to_protein_with_linkages.tsv")
+    data = []
+    uniq_peptides = set()
+    for peptide_pair in sorted(
+        data_set.peptide_pairs.values(),
+        key=lambda p: p.a.sequence + p.b.sequence,
+    ):
+        for peptide in (peptide_pair.a, peptide_pair.b):
+            pep_str = str(peptide)
+            if pep_str not in uniq_peptides:
+                uniq_peptides.add(pep_str)
+                row = [pep_str]
+                for prot in peptide.mapped_proteins:
+                    linkage = peptide.protein_linkages.get(prot, "")
+                    prot_str = f"{prot}:{linkage}" if linkage else prot
+                    row.append(prot_str)
+                data.append("\t".join(row))
+    with open(output_path, "w") as w:
+        w.write("\n".join(data))
+
+
+def mapping_peptide_pair_to_best_protein_pair(
+    data_set: XLDataSet, output_path: str | None = None
+) -> None:
+    """Write mapping table showing the best selected protein pair for each peptide pair.
+
+    Args:
+        data_set (XLDataSet): XL data set to create mapping table from
+        output_path (str | None, optional): Output path, if None will use default path.
+            Defaults to None.
+
+    """
+    if output_path is None:
+        output_folder = Path(config.output).joinpath("mapping")
+        output_folder.mkdir(exist_ok=True)
+        output_path = str(output_folder / "peptide_to_best_protein_pair.tsv")
+    data = []
+    for peptide_pair_id in sorted(data_set.peptide_pairs.keys()):
+        peptide_pair = data_set.peptide_pairs[peptide_pair_id]
+
+        best_prot_pair = None
+        for prot_pair_id in peptide_pair.connections:
+            prot_pair = data_set.protein_pairs[prot_pair_id]
+            if best_prot_pair is None:
+                best_prot_pair = prot_pair
+            else:
+                if prot_pair.report_status < best_prot_pair.report_status:
+                    best_prot_pair = prot_pair
+                elif prot_pair.report_status == best_prot_pair.report_status:
+                    if prot_pair.score > best_prot_pair.score:
+                        best_prot_pair = prot_pair
+
+        if best_prot_pair is not None:
+            data.append(f"{peptide_pair_id}\t{best_prot_pair.pair_id}")
+        else:
+            data.append(f"{peptide_pair_id}\t")
+
     with open(output_path, "w") as w:
         w.write("\n".join(data))
 

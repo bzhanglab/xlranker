@@ -58,16 +58,15 @@ def get_pair_id(a: Protein | Peptide, b: Protein | Peptide) -> str:
            config.advanced.pair_separator (default '+').
 
     """
-    name_a = ""
-    name_b = ""
-    if isinstance(a, Protein):
+    if isinstance(a, Peptide):
+        name_a = str(a)
+    else:
         name_a = a.name
+
+    if isinstance(b, Peptide):
+        name_b = str(b)
     else:
-        name_a = a.sequence
-    if isinstance(b, Protein):
         name_b = b.name
-    else:
-        name_b = b.sequence
     return get_pair_id_from_str(name_a, name_b)
 
 

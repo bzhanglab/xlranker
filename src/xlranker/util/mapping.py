@@ -102,11 +102,33 @@ class SequenceMatch:
     Attributes:
         unique_identifier (str): Isoform-specific identifier
         protein_name (str): Protein-level name from fasta file. Typically in Gene Symbol
+        start_index (int): 1-based start index of the match in the protein sequence.
+        match_location (str): Location string (e.g., "M1") where the peptide starts.
 
     """
 
     unique_identifier: str
     protein_name: str
+    start_index: int
+    match_location: str
+
+
+@dataclass
+class MappingResultWithLoc:
+    """Results from mapping peptide sequences to proteins.
+
+    Args:
+        peptide_to_protein (dict[str, list[SequenceMatch]]): Dictionary where keys are
+            peptide sequences and values are the list of SequenceMatch objects.
+        protein_sequences (dict[str, str] | None): Optional dictionary where keys are
+            protein names and values are those proteins sequence.
+            Used for linkage location.
+            None if sequence not available (i.e. mapping table)
+
+    """
+
+    peptide_to_protein: dict[str, list[SequenceMatch]]
+    protein_sequences: dict[str, str] | None
 
 
 @dataclass
@@ -295,6 +317,19 @@ class PeptideMapper:
             return self.map_fasta_with_reduction(sequences, automaton)
         return self.map_fasta_no_reduction(sequences, automaton)
 
+    def map_fasta_with_loc(self, sequences: list[str]) -> MappingResultWithLoc:
+        """Map the provided sequences to proteins using a FASTA file.
+
+        Args:
+            sequences (list[str]): list of peptide sequences to map.
+
+        Returns:
+            MappingResult: Result of the mapping.
+
+        """
+        automaton = build_automaton(sequences)
+        return self.map_fasta_with_reduction_with_loc(sequences, automaton)
+
     def map_fasta_no_reduction(
         self, sequences: list[str], automaton: ahocorasick.Automaton
     ) -> MappingResult:
@@ -389,6 +424,73 @@ class PeptideMapper:
             final_matches[key] = list(matches[key])
         return MappingResult(
             peptide_to_protein=final_matches,
+            protein_sequences=protein_sequences,
+        )
+
+    def map_fasta_with_reduction_with_loc(
+        self, sequences: list[str], automaton: ahocorasick.Automaton
+    ) -> MappingResultWithLoc:
+        """Maps the provided sequences to proteins with a reduced FASTA file.
+
+        Keeps only the longest sequence is kept for duplicated proteins.
+
+        Duplicate proteins are proteins that share the same gene symbol identification.
+
+        Args:
+            sequences (list[str]): list of peptide sequences to map.
+            automaton (ahocorasick.Automaton): An automaton built from the peptides.
+
+        Returns:
+            MappingResult: Result of the mapping.
+
+        """
+        logger.debug("Mapping FASTA file with reduction")
+        matches: dict[str, list[SequenceMatch]] = {}
+        for seq in sequences:
+            matches[seq] = []
+        logger.info(f"Mapping {len(sequences)} peptide sequences")
+
+        # First, build a mapping from gene symbol to its longest protein sequence
+        gene_to_longest_protein = {}
+        gene_to_longest_length: dict[str, int] = {}
+
+        for record in SeqIO.parse(self.mapping_table_path, "fasta"):
+            gene_symbol = extract_gene_symbol(
+                record.description,
+                self.fasta_type,
+                split_by=self.split_by,
+                split_index=self.split_index,
+            )
+            seq_str = str(record.seq)
+            seq_len = len(seq_str)
+            if (
+                gene_symbol not in gene_to_longest_length
+                or seq_len > gene_to_longest_length[gene_symbol]
+            ):
+                gene_to_longest_length[gene_symbol] = seq_len
+                gene_to_longest_protein[gene_symbol] = seq_str
+
+        protein_sequences: dict[str, str] = {}
+
+        # Now, map sequences only if they are present in the longest protein sequence
+        # for that gene
+        for gene_symbol, protein_seq in gene_to_longest_protein.items():
+            mapped = False
+            for end_index, sequence in automaton.iter(str(protein_seq)):
+                start_index = end_index - len(sequence) + 2
+                match_location = f"{sequence[0]}{start_index}"
+                seq_match = SequenceMatch(
+                    unique_identifier=gene_symbol,
+                    protein_name=gene_symbol,
+                    start_index=start_index,
+                    match_location=match_location,
+                )
+                matches[sequence].append(seq_match)
+                mapped = True
+            if mapped:
+                protein_sequences[gene_symbol] = protein_seq
+        return MappingResultWithLoc(
+            peptide_to_protein=matches,
             protein_sequences=protein_sequences,
         )
 
