@@ -141,9 +141,11 @@ def init(
             ).ask()
             mapping_table_path = questionary.path(
                 "Path to fasta file:",
-                validate=lambda x: True
-                if x.lower().endswith(".fa") or x.lower().endswith(".fasta")
-                else "Please input a FASTA file (.fasta or .fa)",
+                validate=lambda x: (
+                    True
+                    if x.lower().endswith(".fa") or x.lower().endswith(".fasta")
+                    else "Please input a FASTA file (.fasta or .fa)"
+                ),
             ).ask()
             if fasta_type == "GENCODE":
                 print(
@@ -195,11 +197,13 @@ def init(
     else:
         output_path: str = questionary.path(
             "Output file for config (JSON or YAML format):",
-            validate=lambda x: True
-            if x.lower().endswith(".json")
-            or x.lower().endswith(".yaml")
-            or x.lower().endswith(".yml")
-            else "File must end with .json, .yaml, or .yml",
+            validate=lambda x: (
+                True
+                if x.lower().endswith(".json")
+                or x.lower().endswith(".yaml")
+                or x.lower().endswith(".yml")
+                else "File must end with .json, .yaml, or .yml"
+            ),
         ).ask()
 
     save_config(output_path, config_to_dict(new_config))  # type: ignore

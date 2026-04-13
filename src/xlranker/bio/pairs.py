@@ -3,7 +3,7 @@
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
 from xlranker.status import PrioritizationStatus, ReportStatus
-from xlranker.util import get_pair_id
+from xlranker.util import get_pair_id, get_pair_id_from_str
 
 
 class GroupedEntity:

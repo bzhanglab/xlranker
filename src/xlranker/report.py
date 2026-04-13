@@ -134,7 +134,7 @@ def mapping_peptide_pair_to_protein_pairs(
 def mapping_peptide_pair_to_protein_pairs_with_linkages(
     data_set: XLDataSet, output_path: str | None = None
 ) -> None:
-    """Write mapping table with peptide pairs and their corresponding protein pairs with linkages.
+    """Write mapping table with peptide pairs and their corresponding protein pairs.
 
     Args:
         data_set (XLDataSet): XL data set to create mapping table from
@@ -198,7 +198,7 @@ def mapping_peptide_to_protein(
 def mapping_peptide_to_protein_with_linkages(
     data_set: XLDataSet, output_path: str | None = None
 ) -> None:
-    """Write mapping table that shows a peptide and its corresponding mapped proteins with linkages.
+    """Write mapping table that shows a peptide and its corresponding mapped proteins.
 
     Args:
         data_set (XLDataSet): XL data set to create mapping table from
@@ -248,7 +248,7 @@ def mapping_peptide_pair_to_best_protein_pair(
     data = []
     for peptide_pair_id in sorted(data_set.peptide_pairs.keys()):
         peptide_pair = data_set.peptide_pairs[peptide_pair_id]
-        
+
         best_prot_pair = None
         for prot_pair_id in peptide_pair.connections:
             prot_pair = data_set.protein_pairs[prot_pair_id]
@@ -265,7 +265,7 @@ def mapping_peptide_pair_to_best_protein_pair(
             data.append(f"{peptide_pair_id}\t{best_prot_pair.pair_id}")
         else:
             data.append(f"{peptide_pair_id}\t")
-            
+
     with open(output_path, "w") as w:
         w.write("\n".join(data))
 

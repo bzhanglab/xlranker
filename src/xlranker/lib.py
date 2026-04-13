@@ -368,8 +368,10 @@ def write_pair_to_network(pairs: list[ProteinPair], output_file: str) -> None:
         w.write("\n".join(network_strings) + "\n")
 
 
-def write_pair_to_network_with_linkages(pairs: list[ProteinPair], output_file: str) -> None:
-    """Write list of protein pairs to a TSV file with linkages in 4 columns.
+def write_pair_to_network_with_linkages(
+    pairs: list[ProteinPair], output_file: str
+) -> None:
+    r"""Write list of protein pairs to a TSV file with linkages in 4 columns.
 
     Format: ProteinA \\t LinkagesA \\t ProteinB \\t LinkagesB.
 
