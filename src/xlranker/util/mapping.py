@@ -102,13 +102,14 @@ class SequenceMatch:
     Attributes:
         unique_identifier (str): Isoform-specific identifier
         protein_name (str): Protein-level name from fasta file. Typically in Gene Symbol
-        match_location (int): Location in the FASTA sequence where the peptide starts.
-            For FASTA sequence ABCDEF, CDE would be a match loc of 3.
+        start_index (int): 1-based start index of the match in the protein sequence.
+        match_location (str): Location string (e.g., "M1") where the peptide starts.
 
     """
 
     unique_identifier: str
     protein_name: str
+    start_index: int
     match_location: str
 
 
@@ -117,8 +118,8 @@ class MappingResultWithLoc:
     """Results from mapping peptide sequences to proteins.
 
     Args:
-        peptide_to_protein (dict[str, list[str]]): Dictionary where keys are peptide
-            sequences and values are the list of proteins that map to that sequence.
+        peptide_to_protein (dict[str, list[SequenceMatch]]): Dictionary where keys are
+            peptide sequences and values are the list of SequenceMatch objects.
         protein_sequences (dict[str, str] | None): Optional dictionary where keys are
             protein names and values are those proteins sequence.
             Used for linkage location.
@@ -476,13 +477,12 @@ class PeptideMapper:
         for gene_symbol, protein_seq in gene_to_longest_protein.items():
             mapped = False
             for end_index, sequence in automaton.iter(str(protein_seq)):
-                start_index = (
-                    end_index - len(sequence) + 2
-                )  # TODO: Check if 2 is correct
-                match_location = f"{sequence[start_index - 1]}{start_index}"
+                start_index = end_index - len(sequence) + 2
+                match_location = f"{sequence[0]}{start_index}"
                 seq_match = SequenceMatch(
                     unique_identifier=gene_symbol,
                     protein_name=gene_symbol,
+                    start_index=start_index,
                     match_location=match_location,
                 )
                 matches[sequence].append(seq_match)

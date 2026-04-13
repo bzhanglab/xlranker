@@ -147,8 +147,16 @@ class XLDataSet:
             else:
                 for protein_a_name in peptide_pair.a.mapped_proteins:
                     protein_a = self.proteins[protein_a_name]
+                    if protein_a_name in peptide_pair.a.protein_linkages:
+                        protein_a.add_linkage(
+                            peptide_pair.a.protein_linkages[protein_a_name]
+                        )
                     for protein_b_name in peptide_pair.b.mapped_proteins:
                         protein_b = self.proteins[protein_b_name]
+                        if protein_b_name in peptide_pair.b.protein_linkages:
+                            protein_b.add_linkage(
+                                peptide_pair.b.protein_linkages[protein_b_name]
+                            )
                         protein_pair_id = get_pair_id(protein_a, protein_b)
                         if protein_pair_id not in self.protein_pairs:
                             new_pair = ProteinPair(protein_a, protein_b)
@@ -259,17 +267,59 @@ class XLDataSet:
             )
         else:
             mapper = custom_mapper
-        # mapping_results = mapper.map_sequences(sorted(list(peptide_sequences)))
-        mapping_results = mapper.map_fasta_with_loc(sorted(list(peptide_sequences)))
+        if is_fasta:
+            mapping_results = mapper.map_fasta_with_loc(sorted(list(peptide_sequences)))
+        else:
+            mapping_results = mapper.map_sequences(sorted(list(peptide_sequences)))
+
         for peptide_pair in sorted(
             network.values(), key=lambda p: p.a.sequence + p.b.sequence
         ):
-            peptide_pair.a.mapped_proteins = mapping_results.peptide_to_protein[
-                peptide_pair.a.sequence
-            ]
-            peptide_pair.b.mapped_proteins = mapping_results.peptide_to_protein[
-                peptide_pair.b.sequence
-            ]
+            # Process Peptide A
+            matches_a = mapping_results.peptide_to_protein[peptide_pair.a.sequence]
+            if is_fasta:
+                peptide_pair.a.mapped_proteins = [m.protein_name for m in matches_a]
+                if (
+                    peptide_pair.a.linkage is not None
+                    and mapping_results.protein_sequences is not None
+                ):
+                    for match in matches_a:
+                        protein_seq = mapping_results.protein_sequences[
+                            match.protein_name
+                        ]
+                        protein_link_index = (
+                            match.start_index + peptide_pair.a.linkage - 1
+                        )
+                        if protein_link_index <= len(protein_seq):
+                            residue = protein_seq[protein_link_index - 1]
+                            peptide_pair.a.protein_linkages[match.protein_name] = (
+                                f"{residue}{protein_link_index}"
+                            )
+            else:
+                peptide_pair.a.mapped_proteins = matches_a
+
+            # Process Peptide B
+            matches_b = mapping_results.peptide_to_protein[peptide_pair.b.sequence]
+            if is_fasta:
+                peptide_pair.b.mapped_proteins = [m.protein_name for m in matches_b]
+                if (
+                    peptide_pair.b.linkage is not None
+                    and mapping_results.protein_sequences is not None
+                ):
+                    for match in matches_b:
+                        protein_seq = mapping_results.protein_sequences[
+                            match.protein_name
+                        ]
+                        protein_link_index = (
+                            match.start_index + peptide_pair.b.linkage - 1
+                        )
+                        if protein_link_index <= len(protein_seq):
+                            residue = protein_seq[protein_link_index - 1]
+                            peptide_pair.b.protein_linkages[match.protein_name] = (
+                                f"{residue}{protein_link_index}"
+                            )
+            else:
+                peptide_pair.b.mapped_proteins = matches_b
         return cls(network, omic_data)
 
 
@@ -314,5 +364,26 @@ def write_pair_to_network(pairs: list[ProteinPair], output_file: str) -> None:
     for pair in sorted(pairs, key=lambda x: x.pair_id):
         splits = pair.pair_id.split(xlr_config.advanced.pair_separator)
         network_strings.append(f"{splits[0]}\t{splits[1]}")
+    with open(output_file, "w") as w:
+        w.write("\n".join(network_strings) + "\n")
+
+
+def write_pair_to_network_with_linkages(pairs: list[ProteinPair], output_file: str) -> None:
+    """Write list of protein pairs to a TSV file with linkages in 4 columns.
+
+    Format: ProteinA \\t LinkagesA \\t ProteinB \\t LinkagesB.
+
+    Args:
+        pairs (list[ProteinPair]): list of protein pairs to save to file.
+        output_file (str): path to write TSV file. Full path must be accessible.
+
+    """
+    network_strings = []
+    for pair in sorted(pairs, key=lambda x: x.pair_id):
+        linkages_a = ",".join(pair.a.linkages) if pair.a.linkages else ""
+        linkages_b = ",".join(pair.b.linkages) if pair.b.linkages else ""
+        network_strings.append(
+            f"{pair.a.name}\t{linkages_a}\t{pair.b.name}\t{linkages_b}"
+        )
     with open(output_file, "w") as w:
         w.write("\n".join(network_strings) + "\n")

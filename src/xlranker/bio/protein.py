@@ -170,7 +170,8 @@ class Protein:
         Args:
             link (str): linkage location
         """
-        self.linkages.append(link)
+        if link not in self.linkages:
+            self.linkages.append(link)
 
     def __str__(self) -> str:
         """Get the string representation of this protein.
@@ -181,7 +182,7 @@ class Protein:
             str: the name of this protein.
 
         """
-        if self.linkages is not None:
+        if len(self.linkages) > 0:
             return f"{self.name}:{','.join(self.linkages)}"
         return self.name
 

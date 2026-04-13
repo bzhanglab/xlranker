@@ -66,3 +66,16 @@ def test_protein_order_no_nulls():
         SMALL_PROTEIN,
         same_val_as_small,
     )
+
+
+def test_protein_linkages():
+    """Test that linkages can be added to proteins and are represented in string."""
+    protein = xlr.bio.Protein(name="Linky", unique_identifier="Linky")
+    assert str(protein) == "Linky"
+    protein.add_linkage("K10")
+    assert str(protein) == "Linky:K10"
+    protein.add_linkage("K20")
+    assert str(protein) == "Linky:K10,K20"
+    # Test uniqueness
+    protein.add_linkage("K10")
+    assert str(protein) == "Linky:K10,K20"

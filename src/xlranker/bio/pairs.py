@@ -207,6 +207,15 @@ class ProteinPair(GroupedEntity):
         """Set this pair to be selected."""
         self.is_selected = True
 
+    def __str__(self) -> str:
+        """Get string representation of the protein pair including linkages.
+
+        Returns:
+            str: pair ID with linkages if present
+
+        """
+        return get_pair_id_from_str(str(self.a), str(self.b))
+
     def __eq__(self, value: "object | ProteinPair") -> bool:
         """Checks if ProteinPairs are equivalent, without caring for order.
 
@@ -296,6 +305,15 @@ class PeptidePair(GroupedEntity):
         self.a = peptide_a
         self.b = peptide_b
         self.pair_id = get_pair_id(peptide_a, peptide_b)
+
+    def __str__(self) -> str:
+        """Get string representation of the peptide pair.
+
+        Returns:
+            str: the pair ID
+
+        """
+        return self.pair_id
 
     def __hash__(self) -> int:
         """Get hash of this PeptidePair.

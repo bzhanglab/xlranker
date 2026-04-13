@@ -64,3 +64,23 @@ def test_custom_table(tmp_path):
         "OR4F16",
     ]
     assert res.peptide_to_protein["PLLALPPQGPPG"] == ["SAMD11"]
+
+
+def test_map_fasta_with_loc(tmp_path):
+    """Tests fasta mapping with location information."""
+    temp_file = tmp_path / "fasta_snippet.fa"
+    temp_file.write_text(FASTA_SNIPPET)
+    mapper = xlranker.util.mapping.PeptideMapper(
+        mapping_table_path=str(temp_file),
+        is_fasta=True,
+        split_index=6,
+        fasta_type=xlranker.util.mapping.FastaType.GENCODE,
+    )
+    sequences = ["LHYTTIM"]
+    res = mapper.map_fasta_with_loc(sequences)
+    matches = res.peptide_to_protein["LHYTTIM"]
+    assert len(matches) == 1
+    match = matches[0]
+    assert match.protein_name == "OR4F5"
+    assert match.start_index == 144
+    assert match.match_location == "L144"

@@ -14,15 +14,21 @@ class Peptide:
     Attributes:
         sequence (str): Peptide sequence from peptide network
         mapped_proteins (list[str]): list of all proteins mapping to sequence
+        protein_linkages (dict[str, str]): mapping of protein name to linkage location
 
     """
 
     sequence: str
     mapped_proteins: list[str]
     linkage: int | None
+    protein_linkages: dict[str, str]
 
     def __init__(
-        self, sequence: str, linkage: int | None = None, mapped_proteins: list[str] = []
+        self,
+        sequence: str,
+        linkage: int | None = None,
+        mapped_proteins: list[str] = [],
+        protein_linkages: dict[str, str] = {},
     ):
         """Initialize the Peptide object with a sequence and mapped proteins.
 
@@ -32,12 +38,16 @@ class Peptide:
                 on the amino acid sequence. Defaults to None.
             mapped_proteins (list[str], optional): list of protein names this sequence
                 maps to. Defaults to [].
+            protein_linkages (dict[str, str], optional): mapping of protein name to
+                linkage location. Defaults to {}.
 
         """
         self.sequence = sequence
+        self.linkage = None
         if linkage is not None and linkage <= len(self.sequence):
             self.linkage = linkage
         self.mapped_proteins = mapped_proteins
+        self.protein_linkages = protein_linkages
 
     def __str__(self) -> str:
         """Get the string representation of this peptide.
