@@ -1,9 +1,57 @@
 """Protein and Peptide pairs."""
 
+from dataclasses import dataclass
+
 from xlranker.bio.peptide import Peptide
 from xlranker.bio.protein import Protein, sort_proteins
+from xlranker.config import config
 from xlranker.status import PrioritizationStatus, ReportStatus
 from xlranker.util import get_pair_id, get_pair_id_from_str
+
+
+@dataclass(frozen=True)
+class LinkagePair:
+    """Observed linkage mapping between one peptide pair and one protein pair."""
+
+    peptide_pair_id: str
+    protein_pair_id: str
+    mapping_order: str
+    peptide_a: str
+    peptide_b: str
+    peptide_linkage_a: int | None
+    peptide_linkage_b: int | None
+    protein_a: str
+    protein_b: str
+    protein_linkage_a: str | None
+    protein_linkage_b: str | None
+
+    def _with_optional_linkage(self, analyte: str, linkage: str | int | None) -> str:
+        """Format analyte with optional linkage information."""
+        if linkage is None or linkage == "":
+            return analyte
+        return f"{analyte}:{linkage}"
+
+    def protein_pair_with_linkages(self) -> str:
+        """Get protein pair string with linkage annotations."""
+        a = self._with_optional_linkage(self.protein_a, self.protein_linkage_a)
+        b = self._with_optional_linkage(self.protein_b, self.protein_linkage_b)
+        return f"{a}{config.advanced.pair_separator}{b}"
+
+    def peptide_pair_with_linkages(self) -> str:
+        """Get peptide pair string with source peptide linkage annotations."""
+        a = self._with_optional_linkage(self.peptide_a, self.peptide_linkage_a)
+        b = self._with_optional_linkage(self.peptide_b, self.peptide_linkage_b)
+        return get_pair_id_from_str(a, b)
+
+    def sort_key(self) -> tuple[str, str, str, str, str]:
+        """Get stable sort key for a linkage pair."""
+        return (
+            self.protein_pair_id,
+            self.protein_linkage_a or "",
+            self.protein_linkage_b or "",
+            self.peptide_pair_id,
+            self.mapping_order,
+        )
 
 
 class GroupedEntity:
@@ -164,6 +212,7 @@ class ProteinPair(GroupedEntity):
     pair_id: str
     is_intra: bool
     report_status: ReportStatus
+    linkage_pairs: set[LinkagePair]
 
     def __init__(self, protein_a: Protein, protein_b: Protein) -> None:
         """Initialize the protein pair.
@@ -184,6 +233,7 @@ class ProteinPair(GroupedEntity):
         self.pair_id = get_pair_id(a, b)
         self.is_intra = a == b
         self.report_status = ReportStatus.NONE
+        self.linkage_pairs = set()
 
     def set_score(self, score: float) -> None:
         """Set the score of the protein pair.
@@ -207,14 +257,20 @@ class ProteinPair(GroupedEntity):
         """Set this pair to be selected."""
         self.is_selected = True
 
+    def add_linkage_pair(self, linkage_pair: LinkagePair) -> None:
+        """Associate an observed linkage pair with this protein pair."""
+        self.linkage_pairs.add(linkage_pair)
+
+    def sorted_linkage_pairs(self) -> list[LinkagePair]:
+        """Get linkage pairs in a stable order."""
+        return sorted(
+            self.linkage_pairs,
+            key=lambda linkage_pair: linkage_pair.sort_key(),
+        )
+
     def __str__(self) -> str:
-        """Get string representation of the protein pair including linkages.
-
-        Returns:
-            str: pair ID with linkages if present
-
-        """
-        return get_pair_id_from_str(str(self.a), str(self.b))
+        """Get string representation of the protein pair."""
+        return self.pair_id
 
     def __eq__(self, value: "object | ProteinPair") -> bool:
         """Checks if ProteinPairs are equivalent, without caring for order.
@@ -290,6 +346,8 @@ class PeptidePair(GroupedEntity):
     a: Peptide
     b: Peptide
     pair_id: str
+    linkage_pairs: set[LinkagePair]
+    protein_pair_linkage_pairs: dict[str, set[LinkagePair]]
 
     def __init__(self, peptide_a: Peptide, peptide_b: Peptide) -> None:
         """Peptide sequence pairs. Used for parsimonious selection.
@@ -305,6 +363,22 @@ class PeptidePair(GroupedEntity):
         self.a = peptide_a
         self.b = peptide_b
         self.pair_id = get_pair_id(peptide_a, peptide_b)
+        self.linkage_pairs = set()
+        self.protein_pair_linkage_pairs = {}
+
+    def add_linkage_pair(self, linkage_pair: LinkagePair) -> None:
+        """Associate an observed linkage pair with this peptide pair."""
+        self.linkage_pairs.add(linkage_pair)
+        if linkage_pair.protein_pair_id not in self.protein_pair_linkage_pairs:
+            self.protein_pair_linkage_pairs[linkage_pair.protein_pair_id] = set()
+        self.protein_pair_linkage_pairs[linkage_pair.protein_pair_id].add(linkage_pair)
+
+    def sorted_linkage_pairs(self) -> list[LinkagePair]:
+        """Get linkage pairs in a stable order."""
+        return sorted(
+            self.linkage_pairs,
+            key=lambda linkage_pair: linkage_pair.sort_key(),
+        )
 
     def __str__(self) -> str:
         """Get string representation of the peptide pair.

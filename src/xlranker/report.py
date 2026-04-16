@@ -22,6 +22,8 @@ class DetailedRow(BaseModel):
     peptide_pair: str
     protein_pair: str
     mapping_order: str
+    peptide_linkage_pair: str = ""
+    protein_linkage_pair: str = ""
     protein_pair_status: str
     selection_criteria: str
     pair_score: float
@@ -151,8 +153,16 @@ def mapping_peptide_pair_to_protein_pairs_with_linkages(
         peptide_pair = data_set.peptide_pairs[peptide_pair_id]
         row = [str(peptide_pair)]
         for prot_pair_id in sorted(peptide_pair.connections):
-            prot_pair = data_set.protein_pairs[prot_pair_id]
-            row.append(str(prot_pair))
+            linkage_pairs = peptide_pair.protein_pair_linkage_pairs.get(
+                prot_pair_id, set()
+            )
+            if len(linkage_pairs) == 0:
+                row.append(prot_pair_id)
+                continue
+            for linkage_pair in sorted(
+                linkage_pairs, key=lambda linkage_pair: linkage_pair.sort_key()
+            ):
+                row.append(linkage_pair.protein_pair_with_linkages())
         data.append("\t".join(row))
     with open(output_path, "w") as w:
         w.write("\n".join(data))
@@ -280,6 +290,26 @@ def detailed_report(data_set: XLDataSet, output_path: str | None = None) -> None
     rows: list[DetailedRow] = []
     for pair_id in sorted(data_set.peptide_pairs.keys()):
         peptide_pair = data_set.peptide_pairs[pair_id]
+        if len(peptide_pair.linkage_pairs) > 0:
+            for linkage_pair in peptide_pair.sorted_linkage_pairs():
+                prot_pair = data_set.protein_pairs.get(
+                    linkage_pair.protein_pair_id, None
+                )
+                if prot_pair is None:
+                    continue
+                rows.append(
+                    DetailedRow(
+                        peptide_pair=pair_id,
+                        protein_pair=prot_pair.pair_id,
+                        mapping_order=linkage_pair.mapping_order,
+                        peptide_linkage_pair=linkage_pair.peptide_pair_with_linkages(),
+                        protein_linkage_pair=linkage_pair.protein_pair_with_linkages(),
+                        protein_pair_status=str(prot_pair.report_status),
+                        selection_criteria=str(prot_pair.prioritization_status),
+                        pair_score=float(prot_pair.score),
+                    )
+                )
+            continue
         for mapped_prot_a in sorted(peptide_pair.a.mapped_proteins):
             for mapped_prot_b in sorted(peptide_pair.b.mapped_proteins):
                 prot_pair = data_set.protein_pairs.get(
@@ -287,17 +317,16 @@ def detailed_report(data_set: XLDataSet, output_path: str | None = None) -> None
                 )
                 if prot_pair is None:
                     continue
-                row_val = DetailedRow(
-                    peptide_pair=pair_id,
-                    protein_pair=prot_pair.pair_id,
-                    mapping_order=f"{mapped_prot_a}{config.advanced.pair_separator}{mapped_prot_b}",
-                    protein_pair_status=str(
-                        prot_pair.report_status,
-                    ),
-                    selection_criteria=str(prot_pair.prioritization_status),
-                    pair_score=float(prot_pair.score),
+                rows.append(
+                    DetailedRow(
+                        peptide_pair=pair_id,
+                        protein_pair=prot_pair.pair_id,
+                        mapping_order=f"{mapped_prot_a}{config.advanced.pair_separator}{mapped_prot_b}",
+                        protein_pair_status=str(prot_pair.report_status),
+                        selection_criteria=str(prot_pair.prioritization_status),
+                        pair_score=float(prot_pair.score),
+                    )
                 )
-                rows.append(row_val)
     if output_path is None:
         output_folder = Path(config.output)
         output_path = str(output_folder / "detailed_report.tsv")

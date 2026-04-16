@@ -16,7 +16,7 @@ from xlranker.util.mapping import (
 from xlranker.util.readers import read_data_folder, read_network_file
 
 from .bio import Protein
-from .bio.pairs import PeptidePair, ProteinPair
+from .bio.pairs import LinkagePair, PeptidePair, ProteinPair
 from .status import PrioritizationStatus
 
 logger = logging.getLogger(__name__)
@@ -147,16 +147,8 @@ class XLDataSet:
             else:
                 for protein_a_name in peptide_pair.a.mapped_proteins:
                     protein_a = self.proteins[protein_a_name]
-                    if protein_a_name in peptide_pair.a.protein_linkages:
-                        protein_a.add_linkage(
-                            peptide_pair.a.protein_linkages[protein_a_name]
-                        )
                     for protein_b_name in peptide_pair.b.mapped_proteins:
                         protein_b = self.proteins[protein_b_name]
-                        if protein_b_name in peptide_pair.b.protein_linkages:
-                            protein_b.add_linkage(
-                                peptide_pair.b.protein_linkages[protein_b_name]
-                            )
                         protein_pair_id = get_pair_id(protein_a, protein_b)
                         if protein_pair_id not in self.protein_pairs:
                             new_pair = ProteinPair(protein_a, protein_b)
@@ -168,8 +160,67 @@ class XLDataSet:
                                 peptide_pair_id
                             )
                             peptide_pair.add_connection(protein_pair_id)
+                        protein_pair = self.protein_pairs[protein_pair_id]
+                        linkage_pair = self._build_linkage_pair(
+                            peptide_pair,
+                            protein_pair,
+                            protein_a_name,
+                            protein_b_name,
+                        )
+                        if linkage_pair is not None:
+                            peptide_pair.add_linkage_pair(linkage_pair)
+                            protein_pair.add_linkage_pair(linkage_pair)
         for key in remove_pairs:
             self.peptide_pairs.pop(key)
+
+    def _build_linkage_pair(
+        self,
+        peptide_pair: PeptidePair,
+        protein_pair: ProteinPair,
+        mapped_protein_a: str,
+        mapped_protein_b: str,
+    ) -> LinkagePair | None:
+        """Build a linkage pair for one peptide-to-protein mapping."""
+        has_linkage_data = (
+            peptide_pair.a.linkage is not None
+            or peptide_pair.b.linkage is not None
+            or mapped_protein_a in peptide_pair.a.protein_linkages
+            or mapped_protein_b in peptide_pair.b.protein_linkages
+        )
+        if not has_linkage_data:
+            return None
+
+        protein_order_matches_input = (
+            protein_pair.a.name == mapped_protein_a
+            and protein_pair.b.name == mapped_protein_b
+        )
+
+        if protein_order_matches_input:
+            peptide_a = peptide_pair.a
+            peptide_b = peptide_pair.b
+            protein_linkage_a = peptide_a.protein_linkages.get(mapped_protein_a)
+            protein_linkage_b = peptide_b.protein_linkages.get(mapped_protein_b)
+        else:
+            peptide_a = peptide_pair.b
+            peptide_b = peptide_pair.a
+            protein_linkage_a = peptide_a.protein_linkages.get(protein_pair.a.name)
+            protein_linkage_b = peptide_b.protein_linkages.get(protein_pair.b.name)
+
+        return LinkagePair(
+            peptide_pair_id=peptide_pair.pair_id,
+            protein_pair_id=protein_pair.pair_id,
+            mapping_order=(
+                f"{mapped_protein_a}{xlr_config.advanced.pair_separator}{mapped_protein_b}"
+            ),
+            peptide_a=peptide_a.sequence,
+            peptide_b=peptide_b.sequence,
+            peptide_linkage_a=peptide_a.linkage,
+            peptide_linkage_b=peptide_b.linkage,
+            protein_a=protein_pair.a.name,
+            protein_b=protein_pair.b.name,
+            protein_linkage_a=protein_linkage_a,
+            protein_linkage_b=protein_linkage_b,
+        )
 
     def to_tsv(self, output_path: str) -> None:
         """Output detailed TSV of all protein pairs in data set.
@@ -382,10 +433,13 @@ def write_pair_to_network_with_linkages(
     """
     network_strings = []
     for pair in sorted(pairs, key=lambda x: x.pair_id):
-        linkages_a = ",".join(pair.a.linkages) if pair.a.linkages else ""
-        linkages_b = ",".join(pair.b.linkages) if pair.b.linkages else ""
-        network_strings.append(
-            f"{pair.a.name}\t{linkages_a}\t{pair.b.name}\t{linkages_b}"
-        )
+        linkage_pairs = pair.sorted_linkage_pairs()
+        if len(linkage_pairs) == 0:
+            network_strings.append(f"{pair.a.name}\t\t{pair.b.name}\t")
+            continue
+        for linkage_pair in linkage_pairs:
+            network_strings.append(
+                f"{linkage_pair.protein_a}\t{linkage_pair.protein_linkage_a or ''}\t{linkage_pair.protein_b}\t{linkage_pair.protein_linkage_b or ''}"  # noqa: E501
+            )
     with open(output_file, "w") as w:
         w.write("\n".join(network_strings) + "\n")
