@@ -104,8 +104,8 @@ class XLDataSet:
                the key is a unique identifier for the pair.
             omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key
                 is the file name and the value is a Polars DataFrame containing the data
-
-        """
+            has_linkages (bool): True if peptide pair input had linkage information. Defaults to false.
+        """  # noqa: E501
         self.peptide_pairs = peptide_pairs
         self.omic_data = omic_data
         self.protein_pairs = {}

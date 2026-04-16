@@ -123,7 +123,7 @@ def test_mapping_table_with_linkages_expands_linkage_columns(tmp_path):
     )
 
 
-def test_make_all_reports_skips_linkage_reports_when_not_provided(tmp_path, monkeypatch):
+def test_make_all_reports_no_linkage(tmp_path, monkeypatch):
     """Standard reports should be the only report files when input has no linkages."""
     monkeypatch.setattr(xlr.config.config, "output", str(tmp_path))
 
