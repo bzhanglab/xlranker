@@ -27,8 +27,8 @@ class Peptide:
         self,
         sequence: str,
         linkage: int | None = None,
-        mapped_proteins: list[str] = [],
-        protein_linkages: dict[str, str] = {},
+        mapped_proteins: list[str] | None = None,
+        protein_linkages: dict[str, str] | None = None,
     ):
         """Initialize the Peptide object with a sequence and mapped proteins.
 
@@ -46,8 +46,10 @@ class Peptide:
         self.linkage = None
         if linkage is not None and linkage <= len(self.sequence):
             self.linkage = linkage
-        self.mapped_proteins = mapped_proteins
-        self.protein_linkages = protein_linkages
+        self.mapped_proteins = [] if mapped_proteins is None else list(mapped_proteins)
+        self.protein_linkages = (
+            {} if protein_linkages is None else dict(protein_linkages)
+        )
 
     def __str__(self) -> str:
         """Get the string representation of this peptide.
