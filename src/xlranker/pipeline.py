@@ -29,7 +29,7 @@ def run_full_pipeline(data_set: XLDataSet, threshold: float | None = None) -> XL
     model = PrioritizationModel(data_set)
     model.run_model()
     get_final_network(data_set, ThresholdSelector(threshold))
-    make_all_reports(list(data_set.protein_pairs.values()))
+    make_all_reports(data_set)
     return data_set
 
 

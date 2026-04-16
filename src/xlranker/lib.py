@@ -89,11 +89,13 @@ class XLDataSet:
     omic_data: dict[str, pl.DataFrame]
     proteins: dict[str, Protein]
     protein_pairs: dict[str, ProteinPair]
+    has_linkages: bool
 
     def __init__(
         self,
         peptide_pairs: dict[str, PeptidePair],
         omic_data: dict[str, pl.DataFrame],
+        has_linkages: bool = False,
     ) -> None:
         """XLRanker cross-linking dataset object.
 
@@ -108,6 +110,7 @@ class XLDataSet:
         self.omic_data = omic_data
         self.protein_pairs = {}
         self.proteins = {}
+        self.has_linkages = has_linkages
 
     def build_proteins(self, remove_intra: bool = False) -> None:
         """Build protein pairs of the XLDataSet network.
@@ -371,7 +374,7 @@ class XLDataSet:
                             )
             else:
                 peptide_pair.b.mapped_proteins = matches_b
-        return cls(network, omic_data)
+        return cls(network, omic_data, has_linkages=has_linkages)
 
 
 def get_final_network(

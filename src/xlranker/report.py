@@ -65,13 +65,14 @@ def make_report_with_linkages(
     write_pair_to_network_with_linkages(valid_pairs, str(output_path))
 
 
-def make_all_reports(pairs: list[ProteinPair]) -> None:
+def make_all_reports(data_set: XLDataSet) -> None:
     """Write reports for all status levels to the output_folder specified in the config.
 
     Args:
-        pairs (list[ProteinPair]): list of all protein pairs.
+        data_set (XLDataSet): data set containing protein pairs and linkage metadata.
 
     """
+    pairs = list(data_set.protein_pairs.values())
     output_folder = Path(config.output).joinpath("reports")
     output_folder.mkdir(exist_ok=True)
     make_report(pairs, ReportStatus.UNIQUE, output_folder / "unique.tsv")
@@ -79,18 +80,19 @@ def make_all_reports(pairs: list[ProteinPair]) -> None:
     make_report(pairs, ReportStatus.EXPANDED, output_folder / "expanded.tsv")
     make_report(pairs, ReportStatus.ALL, output_folder / "all.tsv")
 
-    make_report_with_linkages(
-        pairs, ReportStatus.UNIQUE, output_folder / "unique_with_linkages.tsv"
-    )
-    make_report_with_linkages(
-        pairs, ReportStatus.MINIMAL, output_folder / "minimal_with_linkages.tsv"
-    )
-    make_report_with_linkages(
-        pairs, ReportStatus.EXPANDED, output_folder / "expanded_with_linkages.tsv"
-    )
-    make_report_with_linkages(
-        pairs, ReportStatus.ALL, output_folder / "all_with_linkages.tsv"
-    )
+    if data_set.has_linkages:
+        make_report_with_linkages(
+            pairs, ReportStatus.UNIQUE, output_folder / "unique_with_linkages.tsv"
+        )
+        make_report_with_linkages(
+            pairs, ReportStatus.MINIMAL, output_folder / "minimal_with_linkages.tsv"
+        )
+        make_report_with_linkages(
+            pairs, ReportStatus.EXPANDED, output_folder / "expanded_with_linkages.tsv"
+        )
+        make_report_with_linkages(
+            pairs, ReportStatus.ALL, output_folder / "all_with_linkages.tsv"
+        )
 
 
 def make_mapping_tables(data_set: XLDataSet) -> None:
@@ -102,10 +104,11 @@ def make_mapping_tables(data_set: XLDataSet) -> None:
         data_set (XLDataSet): XL data set to create mapping table from
     """
     mapping_peptide_pair_to_protein_pairs(data_set)
-    mapping_peptide_pair_to_protein_pairs_with_linkages(data_set)
     mapping_peptide_to_protein(data_set)
-    mapping_peptide_to_protein_with_linkages(data_set)
     mapping_peptide_pair_to_best_protein_pair(data_set)
+    if data_set.has_linkages:
+        mapping_peptide_pair_to_protein_pairs_with_linkages(data_set)
+        mapping_peptide_to_protein_with_linkages(data_set)
 
 
 def mapping_peptide_pair_to_protein_pairs(

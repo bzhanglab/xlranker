@@ -121,3 +121,29 @@ def test_mapping_table_with_linkages_expands_linkage_columns(tmp_path):
     assert output_path.read_text().strip() == (
         "PEPA:2+PEPB:3\tESR1:K10+ESR2:K20\tESR1:K10+ESR2B:K25"
     )
+
+
+def test_make_all_reports_skips_linkage_reports_when_not_provided(tmp_path, monkeypatch):
+    """Standard reports should be the only report files when input has no linkages."""
+    monkeypatch.setattr(xlr.config.config, "output", str(tmp_path))
+
+    peptide_pair = xlr.lib.PeptidePair(
+        xlr.bio.Peptide("PEPA", mapped_proteins=["ESR1"]),
+        xlr.bio.Peptide("PEPB", mapped_proteins=["ESR2"]),
+    )
+    data_set = xlr.XLDataSet(
+        {peptide_pair.pair_id: peptide_pair}, {}, has_linkages=False
+    )
+    data_set.build_proteins()
+
+    xlr.report.make_all_reports(data_set)
+
+    report_dir = tmp_path / "reports"
+    assert (report_dir / "unique.tsv").exists()
+    assert (report_dir / "minimal.tsv").exists()
+    assert (report_dir / "expanded.tsv").exists()
+    assert (report_dir / "all.tsv").exists()
+    assert not (report_dir / "unique_with_linkages.tsv").exists()
+    assert not (report_dir / "minimal_with_linkages.tsv").exists()
+    assert not (report_dir / "expanded_with_linkages.tsv").exists()
+    assert not (report_dir / "all_with_linkages.tsv").exists()
