@@ -1821,8 +1821,8 @@ key is a unique identifier for the pair.</p>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">               the key is a unique identifier for the pair.</span>
 </span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">            omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key</span>
 </span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">                is the file name and the value is a Polars DataFrame containing the data</span>
-</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>
-</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">            has_linkages (bool): True if peptide pair input had linkage information. Defaults to false.</span>
+</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        &quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
 </span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">peptide_pairs</span> <span class="o">=</span> <span class="n">peptide_pairs</span>
 </span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">omic_data</span> <span class="o">=</span> <span class="n">omic_data</span>
 </span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">protein_pairs</span> <span class="o">=</span> <span class="p">{}</span>
@@ -2167,6 +2167,22 @@ is the file name and the value is a Polars DataFrame containing the data</p>
                 <em>required</em>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>has_linkages</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True if peptide pair input had linkage information. Defaults to false.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -2205,8 +2221,8 @@ is the file name and the value is a Polars DataFrame containing the data</p>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">           the key is a unique identifier for the pair.</span>
 </span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        omic_data (dict[str, pl.DataFrame]): Dictionary of omic data, where the key</span>
 </span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">            is the file name and the value is a Polars DataFrame containing the data</span>
-</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a>
-</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        has_linkages (bool): True if peptide pair input had linkage information. Defaults to false.</span>
+</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
 </span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">peptide_pairs</span> <span class="o">=</span> <span class="n">peptide_pairs</span>
 </span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">omic_data</span> <span class="o">=</span> <span class="n">omic_data</span>
 </span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">protein_pairs</span> <span class="o">=</span> <span class="p">{}</span>
