@@ -22,6 +22,7 @@ class Peptide:
     mapped_proteins: list[str]
     linkage: int | None
     protein_linkages: dict[str, str]
+    protein_locations: dict[str, tuple[int, int]]
 
     def __init__(
         self,
@@ -29,6 +30,7 @@ class Peptide:
         linkage: int | None = None,
         mapped_proteins: list[str] | None = None,
         protein_linkages: dict[str, str] | None = None,
+        protein_locations: dict[str, tuple[int, int]] | None = None,
     ):
         """Initialize the Peptide object with a sequence and mapped proteins.
 
@@ -40,6 +42,8 @@ class Peptide:
                 maps to. Defaults to [].
             protein_linkages (dict[str, str], optional): mapping of protein name to
                 linkage location. Defaults to {}.
+            protein_locations (dict[str, tuple[int, int]], optional): mapping of protein
+                name to start and end index. Defaults to {}.
 
         """
         self.sequence = sequence
@@ -49,6 +53,9 @@ class Peptide:
         self.mapped_proteins = [] if mapped_proteins is None else list(mapped_proteins)
         self.protein_linkages = (
             {} if protein_linkages is None else dict(protein_linkages)
+        )
+        self.protein_locations = (
+            {} if protein_locations is None else dict(protein_locations)
         )
 
     def __str__(self) -> str:

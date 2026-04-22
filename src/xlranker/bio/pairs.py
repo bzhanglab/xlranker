@@ -24,6 +24,10 @@ class LinkagePair:
     protein_b: str
     protein_linkage_a: str | None
     protein_linkage_b: str | None
+    start_a: int | None = None
+    end_a: int | None = None
+    start_b: int | None = None
+    end_b: int | None = None
 
     def _with_optional_linkage(self, analyte: str, linkage: str | int | None) -> str:
         """Format analyte with optional linkage information."""
@@ -52,6 +56,30 @@ class LinkagePair:
             self.peptide_pair_id,
             self.mapping_order,
         )
+
+    def __str__(self) -> str:
+        """Transform linkage pair to standardized string."""
+        prot_a = (
+            self.protein_a
+            if self.protein_linkage_a is None
+            else f"{self.protein_a}:{self.protein_linkage_a}"
+        )
+        prot_b = (
+            self.protein_b
+            if self.protein_linkage_b is None
+            else f"{self.protein_b}:{self.protein_linkage_b}"
+        )
+        pep_a = (
+            self.peptide_a
+            if self.peptide_linkage_a is None
+            else f"{self.peptide_a}:{self.peptide_linkage_a}"
+        )
+        pep_b = (
+            self.peptide_b
+            if self.peptide_linkage_b is None
+            else f"{self.peptide_b}:{self.peptide_linkage_b}"
+        )
+        return f"{prot_a}{config.advanced.pair_separator}{prot_b}_{pep_a}{config.advanced.pair_separator}{pep_b}"  # noqa: E501
 
 
 class GroupedEntity:

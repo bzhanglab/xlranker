@@ -103,6 +103,7 @@ class SequenceMatch:
         unique_identifier (str): Isoform-specific identifier
         protein_name (str): Protein-level name from fasta file. Typically in Gene Symbol
         start_index (int): 1-based start index of the match in the protein sequence.
+        end_index (int): 1-based end index of the match in the protein sequence.
         match_location (str): Location string (e.g., "M1") where the peptide starts.
 
     """
@@ -110,6 +111,7 @@ class SequenceMatch:
     unique_identifier: str
     protein_name: str
     start_index: int
+    end_index: int
     match_location: str
 
 
@@ -477,12 +479,16 @@ class PeptideMapper:
         for gene_symbol, protein_seq in gene_to_longest_protein.items():
             mapped = False
             for end_index, sequence in automaton.iter(str(protein_seq)):
-                start_index = end_index - len(sequence) + 2
+                # end_index from ahocorasick is 0-based and points to last character
+                # convert to 1-based
+                end_pos = end_index + 1
+                start_index = end_pos - len(sequence) + 1
                 match_location = f"{sequence[0]}{start_index}"
                 seq_match = SequenceMatch(
                     unique_identifier=gene_symbol,
                     protein_name=gene_symbol,
                     start_index=start_index,
+                    end_index=end_pos,
                     match_location=match_location,
                 )
                 matches[sequence].append(seq_match)

@@ -203,11 +203,23 @@ class XLDataSet:
             peptide_b = peptide_pair.b
             protein_linkage_a = peptide_a.protein_linkages.get(mapped_protein_a)
             protein_linkage_b = peptide_b.protein_linkages.get(mapped_protein_b)
+            start_a, end_a = peptide_a.protein_locations.get(
+                mapped_protein_a, (None, None)
+            )
+            start_b, end_b = peptide_b.protein_locations.get(
+                mapped_protein_b, (None, None)
+            )
         else:
             peptide_a = peptide_pair.b
             peptide_b = peptide_pair.a
             protein_linkage_a = peptide_a.protein_linkages.get(protein_pair.a.name)
             protein_linkage_b = peptide_b.protein_linkages.get(protein_pair.b.name)
+            start_a, end_a = peptide_a.protein_locations.get(
+                protein_pair.a.name, (None, None)
+            )
+            start_b, end_b = peptide_b.protein_locations.get(
+                protein_pair.b.name, (None, None)
+            )
 
         return LinkagePair(
             peptide_pair_id=peptide_pair.pair_id,
@@ -223,6 +235,10 @@ class XLDataSet:
             protein_b=protein_pair.b.name,
             protein_linkage_a=protein_linkage_a,
             protein_linkage_b=protein_linkage_b,
+            start_a=start_a,
+            end_a=end_a,
+            start_b=start_b,
+            end_b=end_b,
         )
 
     def to_tsv(self, output_path: str) -> None:
@@ -333,6 +349,12 @@ class XLDataSet:
             matches_a = mapping_results.peptide_to_protein[peptide_pair.a.sequence]
             if is_fasta:
                 peptide_pair.a.mapped_proteins = [m.protein_name for m in matches_a]
+                for match in matches_a:
+                    if match.protein_name not in peptide_pair.a.protein_locations:
+                        peptide_pair.a.protein_locations[match.protein_name] = (
+                            match.start_index,
+                            match.end_index,
+                        )
                 if (
                     peptide_pair.a.linkage is not None
                     and mapping_results.protein_sequences is not None
@@ -356,6 +378,12 @@ class XLDataSet:
             matches_b = mapping_results.peptide_to_protein[peptide_pair.b.sequence]
             if is_fasta:
                 peptide_pair.b.mapped_proteins = [m.protein_name for m in matches_b]
+                for match in matches_b:
+                    if match.protein_name not in peptide_pair.b.protein_locations:
+                        peptide_pair.b.protein_locations[match.protein_name] = (
+                            match.start_index,
+                            match.end_index,
+                        )
                 if (
                     peptide_pair.b.linkage is not None
                     and mapping_results.protein_sequences is not None

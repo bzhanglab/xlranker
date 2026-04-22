@@ -107,8 +107,109 @@ def make_mapping_tables(data_set: XLDataSet) -> None:
     mapping_peptide_to_protein(data_set)
     mapping_peptide_pair_to_best_protein_pair(data_set)
     if data_set.has_linkages:
+        mapping_report(data_set)
         mapping_peptide_pair_to_protein_pairs_with_linkages(data_set)
         mapping_peptide_to_protein_with_linkages(data_set)
+
+
+def mapping_report(data_set: XLDataSet, output_path: str | None = None) -> None:
+    """Write detailed mapping report.
+
+    Args:
+        data_set (XLDataSet): XL data set to create mapping table from
+        output_path (str | None, optional): Output path, if None will use default path.
+            Defaults to None.
+
+    """
+    if output_path is None:
+        output_folder = Path(config.output).joinpath("mapping")
+        output_folder.mkdir(exist_ok=True)
+        output_path = str(output_folder / "mapping_report.tsv")
+
+    header = [
+        "pair_id",
+        "peptide a",
+        "pep_residue_a",
+        "start_a",
+        "end_a",
+        "peptide b",
+        "pep_residue_b",
+        "start_b",
+        "end_b",
+        "gene_a",
+        "residue_a",
+        "gene_b",
+        "residue_b",
+        "ambiguity",
+    ]
+    data = []
+
+    for peptide_pair_id in sorted(data_set.peptide_pairs.keys()):
+        peptide_pair = data_set.peptide_pairs[peptide_pair_id]
+
+        # Calculate ambiguity
+        expanded_protein_pairs = 0
+        for prot_pair_id in peptide_pair.connections:
+            prot_pair = data_set.protein_pairs[prot_pair_id]
+            if prot_pair.report_status <= ReportStatus.EXPANDED:
+                expanded_protein_pairs += 1
+
+        ambiguity = (
+            "ambiguous_protein" if expanded_protein_pairs > 1 else "no_ambiguity"
+        )
+
+        if len(peptide_pair.linkage_pairs) > 0:
+            for linkage_pair in peptide_pair.sorted_linkage_pairs():
+                row = [
+                    str(linkage_pair),
+                    linkage_pair.peptide_a,
+                    str(linkage_pair.peptide_linkage_a or ""),
+                    str(linkage_pair.start_a or ""),
+                    str(linkage_pair.end_a or ""),
+                    linkage_pair.peptide_b,
+                    str(linkage_pair.peptide_linkage_b or ""),
+                    str(linkage_pair.start_b or ""),
+                    str(linkage_pair.end_b or ""),
+                    linkage_pair.protein_a,
+                    str(linkage_pair.protein_linkage_a or ""),
+                    linkage_pair.protein_b,
+                    str(linkage_pair.protein_linkage_b or ""),
+                    ambiguity,
+                ]
+                data.append("\t".join(row))
+        else:
+            for mapped_prot_a in sorted(peptide_pair.a.mapped_proteins):
+                for mapped_prot_b in sorted(peptide_pair.b.mapped_proteins):
+                    start_a, end_a = peptide_pair.a.protein_locations.get(
+                        mapped_prot_a, ("", "")
+                    )
+                    start_b, end_b = peptide_pair.b.protein_locations.get(
+                        mapped_prot_b, ("", "")
+                    )
+
+                    pair_id_str = f"{mapped_prot_a}{config.advanced.pair_separator}{mapped_prot_b}_{peptide_pair.a.sequence}{config.advanced.pair_separator}{peptide_pair.b.sequence}"  # noqa: E501
+
+                    row = [
+                        pair_id_str,
+                        peptide_pair.a.sequence,
+                        "",
+                        str(start_a) if start_a else "",
+                        str(end_a) if end_a else "",
+                        peptide_pair.b.sequence,
+                        "",
+                        str(start_b) if start_b else "",
+                        str(end_b) if end_b else "",
+                        mapped_prot_a,
+                        "",
+                        mapped_prot_b,
+                        "",
+                        ambiguity,
+                    ]
+                    data.append("\t".join(row))
+
+    with open(output_path, "w") as w:
+        w.write("\t".join(header) + "\n")
+        w.write("\n".join(data) + "\n")
 
 
 def mapping_peptide_pair_to_protein_pairs(
