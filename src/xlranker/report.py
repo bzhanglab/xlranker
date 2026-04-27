@@ -141,6 +141,9 @@ def mapping_report(data_set: XLDataSet, output_path: str | None = None) -> None:
         "gene_b",
         "residue_b",
         "ambiguity",
+        "in_unique",
+        "in_minimal",
+        "in_expanded",
     ]
     data = []
 
@@ -160,6 +163,22 @@ def mapping_report(data_set: XLDataSet, output_path: str | None = None) -> None:
 
         if len(peptide_pair.linkage_pairs) > 0:
             for linkage_pair in peptide_pair.sorted_linkage_pairs():
+                prot_pair = data_set.protein_pairs[linkage_pair.protein_pair_id]
+                in_unique = (
+                    "True"
+                    if prot_pair.report_status <= ReportStatus.UNIQUE
+                    else "False"
+                )
+                in_minimal = (
+                    "True"
+                    if prot_pair.report_status <= ReportStatus.MINIMAL
+                    else "False"
+                )
+                in_expanded = (
+                    "True"
+                    if prot_pair.report_status <= ReportStatus.EXPANDED
+                    else "False"
+                )
                 row = [
                     str(linkage_pair),
                     linkage_pair.peptide_a,
@@ -175,11 +194,32 @@ def mapping_report(data_set: XLDataSet, output_path: str | None = None) -> None:
                     linkage_pair.protein_b,
                     str(linkage_pair.protein_linkage_b or ""),
                     ambiguity,
+                    in_unique,
+                    in_minimal,
+                    in_expanded,
                 ]
                 data.append("\t".join(row))
         else:
             for mapped_prot_a in sorted(peptide_pair.a.mapped_proteins):
                 for mapped_prot_b in sorted(peptide_pair.b.mapped_proteins):
+                    prot_pair = data_set.protein_pairs[
+                        get_pair_id_from_str(mapped_prot_a, mapped_prot_b)
+                    ]
+                    in_unique = (
+                        "True"
+                        if prot_pair.report_status <= ReportStatus.UNIQUE
+                        else "False"
+                    )
+                    in_minimal = (
+                        "True"
+                        if prot_pair.report_status <= ReportStatus.MINIMAL
+                        else "False"
+                    )
+                    in_expanded = (
+                        "True"
+                        if prot_pair.report_status <= ReportStatus.EXPANDED
+                        else "False"
+                    )
                     start_a, end_a = peptide_pair.a.protein_locations.get(
                         mapped_prot_a, ("", "")
                     )
@@ -204,6 +244,9 @@ def mapping_report(data_set: XLDataSet, output_path: str | None = None) -> None:
                         mapped_prot_b,
                         "",
                         ambiguity,
+                        in_unique,
+                        in_minimal,
+                        in_expanded,
                     ]
                     data.append("\t".join(row))
 
